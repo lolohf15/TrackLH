@@ -1,0 +1,63 @@
+@import "tailwindcss";
+
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    color-scheme: light;
+  }
+
+  body {
+    background-color: #F8F5F0;
+    color: #111827;
+  }
+
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: #F8F5F0; }
+  ::-webkit-scrollbar-thumb { background: #D4CCBE; border-radius: 99px; }
+  ::-webkit-scrollbar-thumb:hover { background: #B8B0A4; }
+
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(0.4);
+    cursor: pointer;
+  }
+
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type="number"] { -moz-appearance: textfield; }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes barGrow {
+  from { width: 0; }
+}
+
+@keyframes pulseDot {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+@layer utilities {
+  .tabular-nums        { font-variant-numeric: tabular-nums; }
+  .font-serif-display  { font-family: Georgia, "Times New Roman", serif; }
+  .shadow-card         { box-shadow: 0 1px 4px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04); }
+  .shadow-card-hover   { box-shadow: 0 4px 14px rgba(0,0,0,0.09), 0 0 0 1px rgba(0,0,0,0.05); }
+  .animate-fade-in-up  { animation: fadeInUp 0.35s ease-out both; }
+  .animate-fade-in     { animation: fadeIn 0.3s ease-out both; }
+  .animate-bar-grow    { animation: barGrow 0.8s ease-out both; }
+  .animate-pulse-dot   { animation: pulseDot 1.4s ease-in-out infinite; }
+}
