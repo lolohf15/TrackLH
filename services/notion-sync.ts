@@ -31,30 +31,22 @@ const ACCOUNT_DEFAULTS = [
  * - Never overwrites the user's initialBalance or initialBalanceDate.
  */
 export async function ensureDefaults(): Promise<void> {
-  // Run each upsert individually so one failure doesn't block the rest
-  for (const d of ACCOUNT_DEFAULTS) {
-    try {
-      await prisma.accountConfig.upsert({
+  await Promise.all([
+    ...ACCOUNT_DEFAULTS.map((d) =>
+      prisma.accountConfig.upsert({
         where: { account: d.account },
         create: { account: d.account, initialBalance: 0, isCredit: d.isCredit, color: d.color },
         update: { isCredit: d.isCredit, color: d.color },
-      });
-    } catch (err) {
-      console.error(`[ensureDefaults] accountConfig upsert failed for "${d.account}":`, err);
-    }
-  }
-
-  for (const b of DEFAULT_BUDGETS) {
-    try {
-      await prisma.budgetConfig.upsert({
+      }).catch((err) => console.error(`[ensureDefaults] accountConfig "${d.account}":`, err))
+    ),
+    ...DEFAULT_BUDGETS.map((b) =>
+      prisma.budgetConfig.upsert({
         where: { category: b.category },
         create: b,
         update: {},
-      });
-    } catch (err) {
-      console.error(`[ensureDefaults] budgetConfig upsert failed for "${b.category}":`, err);
-    }
-  }
+      }).catch((err) => console.error(`[ensureDefaults] budgetConfig "${b.category}":`, err))
+    ),
+  ]);
 }
 
 function mapPage(page: NotionPage): {
