@@ -47,7 +47,7 @@ export function StatCard({
         )}
       </CardHeader>
       <CardContent>
-        <div className={cn("text-2xl font-serif-display font-semibold tracking-tight tabular-nums", style.value)}>
+        <div className={cn("text-2xl font-semibold tracking-tight tabular-nums", style.value)}>
           {value}
         </div>
         <div className="mt-1.5 flex items-center gap-2 flex-wrap">
