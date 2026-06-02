@@ -46,7 +46,7 @@ export function TransactionFiltersPanel({ filters, categories, accounts, onChang
       {hasFilters && (
         <button
           onClick={reset}
-          className="text-xs text-[#6B7280] hover:text-[#4B5563] underline underline-offset-2 transition-colors"
+          className="text-xs text-[#8b949e] hover:text-[#c9d1d9] underline underline-offset-2 transition-colors"
         >
           Limpiar
         </button>
@@ -67,9 +67,9 @@ function Select({
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="text-xs bg-white border border-[#E5DED2] rounded-xl px-3 py-1.5 text-[#4B5563]
-        hover:border-[#D4CCBE] hover:text-[#111827]
-        focus:outline-none focus:ring-1 focus:ring-[#C6A15B]/40 focus:border-[#C6A15B]/60
+      className="text-xs bg-[#161b22] border border-[#21262d] rounded-xl px-3 py-1.5 text-[#c9d1d9]
+        hover:border-[#30363d] hover:text-[#e6edf3]
+        focus:outline-none focus:ring-1 focus:ring-[#238636]/40 focus:border-[#238636]/60
         appearance-none cursor-pointer transition-all duration-150 shadow-sm"
     >
       <option value="">{placeholder}</option>

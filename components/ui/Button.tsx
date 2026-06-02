@@ -8,13 +8,13 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variants = {
   primary:
-    "bg-[#C6A15B] text-white hover:bg-[#B8904A] active:bg-[#A8803A] shadow-sm shadow-[#C6A15B]/20",
+    "bg-[#238636] text-white hover:bg-[#2ea043] active:bg-[#26913a] shadow-sm shadow-[#238636]/30",
   secondary:
-    "bg-white text-[#4B5563] border border-[#E5DED2] hover:bg-[#F8F5F0] hover:border-[#D4CCBE] hover:text-[#111827] active:bg-[#EFEAE2]",
+    "bg-[#21262d] text-[#c9d1d9] border border-[#30363d] hover:bg-[#30363d] hover:border-[#484f58] hover:text-[#e6edf3] active:bg-[#3a4048]",
   ghost:
-    "text-[#6B7280] hover:bg-black/5 hover:text-[#111827] active:bg-black/8",
+    "text-[#8b949e] hover:bg-white/5 hover:text-[#e6edf3] active:bg-white/10",
   danger:
-    "bg-red-50 text-[#C0392B] border border-red-200 hover:bg-red-100 hover:border-red-300",
+    "bg-red-900/20 text-[#f85149] border border-red-800/50 hover:bg-red-900/30 hover:border-red-700/60",
 };
 
 const sizes = {
@@ -38,7 +38,7 @@ export function Button({
       disabled={disabled || loading}
       className={cn(
         "inline-flex items-center justify-center rounded-xl font-medium transition-all duration-150",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C6A15B]/50 focus-visible:ring-offset-1 focus-visible:ring-offset-[#F8F5F0]",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#238636]/50 focus-visible:ring-offset-1 focus-visible:ring-offset-[#0d1117]",
         "disabled:opacity-40 disabled:cursor-not-allowed",
         variants[variant],
         sizes[size],

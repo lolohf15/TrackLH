@@ -20,7 +20,7 @@ export function BudgetTracker({ data }: { data: BudgetItem[] }) {
         {data.length > 0 && (
           <span className={cn(
             "text-xs font-semibold tabular-nums",
-            isOver ? "text-[#C0392B]" : isNear ? "text-[#D97706]" : "text-[#16A34A]"
+            isOver ? "text-[#f85149]" : isNear ? "text-[#d29922]" : "text-[#3fb950]"
           )}>
             {totalPct}% usado
           </span>
@@ -39,29 +39,29 @@ export function BudgetTracker({ data }: { data: BudgetItem[] }) {
             </div>
 
             {/* Total footer */}
-            <div className="mt-5 pt-4 border-t border-[#E5DED2]">
+            <div className="mt-5 pt-4 border-t border-[#21262d]">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold text-[#4B5563] uppercase tracking-widest">Total</span>
+                <span className="text-xs font-semibold text-[#c9d1d9] uppercase tracking-widest">Total</span>
                 <div className="flex items-center gap-1.5 tabular-nums">
                   <span className={cn(
                     "text-sm font-semibold",
-                    isOver ? "text-[#C0392B]" : isNear ? "text-[#D97706]" : "text-[#111827]"
+                    isOver ? "text-[#f85149]" : isNear ? "text-[#d29922]" : "text-[#e6edf3]"
                   )}>
                     {formatMXN(totalSpent)}
                   </span>
                   <span className="text-[#6B7280] text-xs">/ {formatMXN(totalBudget)}</span>
                 </div>
               </div>
-              <div className="h-2 bg-[#E5DED2] rounded-full overflow-hidden">
+              <div className="h-2 bg-[#21262d] rounded-full overflow-hidden">
                 <div
                   className={cn(
                     "h-full rounded-full transition-all duration-700",
-                    isOver ? "bg-[#C0392B]" : isNear ? "bg-[#D97706]" : "bg-[#C6A15B]"
+                    isOver ? "bg-[#f85149]" : isNear ? "bg-[#d29922]" : "bg-[#238636]"
                   )}
                   style={{ width: `${totalPct}%` }}
                 />
               </div>
-              <p className="mt-1.5 text-xs text-[#6B7280]">
+              <p className="mt-1.5 text-xs text-[#8b949e]">
                 {isOver
                   ? `${formatMXN(totalSpent - totalBudget)} sobre el presupuesto total`
                   : `${formatMXN(totalBudget - totalSpent)} disponible`}
@@ -79,21 +79,21 @@ function BudgetRow({ item }: { item: BudgetItem }) {
   const isWarning = item.percentage >= 90;
 
   const barColor = isOver
-    ? "bg-[#C0392B]"
+    ? "bg-[#f85149]"
     : isWarning
-    ? "bg-[#D97706]"
-    : "bg-[#2EA87A]";
+    ? "bg-[#d29922]"
+    : "bg-[#238636]";
 
   const valueColor = isOver
-    ? "text-[#C0392B]"
+    ? "text-[#f85149]"
     : isWarning
-    ? "text-[#D97706]"
-    : "text-[#111827]";
+    ? "text-[#d29922]"
+    : "text-[#e6edf3]";
 
   return (
     <div className="space-y-1.5">
       <div className="flex items-center justify-between">
-        <span className="text-sm text-[#4B5563]">{item.category}</span>
+        <span className="text-sm text-[#c9d1d9]">{item.category}</span>
         <div className="flex items-center gap-1.5 tabular-nums">
           <span className={cn("text-sm font-semibold", valueColor)}>
             {formatMXN(item.spent)}
@@ -101,13 +101,13 @@ function BudgetRow({ item }: { item: BudgetItem }) {
           <span className="text-[#6B7280] text-xs">/ {formatMXN(item.budget)}</span>
         </div>
       </div>
-      <div className="h-1.5 bg-[#E5DED2] rounded-full overflow-hidden">
+      <div className="h-1.5 bg-[#21262d] rounded-full overflow-hidden">
         <div
           className={cn("h-full rounded-full transition-all duration-700", barColor)}
           style={{ width: `${Math.min(item.percentage, 100)}%` }}
         />
       </div>
-      <p className="text-xs text-[#6B7280]">
+      <p className="text-xs text-[#8b949e]">
         {isOver
           ? `${formatMXN(Math.abs(item.remaining))} sobre el límite`
           : `${formatMXN(item.remaining)} disponible`}

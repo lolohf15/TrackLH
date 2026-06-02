@@ -17,11 +17,11 @@ interface StatCardProps {
 }
 
 const accents: Record<string, { value: string; icon: string }> = {
-  default: { value: "text-[#111827]",   icon: "text-[#6B7280] bg-[#F8F5F0]" },
-  green:   { value: "text-[#16A34A]",   icon: "text-[#16A34A] bg-green-50" },
-  red:     { value: "text-[#C0392B]",   icon: "text-[#C0392B] bg-red-50" },
-  gold:    { value: "text-[#C6A15B]",   icon: "text-[#C6A15B] bg-amber-50" },
-  amber:   { value: "text-[#D97706]",   icon: "text-[#D97706] bg-amber-50" },
+  default: { value: "text-[#e6edf3]",   icon: "text-[#8b949e] bg-[#21262d]" },
+  green:   { value: "text-[#3fb950]",   icon: "text-[#3fb950] bg-green-900/20" },
+  red:     { value: "text-[#f85149]",   icon: "text-[#f85149] bg-red-900/20" },
+  gold:    { value: "text-[#d29922]",   icon: "text-[#d29922] bg-amber-900/20" },
+  amber:   { value: "text-[#d29922]",   icon: "text-[#d29922] bg-amber-900/20" },
 };
 
 export function StatCard({
@@ -52,12 +52,12 @@ export function StatCard({
         </div>
         <div className="mt-1.5 flex items-center gap-2 flex-wrap">
           {subtitle && (
-            <p className="text-xs text-[#6B7280]">{subtitle}</p>
+            <p className="text-xs text-[#8b949e]">{subtitle}</p>
           )}
           {showTrend && trend !== 0 && (
             <span className={cn(
               "inline-flex items-center gap-0.5 text-xs font-medium tabular-nums",
-              trendGood ? "text-[#16A34A]" : trendBad ? "text-[#C0392B]" : "text-[#6B7280]"
+              trendGood ? "text-[#3fb950]" : trendBad ? "text-[#f85149]" : "text-[#8b949e]"
             )}>
               {trendUp ? "▲" : "▼"}
               {Math.abs(trend).toFixed(0)}%

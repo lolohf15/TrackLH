@@ -17,7 +17,7 @@ interface Props {
 export function TransactionTable({ data, loading, page, onPageChange }: Props) {
   if (loading) {
     return (
-      <div className="bg-white rounded-2xl border border-[#E5DED2] shadow-card overflow-hidden">
+      <div className="bg-[#161b22] rounded-2xl border border-[#21262d] shadow-card overflow-hidden">
         <TableSkeleton rows={8} />
       </div>
     );
@@ -25,7 +25,7 @@ export function TransactionTable({ data, loading, page, onPageChange }: Props) {
 
   if (!data || data.data.length === 0) {
     return (
-      <div className="bg-white rounded-2xl border border-[#E5DED2] shadow-card">
+      <div className="bg-[#161b22] rounded-2xl border border-[#21262d] shadow-card">
         <EmptyState
           icon="📊"
           title="Sin transacciones"
@@ -36,12 +36,12 @@ export function TransactionTable({ data, loading, page, onPageChange }: Props) {
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-[#E5DED2] shadow-card overflow-hidden">
+    <div className="bg-[#161b22] rounded-2xl border border-[#21262d] shadow-card overflow-hidden">
       {/* Desktop table */}
       <div className="hidden md:block overflow-x-auto">
         <table className="w-full">
           <thead>
-            <tr className="bg-[#FDFAF7] border-b border-[#E5DED2]">
+            <tr className="bg-[#0d1117] border-b border-[#21262d]">
               <Th>Fecha</Th>
               <Th>Descripción</Th>
               <Th>Categoría</Th>
@@ -50,14 +50,14 @@ export function TransactionTable({ data, loading, page, onPageChange }: Props) {
               <Th right>Monto</Th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#E5DED2]">
+          <tbody className="divide-y divide-[#21262d]">
             {data.data.map((tx) => <DesktopRow key={tx.id} tx={tx} />)}
           </tbody>
         </table>
       </div>
 
       {/* Mobile list */}
-      <div className="md:hidden divide-y divide-[#E5DED2]">
+      <div className="md:hidden divide-y divide-[#21262d]">
         {data.data.map((tx) => <MobileRow key={tx.id} tx={tx} />)}
       </div>
 
@@ -71,7 +71,7 @@ export function TransactionTable({ data, loading, page, onPageChange }: Props) {
 function Th({ children, right }: { children: React.ReactNode; right?: boolean }) {
   return (
     <th className={cn(
-      "px-6 py-3.5 text-xs font-semibold text-[#6B7280] uppercase tracking-widest whitespace-nowrap",
+      "px-6 py-3.5 text-xs font-semibold text-[#8b949e] uppercase tracking-widest whitespace-nowrap",
       right ? "text-right" : "text-left"
     )}>
       {children}
@@ -84,21 +84,21 @@ function DesktopRow({ tx }: { tx: Transaction }) {
   const isIngreso = tx.type === "Ingreso";
 
   return (
-    <tr className="hover:bg-[#FDFAF7] transition-colors group">
+    <tr className="hover:bg-[#1c2128] transition-colors group">
       <td className="px-6 py-4 whitespace-nowrap">
-        <span className="text-xs text-[#6B7280]">{formatDate(tx.date)}</span>
+        <span className="text-xs text-[#8b949e]">{formatDate(tx.date)}</span>
       </td>
       <td className="px-6 py-4 max-w-[220px]">
-        <p className="text-sm font-medium text-[#111827] truncate">
+        <p className="text-sm font-medium text-[#e6edf3] truncate">
           {tx.description ?? "—"}
         </p>
-        {tx.notes && <p className="text-xs text-[#6B7280] truncate">{tx.notes}</p>}
+        {tx.notes && <p className="text-xs text-[#8b949e] truncate">{tx.notes}</p>}
       </td>
       <td className="px-6 py-4">
-        <span className="text-sm text-[#4B5563]">{tx.category ?? <span className="text-[#D4CCBE]">—</span>}</span>
+        <span className="text-sm text-[#c9d1d9]">{tx.category ?? <span className="text-[#30363d]">—</span>}</span>
       </td>
       <td className="px-6 py-4">
-        <span className="text-sm text-[#4B5563]">
+        <span className="text-sm text-[#c9d1d9]">
           {tx.account}
           {tx.toAccount && <span className="text-[#6B7280]"> → {tx.toAccount}</span>}
         </span>
@@ -109,8 +109,8 @@ function DesktopRow({ tx }: { tx: Transaction }) {
       <td className="px-6 py-4 text-right whitespace-nowrap">
         <span className={cn(
           "text-sm font-semibold tabular-nums",
-          isGasto   ? "text-[#C0392B]" :
-          isIngreso ? "text-[#16A34A]" : "text-[#C6A15B]"
+          isGasto   ? "text-[#f85149]" :
+          isIngreso ? "text-[#3fb950]" : "text-[#d29922]"
         )}>
           {isGasto ? "−" : isIngreso ? "+" : ""}
           {formatMXN(tx.amount)}
@@ -123,23 +123,23 @@ function DesktopRow({ tx }: { tx: Transaction }) {
 function MobileRow({ tx }: { tx: Transaction }) {
   const isGasto   = tx.type === "Gasto";
   const isIngreso = tx.type === "Ingreso";
-  const dotColors = { Gasto: "bg-[#C0392B]", Ingreso: "bg-[#16A34A]", Transferencia: "bg-[#C6A15B]" };
+  const dotColors = { Gasto: "bg-[#f85149]", Ingreso: "bg-[#3fb950]", Transferencia: "bg-[#d29922]" };
 
   return (
-    <div className="flex items-center justify-between px-4 py-3.5 hover:bg-[#FDFAF7] transition-colors">
+    <div className="flex items-center justify-between px-4 py-3.5 hover:bg-[#1c2128] transition-colors">
       <div className="flex items-center gap-3 min-w-0">
         <div className={cn("w-1.5 h-1.5 rounded-full shrink-0", dotColors[tx.type as TransactionType])} />
         <div className="min-w-0">
-          <p className="text-sm font-medium text-[#111827] truncate">
+          <p className="text-sm font-medium text-[#e6edf3] truncate">
             {tx.description ?? tx.category ?? "Transacción"}
           </p>
-          <p className="text-xs text-[#6B7280]">{formatDate(tx.date)} · {tx.account}</p>
+          <p className="text-xs text-[#8b949e]">{formatDate(tx.date)} · {tx.account}</p>
         </div>
       </div>
       <span className={cn(
         "text-sm font-semibold tabular-nums ml-3 shrink-0",
-        isGasto   ? "text-[#C0392B]" :
-        isIngreso ? "text-[#16A34A]" : "text-[#C6A15B]"
+        isGasto   ? "text-[#f85149]" :
+        isIngreso ? "text-[#3fb950]" : "text-[#d29922]"
       )}>
         {isGasto ? "−" : isIngreso ? "+" : ""}
         {formatMXN(tx.amount)}
@@ -157,8 +157,8 @@ function Pagination({
   const startPage = Math.max(1, Math.min(page - 2, totalPages - pageCount + 1));
 
   return (
-    <div className="flex items-center justify-between px-6 py-3.5 border-t border-[#E5DED2]">
-      <span className="text-xs text-[#6B7280]">
+    <div className="flex items-center justify-between px-6 py-3.5 border-t border-[#21262d]">
+      <span className="text-xs text-[#8b949e]">
         {start}–{end} de {total}
       </span>
       <div className="flex items-center gap-1">
@@ -182,8 +182,8 @@ function PagBtn({
       className={cn(
         "w-7 h-7 flex items-center justify-center rounded-lg text-xs font-medium transition-all duration-150",
         active
-          ? "bg-[#C6A15B] text-white"
-          : "text-[#6B7280] hover:bg-[#F8F5F0] hover:text-[#4B5563]",
+          ? "bg-[#238636] text-white"
+          : "text-[#8b949e] hover:bg-[#21262d] hover:text-[#c9d1d9]",
         disabled && "opacity-30 cursor-not-allowed hover:bg-transparent"
       )}
     >

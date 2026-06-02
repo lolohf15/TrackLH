@@ -67,12 +67,12 @@ export function Dashboard() {
   const netTrend      = pctChange(netBalance, dashboard ? dashboard.prevMonthIncome - dashboard.prevMonthExpenses : 0);
 
   return (
-    <div className="min-h-screen bg-[#F8F5F0]">
+    <div className="min-h-screen bg-[#0d1117]">
       {/* Header */}
-      <header className="sticky top-0 z-20 bg-[#EFEAE2]/95 backdrop-blur-md border-b border-[#E5DED2]">
+      <header className="sticky top-0 z-20 bg-[#0d1117]/95 backdrop-blur-md border-b border-[#21262d]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-8 h-8 shrink-0 bg-[#C6A15B] rounded-xl flex items-center justify-center shadow-sm shadow-[#C6A15B]/30">
+            <div className="w-8 h-8 shrink-0 bg-[#238636] rounded-xl flex items-center justify-center shadow-sm shadow-[#238636]/30">
               <span className="text-white text-xs font-bold">T</span>
             </div>
             {/* Month navigation */}
@@ -80,19 +80,19 @@ export function Dashboard() {
               <button
                 onClick={() => navigateMonth(-1)}
                 aria-label="Mes anterior"
-                className="w-6 h-6 flex items-center justify-center rounded-lg text-[#6B7280] hover:bg-[#E5DED2] hover:text-[#111827] transition-colors text-sm"
+                className="w-6 h-6 flex items-center justify-center rounded-lg text-[#8b949e] hover:bg-[#21262d] hover:text-[#e6edf3] transition-colors text-sm"
               >
                 ‹
               </button>
               <div className="min-w-0 text-center">
-                <h1 className="text-sm font-semibold text-[#111827] leading-none">TrackLH</h1>
-                <p className="text-xs text-[#6B7280] mt-0.5 truncate">{formatMonth(dashMonth)}</p>
+                <h1 className="text-sm font-semibold text-[#e6edf3] leading-none">TrackLH</h1>
+                <p className="text-xs text-[#8b949e] mt-0.5 truncate">{formatMonth(dashMonth)}</p>
               </div>
               <button
                 onClick={() => navigateMonth(1)}
                 aria-label="Mes siguiente"
                 disabled={dashMonth >= getCurrentMonth()}
-                className="w-6 h-6 flex items-center justify-center rounded-lg text-[#6B7280] hover:bg-[#E5DED2] hover:text-[#111827] transition-colors text-sm disabled:opacity-30 disabled:cursor-not-allowed"
+                className="w-6 h-6 flex items-center justify-center rounded-lg text-[#8b949e] hover:bg-[#21262d] hover:text-[#e6edf3] transition-colors text-sm disabled:opacity-30 disabled:cursor-not-allowed"
               >
                 ›
               </button>
@@ -178,7 +178,7 @@ export function Dashboard() {
         {/* Transactions */}
         <section className="space-y-3">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <h2 className="text-xs font-semibold text-[#6B7280] uppercase tracking-widest">
+            <h2 className="text-xs font-semibold text-[#8b949e] uppercase tracking-widest">
               Historial de transacciones
             </h2>
             <TransactionFiltersPanel

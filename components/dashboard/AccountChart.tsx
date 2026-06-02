@@ -12,9 +12,9 @@ function CustomTooltip({ active, payload }: { active?: boolean; payload?: Array<
   if (!active || !payload?.length) return null;
   const item = payload[0].payload;
   return (
-    <div className="bg-white border border-[#E5DED2] rounded-xl shadow-card-hover px-4 py-3 text-sm">
-      <p className="font-semibold text-[#111827]">{item.account}</p>
-      <p className="text-[#4B5563] mt-0.5 tabular-nums">{formatMXN(item.currentBalance)}</p>
+    <div className="bg-[#161b22] border border-[#30363d] rounded-xl shadow-card-hover px-4 py-3 text-sm">
+      <p className="font-semibold text-[#e6edf3]">{item.account}</p>
+      <p className="text-[#c9d1d9] mt-0.5 tabular-nums">{formatMXN(item.currentBalance)}</p>
     </div>
   );
 }
@@ -56,7 +56,7 @@ export function AccountChart({ data }: Props) {
                 iconType="circle"
                 iconSize={8}
                 formatter={(value) => (
-                  <span style={{ color: "#4B5563", fontSize: 12 }}>{value}</span>
+                  <span style={{ color: "#c9d1d9", fontSize: 12 }}>{value}</span>
                 )}
               />
             </PieChart>

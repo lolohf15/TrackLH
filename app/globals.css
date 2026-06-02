@@ -6,21 +6,21 @@
   html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    color-scheme: light;
+    color-scheme: dark;
   }
 
   body {
-    background-color: #F8F5F0;
-    color: #111827;
+    background-color: #0d1117;
+    color: #e6edf3;
   }
 
   ::-webkit-scrollbar { width: 5px; height: 5px; }
-  ::-webkit-scrollbar-track { background: #F8F5F0; }
-  ::-webkit-scrollbar-thumb { background: #D4CCBE; border-radius: 99px; }
-  ::-webkit-scrollbar-thumb:hover { background: #B8B0A4; }
+  ::-webkit-scrollbar-track { background: #0d1117; }
+  ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 99px; }
+  ::-webkit-scrollbar-thumb:hover { background: #484f58; }
 
   input[type="date"]::-webkit-calendar-picker-indicator {
-    filter: invert(0.4);
+    filter: invert(0.8);
     cursor: pointer;
   }
 
@@ -54,8 +54,8 @@
 @layer utilities {
   .tabular-nums        { font-variant-numeric: tabular-nums; }
   .font-serif-display  { font-family: Georgia, "Times New Roman", serif; }
-  .shadow-card         { box-shadow: 0 1px 4px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04); }
-  .shadow-card-hover   { box-shadow: 0 4px 14px rgba(0,0,0,0.09), 0 0 0 1px rgba(0,0,0,0.05); }
+  .shadow-card         { box-shadow: 0 1px 4px rgba(0,0,0,0.4), 0 0 0 1px rgba(0,0,0,0.3); }
+  .shadow-card-hover   { box-shadow: 0 4px 14px rgba(0,0,0,0.5), 0 0 0 1px rgba(0,0,0,0.4); }
   .animate-fade-in-up  { animation: fadeInUp 0.35s ease-out both; }
   .animate-fade-in     { animation: fadeIn 0.3s ease-out both; }
   .animate-bar-grow    { animation: barGrow 0.8s ease-out both; }

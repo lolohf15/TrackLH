@@ -31,7 +31,7 @@ export function AccountBalances({ data }: { data: AccountBalance[] }) {
           {credits.length > 0 && (
             <>
               <div className="pt-4 pb-1.5">
-                <p className="text-xs font-semibold text-[#6B7280] uppercase tracking-widest">
+                <p className="text-xs font-semibold text-[#8b949e] uppercase tracking-widest">
                   Crédito
                 </p>
               </div>
@@ -48,13 +48,13 @@ function AccountRow({ account, credit }: { account: AccountBalance; credit?: boo
   const isNegative = account.currentBalance < 0;
 
   return (
-    <div className="flex items-center justify-between py-2.5 group rounded-lg px-2 -mx-2 hover:bg-[#F8F5F0] transition-colors">
+    <div className="flex items-center justify-between py-2.5 group rounded-lg px-2 -mx-2 hover:bg-[#21262d] transition-colors">
       <div className="flex items-center gap-2.5">
         <div
           className="w-2 h-2 rounded-full shrink-0"
           style={{ backgroundColor: account.color }}
         />
-        <span className="text-sm text-[#4B5563] group-hover:text-[#111827] transition-colors">
+        <span className="text-sm text-[#8b949e] group-hover:text-[#e6edf3] transition-colors">
           {account.account}
         </span>
       </div>
@@ -62,10 +62,10 @@ function AccountRow({ account, credit }: { account: AccountBalance; credit?: boo
         className={cn(
           "text-sm font-semibold tabular-nums",
           credit
-            ? "text-purple-600"
+            ? "text-purple-400"
             : isNegative
-            ? "text-[#C0392B]"
-            : "text-[#111827]"
+            ? "text-[#f85149]"
+            : "text-[#e6edf3]"
         )}
       >
         {formatMXN(account.currentBalance)}

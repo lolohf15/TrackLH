@@ -11,8 +11,8 @@ export function Card({ children, className, onClick }: CardProps) {
     <div
       onClick={onClick}
       className={cn(
-        "bg-white rounded-2xl border border-[#E5DED2] shadow-card transition-all duration-200",
-        onClick && "cursor-pointer hover:border-[#D4CCBE] hover:shadow-card-hover",
+        "bg-[#161b22] rounded-2xl border border-[#21262d] shadow-card transition-all duration-200",
+        onClick && "cursor-pointer hover:border-[#30363d] hover:shadow-card-hover",
         className
       )}
     >
@@ -51,7 +51,7 @@ export function CardTitle({
   return (
     <h3
       className={cn(
-        "text-xs font-semibold text-[#6B7280] uppercase tracking-widest",
+        "text-xs font-semibold text-[#8b949e] uppercase tracking-widest",
         className
       )}
     >

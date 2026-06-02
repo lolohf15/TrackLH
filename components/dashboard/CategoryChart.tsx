@@ -14,10 +14,10 @@ function CustomTooltip({ active, payload }: { active?: boolean; payload?: Array<
   if (!active || !payload?.length) return null;
   const item = payload[0].payload;
   return (
-    <div className="bg-white border border-[#E5DED2] rounded-xl shadow-card-hover px-4 py-3 text-sm">
-      <p className="font-semibold text-[#111827]">{item.category}</p>
-      <p className="text-[#4B5563] mt-0.5 tabular-nums">{formatMXN(item.amount)}</p>
-      <p className="text-[#6B7280] text-xs mt-0.5">{item.percentage}% del total · {item.count} movs.</p>
+    <div className="bg-[#161b22] border border-[#30363d] rounded-xl shadow-card-hover px-4 py-3 text-sm">
+      <p className="font-semibold text-[#e6edf3]">{item.category}</p>
+      <p className="text-[#c9d1d9] mt-0.5 tabular-nums">{formatMXN(item.amount)}</p>
+      <p className="text-[#8b949e] text-xs mt-0.5">{item.percentage}% del total · {item.count} movs.</p>
     </div>
   );
 }
@@ -42,7 +42,7 @@ export function CategoryChart({ data }: Props) {
               <XAxis
                 type="number"
                 tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
-                tick={{ fontSize: 11, fill: "#6B7280" }}
+                tick={{ fontSize: 11, fill: "#8b949e" }}
                 axisLine={false}
                 tickLine={false}
               />
@@ -50,11 +50,11 @@ export function CategoryChart({ data }: Props) {
                 type="category"
                 dataKey="category"
                 width={112}
-                tick={{ fontSize: 12, fill: "#4B5563" }}
+                tick={{ fontSize: 12, fill: "#c9d1d9" }}
                 axisLine={false}
                 tickLine={false}
               />
-              <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(0,0,0,0.03)" }} />
+              <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(255,255,255,0.05)" }} />
               <Bar dataKey="amount" radius={[0, 6, 6, 0]} maxBarSize={22}>
                 {top.map((entry, i) => (
                   <Cell key={i} fill={entry.color} />

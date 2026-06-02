@@ -39,12 +39,12 @@ export function SyncButton({ lastSyncAt, onSyncComplete }: SyncButtonProps) {
     <div className="flex flex-col items-end gap-1.5">
       <div className="flex items-center gap-3">
         {result && (
-          <span className={`text-xs font-medium ${result.success ? "text-[#16A34A]" : "text-[#C0392B]"}`}>
+          <span className={`text-xs font-medium ${result.success ? "text-[#3fb950]" : "text-[#f85149]"}`}>
             {result.success ? `✓ ${result.message}` : `✗ ${result.message}`}
           </span>
         )}
         {!result && lastSyncAt && (
-          <span className="text-xs text-[#6B7280]">
+          <span className="text-xs text-[#8b949e]">
             Sync: {formatRelativeTime(lastSyncAt)}
           </span>
         )}
@@ -60,12 +60,12 @@ export function SyncButton({ lastSyncAt, onSyncComplete }: SyncButtonProps) {
         <div className="text-right">
           <button
             onClick={() => setShowWarnings((v) => !v)}
-            className="text-xs text-[#D97706] underline underline-offset-2 hover:text-[#B86A00] transition-colors"
+            className="text-xs text-[#d29922] underline underline-offset-2 hover:text-[#e3b341] transition-colors"
           >
             {result.warnings.length} advertencia{result.warnings.length > 1 ? "s" : ""}
           </button>
           {showWarnings && (
-            <ul className="mt-1.5 text-xs text-[#6B7280] space-y-0.5 max-w-xs text-right">
+            <ul className="mt-1.5 text-xs text-[#8b949e] space-y-0.5 max-w-xs text-right">
               {result.warnings.map((w, i) => (
                 <li key={i} className="truncate">⚠ {w}</li>
               ))}
