@@ -30,23 +30,25 @@ const ACCOUNT_DEFAULTS = [
  * - Always re-applies isCredit and color from app rules so corrections are auto-fixed.
  * - Never overwrites the user's initialBalance or initialBalanceDate.
  */
+let defaultsSeeded = false;
+
 export async function ensureDefaults(): Promise<void> {
-  await Promise.all([
-    ...ACCOUNT_DEFAULTS.map((d) =>
-      prisma.accountConfig.upsert({
-        where: { account: d.account },
-        create: { account: d.account, initialBalance: 0, isCredit: d.isCredit, color: d.color },
-        update: { isCredit: d.isCredit, color: d.color },
-      }).catch((err) => console.error(`[ensureDefaults] accountConfig "${d.account}":`, err))
-    ),
-    ...DEFAULT_BUDGETS.map((b) =>
-      prisma.budgetConfig.upsert({
-        where: { category: b.category },
-        create: b,
-        update: {},
-      }).catch((err) => console.error(`[ensureDefaults] budgetConfig "${b.category}":`, err))
-    ),
-  ]);
+  if (defaultsSeeded) return;
+  defaultsSeeded = true;
+  for (const d of ACCOUNT_DEFAULTS) {
+    await prisma.accountConfig.upsert({
+      where: { account: d.account },
+      create: { account: d.account, initialBalance: 0, isCredit: d.isCredit, color: d.color },
+      update: { isCredit: d.isCredit, color: d.color },
+    }).catch((err) => console.error(`[ensureDefaults] accountConfig "${d.account}":`, err));
+  }
+  for (const b of DEFAULT_BUDGETS) {
+    await prisma.budgetConfig.upsert({
+      where: { category: b.category },
+      create: b,
+      update: {},
+    }).catch((err) => console.error(`[ensureDefaults] budgetConfig "${b.category}":`, err));
+  }
 }
 
 function mapPage(page: NotionPage): {
@@ -119,15 +121,14 @@ export async function syncFromNotion(): Promise<SyncResult> {
     const warnings = skippedItems.map((s) => s.reason);
 
     // Rule 2: upsert — never duplicate; Notion page ID is the primary key
-    await Promise.all(
-      valid.map((r) =>
-        prisma.transaction.upsert({
-          where: { id: r.data.id as string },
-          create: r.data,
-          update: { ...r.data, syncedAt: new Date() },
-        })
-      )
-    );
+    // Sequential to avoid exhausting the pgbouncer connection pool
+    for (const r of valid) {
+      await prisma.transaction.upsert({
+        where: { id: r.data.id as string },
+        create: r.data,
+        update: { ...r.data, syncedAt: new Date() },
+      });
+    }
 
     await prisma.syncLog.create({
       data: {

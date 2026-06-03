@@ -30,7 +30,7 @@ export function getPrevMonth(month: string): string {
 
 export function getTransactionMonth(date: string): string {
   const d = new Date(date);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
 }
 
 export function filterByMonth(transactions: Transaction[], month: string): Transaction[] {
