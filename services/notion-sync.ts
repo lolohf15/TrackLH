@@ -21,7 +21,7 @@ const ACCOUNT_DEFAULTS = [
   { account: "Revolut Débito", isCredit: false, color: "#38BDF8" },
   { account: "BBVA Débito",    isCredit: false, color: "#34D399" },
   { account: "Efectivo",       isCredit: false, color: "#FBBF24" },
-  { account: "Bitso",          isCredit: false, color: "#FB923C" },
+  { account: "Inversiones",    isCredit: false, color: "#FB923C" },
 ] as const;
 
 /**

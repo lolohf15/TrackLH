@@ -17,7 +17,7 @@ export type AccountName =
   | "Revolut Débito"
   | "BBVA Débito"
   | "Efectivo"
-  | "Bitso";
+  | "Inversiones";
 
 // Debit accounts: rule 6
 export const DEBIT_ACCOUNTS: AccountName[] = [
@@ -25,7 +25,7 @@ export const DEBIT_ACCOUNTS: AccountName[] = [
   "Revolut Débito",
   "BBVA Débito",
   "Efectivo",
-  "Bitso",
+  "Inversiones",
 ];
 
 // Credit accounts: rule 7 — Revolut is credit, not debit
@@ -40,7 +40,7 @@ export const ACCOUNT_COLORS: Record<string, string> = {
   "Revolut Débito": "#2E9EC4",
   "BBVA Débito": "#2EA87A",
   Efectivo:      "#C6A15B",
-  Bitso:         "#D4762A",
+  Inversiones:   "#D4762A",
 };
 
 export const TRANSACTION_TYPE_COLORS: Record<string, string> = {
