@@ -1,5 +1,44 @@
 @import "tailwindcss";
 
+@theme {
+  /* Surfaces — matte black hierarchy sampled from the logo */
+  --color-bg:              #0a0a0a;
+  --color-surface:         #141414;
+  --color-surface-2:       #1f1f1f;
+  --color-surface-3:       #262626;
+  --color-border:          #262626;
+  --color-border-strong:   #383838;
+
+  /* Text */
+  --color-text:            #f5f5f5;
+  --color-text-muted:      #a3a3a3;
+  --color-text-dim:        #737373;
+  --color-text-faint:      #525252;
+
+  /* Semantic — deep forest + crimson from the wallet cards */
+  --color-green:           #1F6B32;
+  --color-green-fg:        #4ADE80;
+  --color-green-bg:        rgba(31, 107, 50, 0.15);
+  --color-green-border:    rgba(31, 107, 50, 0.35);
+
+  --color-red:             #DC2626;
+  --color-red-fg:          #F87171;
+  --color-red-bg:          rgba(220, 38, 38, 0.12);
+  --color-red-border:      rgba(220, 38, 38, 0.30);
+
+  --color-amber:           #D97706;
+  --color-amber-fg:        #FBBF24;
+  --color-amber-bg:        rgba(217, 119, 6, 0.12);
+  --color-amber-border:    rgba(217, 119, 6, 0.30);
+
+  --color-violet-fg:       #C4B5FD;
+
+  /* Motion — strong custom curves; the built-ins are punchless */
+  --ease-out:              cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out:           cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer:           cubic-bezier(0.32, 0.72, 0, 1);
+}
+
 @layer base {
   *, *::before, *::after { box-sizing: border-box; }
 
@@ -10,14 +49,14 @@
   }
 
   body {
-    background-color: #0d1117;
-    color: #e6edf3;
+    background-color: var(--color-bg);
+    color: var(--color-text);
   }
 
   ::-webkit-scrollbar { width: 5px; height: 5px; }
-  ::-webkit-scrollbar-track { background: #0d1117; }
-  ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 99px; }
-  ::-webkit-scrollbar-thumb:hover { background: #484f58; }
+  ::-webkit-scrollbar-track { background: var(--color-bg); }
+  ::-webkit-scrollbar-thumb { background: var(--color-surface-3); border-radius: 99px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--color-border-strong); }
 
   input[type="date"]::-webkit-calendar-picker-indicator {
     filter: invert(0.8);
@@ -30,10 +69,14 @@
     margin: 0;
   }
   input[type="number"] { -moz-appearance: textfield; }
+
+  /* Safe-area padding for the mobile tab bar */
+  .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+  .pt-safe { padding-top: env(safe-area-inset-top); }
 }
 
 @keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(10px); }
+  from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
@@ -43,7 +86,8 @@
 }
 
 @keyframes barGrow {
-  from { width: 0; }
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
 }
 
 @keyframes pulseDot {
@@ -51,13 +95,45 @@
   50%       { opacity: 0.4; }
 }
 
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes sheetUp {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
 @layer utilities {
   .tabular-nums        { font-variant-numeric: tabular-nums; }
   .font-serif-display  { font-family: Georgia, "Times New Roman", serif; }
-  .shadow-card         { box-shadow: 0 1px 4px rgba(0,0,0,0.4), 0 0 0 1px rgba(0,0,0,0.3); }
-  .shadow-card-hover   { box-shadow: 0 4px 14px rgba(0,0,0,0.5), 0 0 0 1px rgba(0,0,0,0.4); }
-  .animate-fade-in-up  { animation: fadeInUp 0.35s ease-out both; }
-  .animate-fade-in     { animation: fadeIn 0.3s ease-out both; }
-  .animate-bar-grow    { animation: barGrow 0.8s ease-out both; }
+
+  .shadow-card         { box-shadow: 0 1px 3px rgba(0,0,0,0.5), 0 0 0 1px rgba(0,0,0,0.4); }
+  .shadow-card-hover   { box-shadow: 0 6px 20px rgba(0,0,0,0.55), 0 0 0 1px rgba(0,0,0,0.5); }
+
+  .animate-fade-in-up  { animation: fadeInUp 0.25s var(--ease-out) both; }
+  .animate-fade-in     { animation: fadeIn 0.2s var(--ease-out) both; }
+  .animate-bar-grow    { animation: barGrow 0.5s var(--ease-out) both; transform-origin: left; }
   .animate-pulse-dot   { animation: pulseDot 1.4s ease-in-out infinite; }
+  .animate-spin-fast   { animation: spin 0.7s linear infinite; }
+  .animate-sheet-up    { animation: sheetUp 280ms var(--ease-drawer) both; }
+
+  /* Interruptible press feedback */
+  .press               { transition: transform 160ms var(--ease-out); }
+  .press:active        { transform: scale(0.97); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in-up,
+  .animate-bar-grow,
+  .animate-pulse-dot,
+  .animate-sheet-up { animation: none; }
+  .animate-spin-fast { animation-duration: 1.4s; }
+  .press { transition: none; }
+  * { scroll-behavior: auto !important; }
+}
+
+@media (hover: none) {
+  /* Kill sticky hover backgrounds on touch after tap */
+  .no-touch-hover:hover { background-color: transparent; }
 }

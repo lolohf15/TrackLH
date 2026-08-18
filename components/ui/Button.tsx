@@ -8,13 +8,13 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variants = {
   primary:
-    "bg-[#238636] text-white hover:bg-[#2ea043] active:bg-[#26913a] shadow-sm shadow-[#238636]/30",
+    "bg-green text-white hover:bg-[#25803c] active:bg-[#1a5c2b] shadow-sm shadow-green/30",
   secondary:
-    "bg-[#21262d] text-[#c9d1d9] border border-[#30363d] hover:bg-[#30363d] hover:border-[#484f58] hover:text-[#e6edf3] active:bg-[#3a4048]",
+    "bg-surface-2 text-text-muted border border-border hover:bg-surface-3 hover:border-border-strong hover:text-text active:bg-[#2b2b2b]",
   ghost:
-    "text-[#8b949e] hover:bg-white/5 hover:text-[#e6edf3] active:bg-white/10",
+    "text-text-dim hover:bg-white/5 hover:text-text active:bg-white/10",
   danger:
-    "bg-red-900/20 text-[#f85149] border border-red-800/50 hover:bg-red-900/30 hover:border-red-700/60",
+    "bg-red-bg text-red-fg border border-red-border hover:bg-red-bg hover:border-red/50",
 };
 
 const sizes = {
@@ -37,16 +37,17 @@ export function Button({
       {...props}
       disabled={disabled || loading}
       className={cn(
-        "inline-flex items-center justify-center rounded-xl font-medium transition-all duration-150",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#238636]/50 focus-visible:ring-offset-1 focus-visible:ring-offset-[#0d1117]",
-        "disabled:opacity-40 disabled:cursor-not-allowed",
+        "inline-flex items-center justify-center rounded-xl font-medium press",
+        "transition-[background-color,border-color,color,transform] duration-150 ease-out",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green/50 focus-visible:ring-offset-1 focus-visible:ring-offset-bg",
+        "disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100",
         variants[variant],
         sizes[size],
         className
       )}
     >
       {loading && (
-        <svg className="animate-spin w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24">
+        <svg className="animate-spin-fast w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24">
           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
         </svg>

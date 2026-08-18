@@ -4,6 +4,7 @@ import type {
   CategorySummary,
   BudgetItem,
   DashboardData,
+  CategoryTrend,
 } from "@/types";
 import { ACCOUNT_COLORS, DEFAULT_BUDGETS, TOTAL_BUDGET } from "@/types";
 
@@ -140,6 +141,39 @@ export function computeCategoryExpenses(
       percentage: total > 0 ? round2((amount / total) * 100) : 0,
       color: CATEGORY_COLORS[i % CATEGORY_COLORS.length],
     }));
+}
+
+export function computeCategoryTrends(
+  transactions: Transaction[],
+  months: string[],
+  budgets: Array<{ category: string; amount: number }>
+): CategoryTrend[] {
+  const budgetMap = new Map(budgets.map((b) => [b.category, b.amount]));
+
+  const perMonth = months.map((m) => computeCategoryExpenses(transactions, m));
+  const currentSummaries = perMonth[perMonth.length - 1];
+
+  const categories = new Set<string>();
+  for (const summary of perMonth) {
+    for (const c of summary) categories.add(c.category);
+  }
+
+  return Array.from(categories)
+    .map((category) => {
+      const currentEntry = currentSummaries.find((c) => c.category === category);
+      const points = months.map((month, i) => ({
+        month,
+        amount: perMonth[i].find((c) => c.category === category)?.amount ?? 0,
+      }));
+      return {
+        category,
+        color: currentEntry?.color ?? CATEGORY_COLORS[0],
+        points,
+        currentAmount: currentEntry?.amount ?? 0,
+        budget: budgetMap.get(category) ?? 0,
+      };
+    })
+    .sort((a, b) => b.currentAmount - a.currentAmount);
 }
 
 export function computeBudgetItems(

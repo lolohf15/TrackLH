@@ -1,10 +1,10 @@
 import { cn } from "@/lib/utils";
 
 const variants = {
-  Gasto:         "bg-red-900/20 text-[#f85149] border border-red-800/50",
-  Ingreso:       "bg-green-900/20 text-[#3fb950] border border-green-800/50",
-  Transferencia: "bg-amber-900/20 text-[#d29922] border border-amber-800/50",
-  default:       "bg-[#21262d] text-[#8b949e] border border-[#30363d]",
+  Gasto:         "bg-red-bg text-red-fg border border-red-border",
+  Ingreso:       "bg-green-bg text-green-fg border border-green-border",
+  Transferencia: "bg-amber-bg text-amber-fg border border-amber-border",
+  default:       "bg-surface-2 text-text-dim border border-border",
 };
 
 interface BadgeProps {

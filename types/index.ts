@@ -44,9 +44,9 @@ export const ACCOUNT_COLORS: Record<string, string> = {
 };
 
 export const TRANSACTION_TYPE_COLORS: Record<string, string> = {
-  Gasto: "#EF4444",
-  Ingreso: "#10B981",
-  Transferencia: "#6366F1",
+  Gasto: "#DC2626",
+  Ingreso: "#4ADE80",
+  Transferencia: "#D97706",
 };
 
 // Rule 11: monthly category budgets
@@ -122,6 +122,19 @@ export interface DashboardData {
   budgetItems: BudgetItem[];
   lastSyncAt: string | null;
   transactionCount: number;
+}
+
+export interface CategoryTrendPoint {
+  month: string;
+  amount: number;
+}
+
+export interface CategoryTrend {
+  category: string;
+  color: string;
+  points: CategoryTrendPoint[];
+  currentAmount: number;
+  budget: number;
 }
 
 export interface TransactionFilters {

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
+import { AppShell } from "@/components/shell/AppShell";
 import "./globals.css";
 
 const geist = Geist({ subsets: ["latin"] });
@@ -16,7 +17,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0d1117",
+  themeColor: "#0a0a0a",
   width: "device-width",
   initialScale: 1,
 };
@@ -28,7 +29,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es">
-      <body className={geist.className}>{children}</body>
+      <body className={geist.className}>
+        <AppShell>{children}</AppShell>
+      </body>
     </html>
   );
 }

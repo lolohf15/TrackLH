@@ -6,20 +6,20 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { formatMXN } from "@/lib/utils";
 import type { AccountBalance } from "@/types";
 
-interface Props { data: AccountBalance[] }
+interface Props { data: AccountBalance[]; height?: number }
 
 function CustomTooltip({ active, payload }: { active?: boolean; payload?: Array<{ payload: AccountBalance }> }) {
   if (!active || !payload?.length) return null;
   const item = payload[0].payload;
   return (
-    <div className="bg-[#161b22] border border-[#30363d] rounded-xl shadow-card-hover px-4 py-3 text-sm">
-      <p className="font-semibold text-[#e6edf3]">{item.account}</p>
-      <p className="text-[#c9d1d9] mt-0.5 tabular-nums">{formatMXN(item.currentBalance)}</p>
+    <div className="bg-surface border border-border-strong rounded-xl shadow-card-hover px-4 py-3 text-sm">
+      <p className="font-semibold text-text">{item.account}</p>
+      <p className="text-text-muted mt-0.5 tabular-nums">{formatMXN(item.currentBalance)}</p>
     </div>
   );
 }
 
-export function AccountChart({ data }: Props) {
+export function AccountChart({ data, height = 260 }: Props) {
   const chartData = data.filter((a) => !a.isCredit && a.currentBalance > 0);
 
   return (
@@ -31,10 +31,10 @@ export function AccountChart({ data }: Props) {
         {chartData.length === 0 ? (
           <EmptyState
             title="Sin saldos disponibles"
-            description="Configura los saldos iniciales en la sección de ajustes"
+            description="Configura los saldos iniciales en la sección de cuentas"
           />
         ) : (
-          <ResponsiveContainer width="100%" height={260}>
+          <ResponsiveContainer width="100%" height={height}>
             <PieChart>
               <Pie
                 data={chartData}
@@ -48,7 +48,7 @@ export function AccountChart({ data }: Props) {
                 strokeWidth={0}
               >
                 {chartData.map((entry, i) => (
-                  <Cell key={i} fill={entry.color} opacity={0.88} />
+                  <Cell key={i} fill={entry.color} opacity={0.9} />
                 ))}
               </Pie>
               <Tooltip content={<CustomTooltip />} />
@@ -56,7 +56,7 @@ export function AccountChart({ data }: Props) {
                 iconType="circle"
                 iconSize={8}
                 formatter={(value) => (
-                  <span style={{ color: "#c9d1d9", fontSize: 12 }}>{value}</span>
+                  <span style={{ color: "#a3a3a3", fontSize: 12 }}>{value}</span>
                 )}
               />
             </PieChart>
