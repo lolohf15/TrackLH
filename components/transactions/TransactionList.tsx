@@ -53,7 +53,7 @@ export function TransactionList({ data, loading, page, onPageChange }: Props) {
         <EmptyState
           icon="📊"
           title="Sin transacciones"
-          description="Ajusta los filtros o sincroniza tus datos de Notion"
+          description="Ajusta los filtros para ver otros movimientos"
         />
       </div>
     );

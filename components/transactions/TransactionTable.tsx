@@ -29,7 +29,7 @@ export function TransactionTable({ data, loading, page, onPageChange }: Props) {
         <EmptyState
           icon="📊"
           title="Sin transacciones"
-          description="Ajusta los filtros o sincroniza tus datos de Notion"
+          description="Ajusta los filtros para ver otros movimientos"
         />
       </div>
     );
@@ -37,7 +37,7 @@ export function TransactionTable({ data, loading, page, onPageChange }: Props) {
 
   return (
     <div className="bg-surface rounded-2xl border border-border shadow-card overflow-hidden">
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto" data-swipe-ignore>
         <table className="w-full">
           <thead>
             <tr className="bg-bg border-b border-border">

@@ -46,11 +46,13 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     color-scheme: dark;
+    overscroll-behavior-x: none;
   }
 
   body {
     background-color: var(--color-bg);
     color: var(--color-text);
+    overscroll-behavior-x: none;
   }
 
   ::-webkit-scrollbar { width: 5px; height: 5px; }
@@ -130,6 +132,7 @@
   .animate-sheet-up { animation: none; }
   .animate-spin-fast { animation-duration: 1.4s; }
   .press { transition: none; }
+  .transition-\[max-height\] { transition: none; }
   * { scroll-behavior: auto !important; }
 }
 
