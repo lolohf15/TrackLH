@@ -33,14 +33,30 @@ export const CREDIT_ACCOUNTS: AccountName[] = ["Nu Crédito", "Revolut"];
 
 export const ALL_ACCOUNTS: AccountName[] = [...DEBIT_ACCOUNTS, ...CREDIT_ACCOUNTS];
 
+// Single-hue ramp (gold → bronze) used for category and account charts,
+// so they read as one ordered family instead of a rainbow of unrelated
+// hues. Green/red stay reserved for income/expense, amber for budgets.
+export const CHART_PALETTE = [
+  "#E8C97A",
+  "#D9B872",
+  "#C6A15B",
+  "#B08D4E",
+  "#9A7941",
+  "#846636",
+  "#6E552D",
+  "#594424",
+  "#46351C",
+  "#362915",
+] as const;
+
 export const ACCOUNT_COLORS: Record<string, string> = {
-  "Nu Crédito": "#9B72CF",
-  "Nu Débito": "#4F7BE8",
-  Revolut:       "#D4518A",
-  "Revolut Débito": "#2E9EC4",
-  "BBVA Débito": "#2EA87A",
-  Efectivo:      "#C6A15B",
-  Inversiones:   "#D4762A",
+  "Nu Crédito": CHART_PALETTE[0],
+  "Nu Débito": CHART_PALETTE[1],
+  Revolut:       CHART_PALETTE[2],
+  "Revolut Débito": CHART_PALETTE[3],
+  "BBVA Débito": CHART_PALETTE[4],
+  Efectivo:      CHART_PALETTE[5],
+  Inversiones:   CHART_PALETTE[6],
 };
 
 export const TRANSACTION_TYPE_COLORS: Record<string, string> = {

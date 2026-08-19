@@ -11,17 +11,17 @@ import {
   extractCheckbox,
   type NotionPage,
 } from "@/lib/notion";
-import { isValidTransactionType, DEFAULT_BUDGETS } from "@/types";
+import { isValidTransactionType, DEFAULT_BUDGETS, CHART_PALETTE } from "@/types";
 import type { SyncResult } from "@/types";
 
 const ACCOUNT_DEFAULTS = [
-  { account: "Nu Crédito",     isCredit: true,  color: "#C084FC" },
-  { account: "Nu Débito",      isCredit: false, color: "#7C9EFF" },
-  { account: "Revolut",        isCredit: true,  color: "#F472B6" }, // rule 7: credit
-  { account: "Revolut Débito", isCredit: false, color: "#38BDF8" },
-  { account: "BBVA Débito",    isCredit: false, color: "#34D399" },
-  { account: "Efectivo",       isCredit: false, color: "#FBBF24" },
-  { account: "Inversiones",    isCredit: false, color: "#FB923C" },
+  { account: "Nu Crédito",     isCredit: true,  color: CHART_PALETTE[0] },
+  { account: "Nu Débito",      isCredit: false, color: CHART_PALETTE[1] },
+  { account: "Revolut",        isCredit: true,  color: CHART_PALETTE[2] }, // rule 7: credit
+  { account: "Revolut Débito", isCredit: false, color: CHART_PALETTE[3] },
+  { account: "BBVA Débito",    isCredit: false, color: CHART_PALETTE[4] },
+  { account: "Efectivo",       isCredit: false, color: CHART_PALETTE[5] },
+  { account: "Inversiones",    isCredit: false, color: CHART_PALETTE[6] },
 ] as const;
 
 /**

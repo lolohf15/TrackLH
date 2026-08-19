@@ -6,12 +6,9 @@ import type {
   DashboardData,
   CategoryTrend,
 } from "@/types";
-import { ACCOUNT_COLORS, DEFAULT_BUDGETS, TOTAL_BUDGET } from "@/types";
+import { ACCOUNT_COLORS, CHART_PALETTE, DEFAULT_BUDGETS, TOTAL_BUDGET } from "@/types";
 
-const CATEGORY_COLORS = [
-  "#C6A15B", "#9B72CF", "#D4518A", "#D4762A", "#2EA87A",
-  "#4F7BE8", "#2E9EC4", "#7B9E5C", "#B8763E", "#A06BAE",
-];
+const CATEGORY_COLORS = CHART_PALETTE;
 
 // Rule 12: all amounts rounded to 2 decimals
 export function round2(n: number): number {
