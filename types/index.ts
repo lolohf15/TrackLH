@@ -33,20 +33,20 @@ export const CREDIT_ACCOUNTS: AccountName[] = ["Nu Crédito", "Revolut"];
 
 export const ALL_ACCOUNTS: AccountName[] = [...DEBIT_ACCOUNTS, ...CREDIT_ACCOUNTS];
 
-// Grayscale ramp used for category and account charts, so they read as
-// one neutral family instead of a rainbow of unrelated hues. Green/red
-// stay reserved for income/expense, amber for budgets.
+// White at descending opacity — used for category and account charts so
+// they read as black/white/green/red instead of introducing gray hues.
+// Green/red stay reserved for income/expense, amber for budgets.
 export const CHART_PALETTE = [
-  "#FAFAFA",
-  "#E5E5E5",
-  "#D0D0D0",
-  "#BABABA",
-  "#A3A3A3",
-  "#8D8D8D",
-  "#777777",
-  "#626262",
-  "#4D4D4D",
-  "#3A3A3A",
+  "rgba(255,255,255,0.95)",
+  "rgba(255,255,255,0.82)",
+  "rgba(255,255,255,0.70)",
+  "rgba(255,255,255,0.58)",
+  "rgba(255,255,255,0.48)",
+  "rgba(255,255,255,0.40)",
+  "rgba(255,255,255,0.33)",
+  "rgba(255,255,255,0.27)",
+  "rgba(255,255,255,0.22)",
+  "rgba(255,255,255,0.18)",
 ] as const;
 
 export const ACCOUNT_COLORS: Record<string, string> = {
