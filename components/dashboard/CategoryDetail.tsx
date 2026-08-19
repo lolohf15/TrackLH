@@ -21,7 +21,7 @@ export function CategoryDetail({ trend }: { trend: CategoryTrend }) {
   const isWarning = trend.budget > 0 && trend.currentAmount / trend.budget >= 0.9;
   const pct = trend.budget > 0 ? Math.min((trend.currentAmount / trend.budget) * 100, 100) : 0;
 
-  const barColor = isOver ? "bg-red" : isWarning ? "bg-amber-fg" : "bg-green";
+  const barColor = isOver ? "bg-red-fg" : isWarning ? "bg-amber-fg" : "bg-green-fg";
 
   return (
     <div className="space-y-6">

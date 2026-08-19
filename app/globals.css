@@ -3,7 +3,7 @@
 @theme {
   /* Surfaces — matte black hierarchy sampled from the logo */
   --color-bg:              #0a0a0a;
-  --color-surface:         #141414;
+  --color-surface:         #0a0a0a;
   --color-surface-2:       #1f1f1f;
   --color-surface-3:       #262626;
   --color-border:          #262626;

@@ -14,7 +14,7 @@ interface Props {
 }
 
 const dotColors: Record<TransactionType, string> = {
-  Gasto: "bg-red",
+  Gasto: "bg-red-fg",
   Ingreso: "bg-green-fg",
   Transferencia: "bg-amber-fg",
 };

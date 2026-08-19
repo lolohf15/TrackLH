@@ -41,7 +41,7 @@ export function BudgetTracker({ data, bare = false }: { data: BudgetItem[]; bare
           <div
             className={cn(
               "h-full rounded-full origin-left transition-transform duration-500 ease-out",
-              isOver ? "bg-red" : isNear ? "bg-amber-fg" : "bg-green"
+              isOver ? "bg-red-fg" : isNear ? "bg-amber-fg" : "bg-green-fg"
             )}
             style={{ transform: `scaleX(${totalPct / 100})` }}
           />
@@ -80,10 +80,10 @@ function BudgetRow({ item, index }: { item: import("@/types").BudgetItem; index:
   const isWarning = item.percentage >= 90;
 
   const barColor = isOver
-    ? "bg-red"
+    ? "bg-red-fg"
     : isWarning
     ? "bg-amber-fg"
-    : "bg-green";
+    : "bg-green-fg";
 
   const valueColor = isOver
     ? "text-red-fg"
