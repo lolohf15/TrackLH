@@ -33,20 +33,20 @@ export const CREDIT_ACCOUNTS: AccountName[] = ["Nu Crédito", "Revolut"];
 
 export const ALL_ACCOUNTS: AccountName[] = [...DEBIT_ACCOUNTS, ...CREDIT_ACCOUNTS];
 
-// Single-hue ramp (gold → bronze) used for category and account charts,
-// so they read as one ordered family instead of a rainbow of unrelated
-// hues. Green/red stay reserved for income/expense, amber for budgets.
+// Grayscale ramp used for category and account charts, so they read as
+// one neutral family instead of a rainbow of unrelated hues. Green/red
+// stay reserved for income/expense, amber for budgets.
 export const CHART_PALETTE = [
-  "#E8C97A",
-  "#D9B872",
-  "#C6A15B",
-  "#B08D4E",
-  "#9A7941",
-  "#846636",
-  "#6E552D",
-  "#594424",
-  "#46351C",
-  "#362915",
+  "#FAFAFA",
+  "#E5E5E5",
+  "#D0D0D0",
+  "#BABABA",
+  "#A3A3A3",
+  "#8D8D8D",
+  "#777777",
+  "#626262",
+  "#4D4D4D",
+  "#3A3A3A",
 ] as const;
 
 export const ACCOUNT_COLORS: Record<string, string> = {

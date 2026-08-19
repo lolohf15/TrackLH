@@ -9,6 +9,10 @@ export const metadata: Metadata = {
   title: "TrackLH",
   description: "Tu dashboard personal de finanzas",
   manifest: "/manifest.json",
+  icons: {
+    icon: "/icons/icon-512.png",
+    apple: "/icons/apple-touch-icon.png",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
