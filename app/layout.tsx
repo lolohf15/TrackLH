@@ -1,9 +1,19 @@
 import type { Metadata, Viewport } from "next";
-import { Geist } from "next/font/google";
+import { Archivo, IBM_Plex_Mono } from "next/font/google";
 import { AppShell } from "@/components/shell/AppShell";
 import "./globals.css";
 
-const geist = Geist({ subsets: ["latin"] });
+const archivo = Archivo({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-archivo",
+});
+
+const ibmPlexMono = IBM_Plex_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-ibm-plex-mono",
+});
 
 export const metadata: Metadata = {
   title: "TrackLH",
@@ -21,7 +31,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0a0a0a",
+  themeColor: "#0a0b0c",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -35,7 +45,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es">
-      <body className={geist.className}>
+      <body className={`${archivo.variable} ${ibmPlexMono.variable} ${archivo.className}`}>
         <AppShell>{children}</AppShell>
       </body>
     </html>

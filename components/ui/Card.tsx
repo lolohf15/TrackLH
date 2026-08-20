@@ -6,13 +6,14 @@ interface CardProps {
   onClick?: () => void;
 }
 
+/** A full-width ledger block, divided from its neighbors by a hairline border. */
 export function Card({ children, className, onClick }: CardProps) {
   return (
     <div
       onClick={onClick}
       className={cn(
-        "bg-surface rounded-2xl border border-border shadow-card transition-[border-color,box-shadow] duration-200 ease-out",
-        onClick && "cursor-pointer press hover:border-border-strong hover:shadow-card-hover",
+        "border-b border-border",
+        onClick && "cursor-pointer press hover:bg-surface-2/60 transition-colors duration-150 ease-out",
         className
       )}
     >
@@ -28,7 +29,7 @@ export function CardHeader({
   children: React.ReactNode;
   className?: string;
 }) {
-  return <div className={cn("px-5 pt-5 pb-2 sm:px-6 sm:pt-6", className)}>{children}</div>;
+  return <div className={cn("px-4 pt-4 pb-3", className)}>{children}</div>;
 }
 
 export function CardContent({
@@ -38,7 +39,7 @@ export function CardContent({
   children: React.ReactNode;
   className?: string;
 }) {
-  return <div className={cn("px-5 pb-5 sm:px-6 sm:pb-6", className)}>{children}</div>;
+  return <div className={cn("px-4 pb-4", className)}>{children}</div>;
 }
 
 export function CardTitle({
@@ -51,7 +52,7 @@ export function CardTitle({
   return (
     <h3
       className={cn(
-        "text-xs font-semibold text-text-dim uppercase tracking-widest",
+        "font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.12em]",
         className
       )}
     >

@@ -11,17 +11,17 @@ import {
   extractCheckbox,
   type NotionPage,
 } from "@/lib/notion";
-import { isValidTransactionType, DEFAULT_BUDGETS, CHART_PALETTE } from "@/types";
+import { isValidTransactionType, DEFAULT_BUDGETS, ACCOUNT_COLORS } from "@/types";
 import type { SyncResult } from "@/types";
 
 const ACCOUNT_DEFAULTS = [
-  { account: "Nu Crédito",     isCredit: true,  color: CHART_PALETTE[0] },
-  { account: "Nu Débito",      isCredit: false, color: CHART_PALETTE[1] },
-  { account: "Revolut",        isCredit: true,  color: CHART_PALETTE[2] }, // rule 7: credit
-  { account: "Revolut Débito", isCredit: false, color: CHART_PALETTE[3] },
-  { account: "BBVA Débito",    isCredit: false, color: CHART_PALETTE[4] },
-  { account: "Efectivo",       isCredit: false, color: CHART_PALETTE[5] },
-  { account: "Inversiones",    isCredit: false, color: CHART_PALETTE[6] },
+  { account: "Nu Crédito",     isCredit: true,  color: ACCOUNT_COLORS["Nu Crédito"] },
+  { account: "Nu Débito",      isCredit: false, color: ACCOUNT_COLORS["Nu Débito"] },
+  { account: "Revolut",        isCredit: true,  color: ACCOUNT_COLORS["Revolut"] }, // rule 7: credit
+  { account: "Revolut Débito", isCredit: false, color: ACCOUNT_COLORS["Revolut Débito"] },
+  { account: "BBVA Débito",    isCredit: false, color: ACCOUNT_COLORS["BBVA Débito"] },
+  { account: "Efectivo",       isCredit: false, color: ACCOUNT_COLORS["Efectivo"] },
+  { account: "Inversiones",    isCredit: false, color: ACCOUNT_COLORS["Inversiones"] },
 ] as const;
 
 /**

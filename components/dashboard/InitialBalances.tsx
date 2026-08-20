@@ -132,7 +132,7 @@ export function InitialBalances({ onSaved }: Props) {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-start gap-3 bg-amber-bg border border-amber-border rounded-xl px-4 py-3">
+      <div className="flex items-start gap-3 bg-amber-bg border border-amber-border px-4 py-3">
         <svg className="w-4 h-4 text-amber-fg mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
@@ -143,11 +143,11 @@ export function InitialBalances({ onSaved }: Props) {
       </div>
 
       {loadError && (
-        <div className="flex items-center justify-between bg-red-bg border border-red-border rounded-xl px-4 py-3">
+        <div className="flex items-center justify-between bg-red-bg border border-red-border px-4 py-3">
           <p className="text-xs text-red-fg">{loadError}</p>
           <button
             onClick={loadAccounts}
-            className="text-xs text-green-fg hover:text-[#6EE7A0] underline underline-offset-2 transition-colors ml-4 shrink-0"
+            className="text-xs text-accent hover:brightness-125 underline underline-offset-2 transition-colors ml-4 shrink-0"
           >
             Reintentar
           </button>
@@ -157,7 +157,7 @@ export function InitialBalances({ onSaved }: Props) {
       {loading && !loadError && (
         <div className="space-y-2.5">
           {Array.from({ length: 7 }).map((_, i) => (
-            <Skeleton key={i} className="h-[120px] rounded-xl" />
+            <Skeleton key={i} className="h-[120px]" />
           ))}
         </div>
       )}
@@ -187,8 +187,8 @@ function AccountGroup({
 }) {
   return (
     <div className="space-y-2">
-      <p className="text-xs font-semibold text-text-dim uppercase tracking-widest">{title}</p>
-      <div className="border border-border rounded-xl overflow-hidden divide-y divide-border">
+      <p className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em]">{title}</p>
+      <div className="border border-border divide-y divide-divider">
         {accounts.map((a, i) => (
           <AccountRow
             key={a.account}
@@ -225,12 +225,12 @@ function AccountRow({
       style={{ animationDelay: `${Math.min(index, 6) * 30}ms` }}
     >
       <div className="flex items-center gap-2.5 mb-3">
-        <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
+        <div className="w-2 h-2 shrink-0" style={{ backgroundColor: color }} />
         <span className="text-sm font-semibold text-text">{account.account}</span>
         <span className={cn(
-          "text-xs px-2 py-0.5 rounded-full font-medium border",
+          "font-mono text-[10px] px-1.5 py-0.5 font-medium border uppercase tracking-wide",
           account.isCredit
-            ? "bg-[#2A1A3D] text-violet-fg border-[#3D2A55]"
+            ? "bg-red-bg text-red-fg border-red-border"
             : "bg-surface-2 text-text-dim border-border-strong"
         )}>
           {account.isCredit ? "Crédito" : "Débito"}
@@ -275,11 +275,11 @@ function AccountRow({
               }
               onKeyDown={(e) => { if (e.key === "Enter" && row.dirty) onSave(); }}
               className={cn(
-                "w-44 pl-7 pr-3 py-2 text-sm rounded-xl bg-bg text-text tabular-nums",
-                "focus:outline-none focus:ring-1 focus:ring-green/50 transition-colors duration-150",
+                "w-44 pl-7 pr-3 py-2 text-sm font-mono bg-bg text-text tabular-nums",
+                "focus:outline-none focus:ring-1 focus:ring-accent/50 transition-colors duration-150",
                 row.error
-                  ? "border border-red/70"
-                  : "border border-border-strong hover:border-[#4a4a4a]"
+                  ? "border border-red-fg/70"
+                  : "border border-border-strong hover:border-text-faint"
               )}
               placeholder="0.00"
             />

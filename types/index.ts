@@ -33,36 +33,43 @@ export const CREDIT_ACCOUNTS: AccountName[] = ["Nu Crédito", "Revolut"];
 
 export const ALL_ACCOUNTS: AccountName[] = [...DEBIT_ACCOUNTS, ...CREDIT_ACCOUNTS];
 
-// White at descending opacity — used for category and account charts so
-// they read as black/white/green/red instead of introducing gray hues.
-// Green/red stay reserved for income/expense, amber for budgets.
-export const CHART_PALETTE = [
-  "rgba(255,255,255,0.95)",
-  "rgba(255,255,255,0.82)",
-  "rgba(255,255,255,0.70)",
-  "rgba(255,255,255,0.58)",
-  "rgba(255,255,255,0.48)",
-  "rgba(255,255,255,0.40)",
-  "rgba(255,255,255,0.33)",
-  "rgba(255,255,255,0.27)",
-  "rgba(255,255,255,0.22)",
-  "rgba(255,255,255,0.18)",
-] as const;
-
+// Ledger dot colors — one distinct hue per debit account. Credit accounts
+// are always red (rule: credit = red, never a neutral/positive color).
 export const ACCOUNT_COLORS: Record<string, string> = {
-  "Nu Crédito": CHART_PALETTE[0],
-  "Nu Débito": CHART_PALETTE[1],
-  Revolut:       CHART_PALETTE[2],
-  "Revolut Débito": CHART_PALETTE[3],
-  "BBVA Débito": CHART_PALETTE[4],
-  Efectivo:      CHART_PALETTE[5],
-  Inversiones:   CHART_PALETTE[6],
+  "Nu Débito": "#d99a15",
+  "Revolut Débito": "#3a8f95",
+  "BBVA Débito": "#5b7fb5",
+  Efectivo: "#6b7075",
+  Inversiones: "#4f9d5f",
+  "Nu Crédito": "#e5484d",
+  Revolut: "#e5484d",
 };
 
 export const TRANSACTION_TYPE_COLORS: Record<string, string> = {
-  Gasto: "#DC2626",
-  Ingreso: "#4ADE80",
-  Transferencia: "#D97706",
+  Gasto: "#e5484d",
+  Ingreso: "#22a355",
+  Transferencia: "#d99a15",
+};
+
+// Category colors — mapped by meaning onto the redesign's 7-swatch palette
+// (3 warm / 3 cool / 1 neutral), plus one extra warm tone for the 8th
+// category since our real Notion categories don't line up 1:1 with the
+// design mockup's placeholder set.
+export const CATEGORY_COLORS: Record<string, string> = {
+  Alimentos: "#e0703a",  // warm orange (food)
+  Gustos: "#d99a15",     // warm gold (discretionary treats)
+  Salidas: "#d2452e",    // warm red (going out)
+  Regalos: "#c2547a",    // warm rose (gifts)
+  Servicios: "#3a8f95",  // cool teal (utilities)
+  Gas: "#8b5cd9",        // cool violet (fuel/transport)
+  Esenciales: "#4f9d5f", // cool green (essentials)
+  Otro: "#6b7075",       // neutral gray
+};
+
+// Budget section exception: Gas (fuel/transport) shows green instead of
+// its usual violet, matching the redesign's one-off contrast rule.
+export const BUDGET_COLOR_OVERRIDES: Record<string, string> = {
+  Gas: "#22a355",
 };
 
 // Rule 11: monthly category budgets

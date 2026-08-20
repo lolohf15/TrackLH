@@ -46,9 +46,9 @@ function MovimientosContent() {
     useSWR<{ categories: string[]; accounts: string[] }>("/api/transactions/filters", fetcher);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 pb-6 space-y-4">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <h1 className="text-lg font-semibold text-text">Movimientos</h1>
+    <div className="max-w-6xl mx-auto px-4 md:px-8 pt-4 pb-6">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-4">
+        <h1 className="text-[15px] font-semibold text-text">Movimientos</h1>
         <TransactionFiltersPanel
           filters={filters}
           categories={filterOptions?.categories ?? []}
@@ -79,7 +79,7 @@ function MovimientosContent() {
 
 export default function Movimientos() {
   return (
-    <Suspense fallback={<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 pb-6"><ChartSkeleton height="h-96" /></div>}>
+    <Suspense fallback={<div className="max-w-6xl mx-auto px-4 md:px-8 pt-4 pb-6"><ChartSkeleton height="h-96" /></div>}>
       <MovimientosContent />
     </Suspense>
   );

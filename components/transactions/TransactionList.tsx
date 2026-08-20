@@ -19,6 +19,12 @@ const dotColors: Record<TransactionType, string> = {
   Transferencia: "bg-amber-fg",
 };
 
+const amountColors: Record<TransactionType, string> = {
+  Gasto: "text-red-fg",
+  Ingreso: "text-green-fg",
+  Transferencia: "text-amber-fg",
+};
+
 function dayLabel(dateStr: string): string {
   const d = new Date(dateStr);
   const today = new Date();
@@ -40,23 +46,11 @@ function dayLabel(dateStr: string): string {
 
 export function TransactionList({ data, loading, page, onPageChange }: Props) {
   if (loading) {
-    return (
-      <div className="bg-surface rounded-2xl border border-border shadow-card overflow-hidden">
-        <TableSkeleton rows={6} />
-      </div>
-    );
+    return <TableSkeleton rows={6} />;
   }
 
   if (!data || data.data.length === 0) {
-    return (
-      <div className="bg-surface rounded-2xl border border-border shadow-card">
-        <EmptyState
-          icon="📊"
-          title="Sin transacciones"
-          description="Ajusta los filtros para ver otros movimientos"
-        />
-      </div>
-    );
+    return <EmptyState icon="—" title="Sin transacciones" description="Ajusta los filtros para ver otros movimientos" />;
   }
 
   const groups: Array<{ label: string; items: Transaction[] }> = [];
@@ -68,21 +62,19 @@ export function TransactionList({ data, loading, page, onPageChange }: Props) {
   }
 
   return (
-    <div className="space-y-5">
+    <div>
       {groups.map((group) => (
         <div key={group.label}>
-          <p className="text-xs font-semibold text-text-dim uppercase tracking-widest px-1 mb-2">
+          <p className="font-mono text-[9px] font-semibold text-text-faint uppercase tracking-[0.1em] pt-3.5 pb-1">
             {group.label}
           </p>
-          <div className="bg-surface rounded-2xl border border-border shadow-card divide-y divide-border overflow-hidden">
-            {group.items.map((tx) => <Row key={tx.id} tx={tx} />)}
-          </div>
+          {group.items.map((tx) => <Row key={tx.id} tx={tx} />)}
         </div>
       ))}
 
       {data.totalPages > 1 && (
-        <div className="flex items-center justify-between px-1 pt-1">
-          <span className="text-xs text-text-dim">
+        <div className="flex items-center justify-between pt-3">
+          <span className="font-mono text-[10.5px] text-text-dim">
             Página {page} de {data.totalPages}
           </span>
           <div className="flex items-center gap-2">
@@ -96,26 +88,21 @@ export function TransactionList({ data, loading, page, onPageChange }: Props) {
 }
 
 function Row({ tx }: { tx: Transaction }) {
-  const isGasto   = tx.type === "Gasto";
-  const isIngreso = tx.type === "Ingreso";
+  const type = tx.type as TransactionType;
 
   return (
-    <div className="flex items-center justify-between px-4 py-3.5 active:bg-surface-2 transition-colors duration-150 ease-out">
-      <div className="flex items-center gap-3 min-w-0">
-        <div className={cn("w-1.5 h-1.5 rounded-full shrink-0", dotColors[tx.type as TransactionType])} />
+    <div className="flex items-center justify-between py-[11px] border-t border-divider">
+      <div className="flex items-center gap-2.5 min-w-0">
+        <div className={cn("w-[5px] h-[5px] shrink-0", dotColors[type])} />
         <div className="min-w-0">
-          <p className="text-sm font-medium text-text truncate">
+          <p className="text-[13px] text-text truncate">
             {tx.description ?? tx.category ?? "Transacción"}
           </p>
-          <p className="text-xs text-text-dim">{tx.category ?? tx.type} · {tx.account}</p>
+          <p className="font-mono text-[10.5px] text-text-dim mt-0.5">{tx.category ?? tx.type} · {tx.account}</p>
         </div>
       </div>
-      <span className={cn(
-        "text-sm font-semibold tabular-nums ml-3 shrink-0",
-        isGasto   ? "text-red-fg" :
-        isIngreso ? "text-green-fg" : "text-amber-fg"
-      )}>
-        {isGasto ? "−" : isIngreso ? "+" : ""}
+      <span className={cn("font-mono text-[13px] font-semibold ml-2.5 shrink-0", amountColors[type])}>
+        {type === "Gasto" ? "−" : type === "Ingreso" ? "+" : ""}
         {formatMXN(tx.amount)}
       </span>
     </div>
@@ -130,9 +117,9 @@ function PagBtn({
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        "text-xs font-medium px-3 py-1.5 rounded-lg press",
-        "transition-[background-color,color,transform] duration-150 ease-out",
-        "text-text-dim hover:bg-surface-2 hover:text-text-muted",
+        "font-mono text-[10.5px] font-medium px-2.5 py-1.5 press",
+        "transition-colors duration-150 ease-out",
+        "text-text-dim hover:text-text-muted",
         disabled && "opacity-30 cursor-not-allowed active:scale-100"
       )}
     >

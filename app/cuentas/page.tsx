@@ -3,15 +3,11 @@
 import { useState } from "react";
 import useSWR from "swr";
 import { mutate } from "swr";
-import { AccountChart } from "@/components/dashboard/AccountChart";
-import { AccountBalances } from "@/components/dashboard/AccountBalances";
 import { InitialBalances } from "@/components/dashboard/InitialBalances";
-import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/Card";
 import { ChartSkeleton } from "@/components/ui/Skeleton";
 import { ChevronDownIcon } from "@/components/shell/icons";
-import { getCurrentMonth } from "@/lib/utils";
-import { cn } from "@/lib/utils";
-import type { DashboardData } from "@/types";
+import { formatMXN, getCurrentMonth, cn } from "@/lib/utils";
+import type { DashboardData, AccountBalance } from "@/types";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -20,52 +16,82 @@ export default function Cuentas() {
     useSWR<DashboardData>(`/api/dashboard?month=${getCurrentMonth()}`, fetcher);
   const [balancesOpen, setBalancesOpen] = useState(false);
 
+  const balances = dashboard?.accountBalances ?? [];
+  const debit = balances.filter((a) => !a.isCredit);
+  const credit = balances.filter((a) => a.isCredit);
+  const totalAvailable = dashboard?.totalAvailable ?? 0;
+
+  if (isLoading) {
+    return (
+      <div className="max-w-6xl mx-auto px-4 md:px-8 pt-4 pb-6">
+        <ChartSkeleton height="h-96" />
+      </div>
+    );
+  }
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 pb-6 space-y-4">
-      <h1 className="text-lg font-semibold text-text">Cuentas</h1>
+    <div className="max-w-6xl mx-auto px-4 md:px-8 pt-4 pb-6">
+      <h1 className="text-[15px] font-semibold text-text mb-4">Cuentas</h1>
 
-      <section className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
-        {isLoading ? (
-          <><ChartSkeleton height="h-80" /><ChartSkeleton height="h-80" /></>
-        ) : (
-          <>
-            <AccountChart data={(dashboard?.accountBalances ?? []).filter((a) => !a.isCredit)} height={280} />
-            <Card>
-              <CardHeader><CardTitle>Saldo por cuenta</CardTitle></CardHeader>
-              <CardContent className="pt-0">
-                <AccountBalances data={dashboard?.accountBalances ?? []} bare />
-              </CardContent>
-            </Card>
-          </>
-        )}
-      </section>
+      <div className="md:grid md:grid-cols-2 md:gap-10 md:items-start">
+        <div>
+          <p className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em] mb-1">Débito</p>
+          {debit.map((a) => <AccountRow key={a.account} account={a} />)}
 
-      <Card>
-        <button
-          type="button"
-          onClick={() => setBalancesOpen((v) => !v)}
-          aria-expanded={balancesOpen}
-          className="press w-full flex items-center justify-between gap-3 px-5 pt-5 pb-2 sm:px-6 sm:pt-6 text-left"
-        >
-          <CardTitle>Ajuste de saldos actuales</CardTitle>
-          <ChevronDownIcon
-            className={cn(
-              "w-4 h-4 text-text-dim shrink-0 transition-transform duration-200 ease-out",
-              balancesOpen && "rotate-180"
-            )}
-          />
-        </button>
-        <div
-          className={cn(
-            "overflow-hidden transition-[max-height] duration-300 ease-out",
-            balancesOpen ? "max-h-[3000px]" : "max-h-0"
+          {credit.length > 0 && (
+            <>
+              <p className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em] mt-6 mb-1">Crédito</p>
+              {credit.map((a) => <AccountRow key={a.account} account={a} credit />)}
+            </>
           )}
-        >
-          <CardContent className="pt-0">
-            <InitialBalances onSaved={() => mutate(() => true)} />
-          </CardContent>
+
+          <div className="mt-6 pt-3.5 border-t border-border flex items-baseline justify-between">
+            <span className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em]">Total disponible</span>
+            <span className="font-mono text-base font-semibold text-text">{formatMXN(totalAvailable)}</span>
+          </div>
         </div>
-      </Card>
+
+        <div className="mt-8 md:mt-0 border-t md:border-t-0 border-border pt-6 md:pt-0">
+          <button
+            type="button"
+            onClick={() => setBalancesOpen((v) => !v)}
+            aria-expanded={balancesOpen}
+            className="press w-full flex items-center justify-between gap-3 text-left mb-4"
+          >
+            <span className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em]">
+              Ajuste de saldos actuales
+            </span>
+            <ChevronDownIcon
+              className={cn(
+                "w-4 h-4 text-text-dim shrink-0 transition-transform duration-200 ease-out",
+                balancesOpen && "rotate-180"
+              )}
+            />
+          </button>
+          <div
+            className={cn(
+              "overflow-hidden transition-[max-height] duration-300 ease-out",
+              balancesOpen ? "max-h-[3000px]" : "max-h-0"
+            )}
+          >
+            <InitialBalances onSaved={() => mutate(() => true)} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AccountRow({ account, credit }: { account: AccountBalance; credit?: boolean }) {
+  return (
+    <div className="flex items-center justify-between py-3 border-t border-divider first:border-t-0">
+      <div className="flex items-center gap-2.5">
+        <span className="w-[7px] h-[7px] shrink-0" style={{ backgroundColor: account.color }} />
+        <span className="text-[13.5px] text-text">{account.account}</span>
+      </div>
+      <span className={cn("font-mono text-sm font-semibold", credit ? "text-red-fg" : "text-text")}>
+        {formatMXN(account.currentBalance)}
+      </span>
     </div>
   );
 }

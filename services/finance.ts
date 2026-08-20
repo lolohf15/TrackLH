@@ -6,9 +6,9 @@ import type {
   DashboardData,
   CategoryTrend,
 } from "@/types";
-import { ACCOUNT_COLORS, CHART_PALETTE, DEFAULT_BUDGETS, TOTAL_BUDGET } from "@/types";
+import { ACCOUNT_COLORS, CATEGORY_COLORS, DEFAULT_BUDGETS, TOTAL_BUDGET } from "@/types";
 
-const CATEGORY_COLORS = CHART_PALETTE;
+const UNKNOWN_CATEGORY_COLOR = "#6b7075";
 
 // Rule 12: all amounts rounded to 2 decimals
 export function round2(n: number): number {
@@ -131,12 +131,12 @@ export function computeCategoryExpenses(
 
   return Array.from(map.entries())
     .sort((a, b) => b[1].amount - a[1].amount)
-    .map(([category, { amount, count }], i) => ({
+    .map(([category, { amount, count }]) => ({
       category,
       amount,
       count,
       percentage: total > 0 ? round2((amount / total) * 100) : 0,
-      color: CATEGORY_COLORS[i % CATEGORY_COLORS.length],
+      color: CATEGORY_COLORS[category] ?? UNKNOWN_CATEGORY_COLOR,
     }));
 }
 
@@ -164,7 +164,7 @@ export function computeCategoryTrends(
       }));
       return {
         category,
-        color: currentEntry?.color ?? CATEGORY_COLORS[0],
+        color: currentEntry?.color ?? CATEGORY_COLORS[category] ?? UNKNOWN_CATEGORY_COLOR,
         points,
         currentAmount: currentEntry?.amount ?? 0,
         budget: budgetMap.get(category) ?? 0,

@@ -20,21 +20,17 @@ export default function CategoryDetailPage({ params }: { params: Promise<{ categ
   const trend = data?.trends.find((t) => t.category === decoded) ?? null;
 
   return (
-    <div className="max-w-2xl mx-auto px-4 sm:px-6 pt-2 pb-6 space-y-4">
-      <Link href="/categorias" className="inline-flex items-center gap-1.5 text-xs text-text-dim hover:text-text transition-colors">
-        ‹ Categorías
+    <div className="max-w-xl mx-auto px-4 pt-4 pb-6">
+      <Link href="/categorias" className="inline-flex items-center gap-1.5 font-mono text-[10.5px] text-text-dim hover:text-text transition-colors mb-4">
+        ‹ CATEGORÍAS
       </Link>
 
       {isLoading ? (
         <ChartSkeleton height="h-80" />
       ) : trend ? (
-        <div className="bg-surface rounded-2xl border border-border shadow-card p-5">
-          <CategoryDetail trend={trend} />
-        </div>
+        <CategoryDetail trend={trend} />
       ) : (
-        <div className="bg-surface rounded-2xl border border-border shadow-card">
-          <EmptyState title="Categoría no encontrada" />
-        </div>
+        <EmptyState title="Categoría no encontrada" />
       )}
     </div>
   );

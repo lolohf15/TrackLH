@@ -8,9 +8,9 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variants = {
   primary:
-    "bg-green text-white hover:bg-[#25803c] active:bg-[#1a5c2b] shadow-sm shadow-green/30",
+    "bg-accent text-white hover:brightness-110 active:brightness-90",
   secondary:
-    "bg-surface-2 text-text-muted border border-border hover:bg-surface-3 hover:border-border-strong hover:text-text active:bg-[#2b2b2b]",
+    "bg-surface-2 text-text-muted border border-border hover:border-border-strong hover:text-text active:bg-surface-3",
   ghost:
     "text-text-dim hover:bg-white/5 hover:text-text active:bg-white/10",
   danger:
@@ -37,9 +37,9 @@ export function Button({
       {...props}
       disabled={disabled || loading}
       className={cn(
-        "inline-flex items-center justify-center rounded-xl font-medium press",
-        "transition-[background-color,border-color,color,transform] duration-150 ease-out",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green/50 focus-visible:ring-offset-1 focus-visible:ring-offset-bg",
+        "inline-flex items-center justify-center font-medium press",
+        "transition-[background-color,border-color,color,filter,transform] duration-150 ease-out",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-1 focus-visible:ring-offset-bg",
         "disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100",
         variants[variant],
         sizes[size],

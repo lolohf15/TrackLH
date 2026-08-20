@@ -1,42 +1,49 @@
 @import "tailwindcss";
 
 @theme {
-  /* Surfaces — matte black hierarchy sampled from the logo */
-  --color-bg:              #0a0a0a;
-  --color-surface:         #0a0a0a;
-  --color-surface-2:       #1f1f1f;
-  --color-surface-3:       #262626;
-  --color-border:          #262626;
-  --color-border-strong:   #383838;
+  /* Type — Archivo for UI, IBM Plex Mono for every number */
+  --font-sans:             var(--font-archivo), Archivo, sans-serif;
+  --font-mono:             var(--font-ibm-plex-mono), "IBM Plex Mono", monospace;
+
+  /* Surfaces — ledger, not bento */
+  --color-bg:              #0a0b0c;
+  --color-surface:         #0e0f11;
+  --color-surface-2:       #17191c;
+  --color-surface-3:       #1a1c1e;
+  --color-border:          #232527;
+  --color-border-strong:   #2f3234;
+  --color-divider:         #1a1c1e;
 
   /* Text */
-  --color-text:            #f5f5f5;
-  --color-text-muted:      #a3a3a3;
-  --color-text-dim:        #737373;
-  --color-text-faint:      #525252;
+  --color-text:            #eef0f0;
+  --color-text-muted:      #97a9a2;
+  --color-text-dim:        #6b7075;
+  --color-text-faint:      #525659;
 
-  /* Semantic — deep forest + crimson from the wallet cards */
-  --color-green:           #1F6B32;
-  --color-green-fg:        #4ADE80;
-  --color-green-bg:        rgba(31, 107, 50, 0.15);
-  --color-green-border:    rgba(31, 107, 50, 0.35);
+  /* Accent — interactive: active tab, links, filter chips */
+  --color-accent:          #5b7fb5;
 
-  --color-red:             #DC2626;
-  --color-red-fg:          #F87171;
-  --color-red-bg:          rgba(220, 38, 38, 0.12);
-  --color-red-border:      rgba(220, 38, 38, 0.30);
+  /* Semantic */
+  --color-green:           #22a355;
+  --color-green-fg:        #22a355;
+  --color-green-bg:        rgba(34, 163, 85, 0.14);
+  --color-green-border:    rgba(34, 163, 85, 0.35);
 
-  --color-amber:           #D97706;
-  --color-amber-fg:        #FBBF24;
-  --color-amber-bg:        rgba(217, 119, 6, 0.12);
-  --color-amber-border:    rgba(217, 119, 6, 0.30);
+  --color-red:             #e5484d;
+  --color-red-fg:          #e5484d;
+  --color-red-bg:          rgba(229, 72, 77, 0.12);
+  --color-red-border:      rgba(229, 72, 77, 0.32);
 
-  --color-violet-fg:       #C4B5FD;
+  --color-amber:           #d99a15;
+  --color-amber-fg:        #d99a15;
+  --color-amber-bg:        rgba(217, 154, 21, 0.12);
+  --color-amber-border:    rgba(217, 154, 21, 0.32);
 
   /* Motion — strong custom curves; the built-ins are punchless */
   --ease-out:              cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out:           cubic-bezier(0.77, 0, 0.175, 1);
   --ease-drawer:           cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-slide:            cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @layer base {
@@ -108,10 +115,6 @@
 
 @layer utilities {
   .tabular-nums        { font-variant-numeric: tabular-nums; }
-  .font-serif-display  { font-family: Georgia, "Times New Roman", serif; }
-
-  .shadow-card         { box-shadow: 0 1px 3px rgba(0,0,0,0.5), 0 0 0 1px rgba(0,0,0,0.4); }
-  .shadow-card-hover   { box-shadow: 0 6px 20px rgba(0,0,0,0.55), 0 0 0 1px rgba(0,0,0,0.5); }
 
   .animate-fade-in-up  { animation: fadeInUp 0.25s var(--ease-out) both; }
   .animate-fade-in     { animation: fadeIn 0.2s var(--ease-out) both; }

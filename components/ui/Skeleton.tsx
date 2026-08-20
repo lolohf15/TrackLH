@@ -4,20 +4,10 @@ export function Skeleton({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        "animate-pulse rounded-xl bg-surface-2",
+        "animate-pulse bg-surface-2",
         className
       )}
     />
-  );
-}
-
-export function StatCardSkeleton() {
-  return (
-    <div className="bg-surface rounded-2xl border border-border shadow-card p-5 sm:p-6 space-y-3">
-      <Skeleton className="h-3.5 w-28" />
-      <Skeleton className="h-8 w-36" />
-      <Skeleton className="h-3 w-20" />
-    </div>
   );
 }
 
@@ -25,7 +15,7 @@ export function ChartSkeleton({ height = "h-64" }: { height?: string }) {
   return (
     <div
       className={cn(
-        "w-full animate-pulse bg-surface rounded-2xl border border-border shadow-card",
+        "w-full animate-pulse border-b border-border bg-surface-2/40",
         height
       )}
     />
@@ -34,9 +24,9 @@ export function ChartSkeleton({ height = "h-64" }: { height?: string }) {
 
 export function TableSkeleton({ rows = 8 }: { rows?: number }) {
   return (
-    <div className="divide-y divide-border">
+    <div>
       {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} className="flex items-center gap-4 px-6 py-4">
+        <div key={i} className="flex items-center gap-4 px-4 py-3.5 border-t border-divider">
           <Skeleton className="h-7 w-7 rounded-full" />
           <div className="flex-1 space-y-2">
             <Skeleton className="h-3.5 w-44" />

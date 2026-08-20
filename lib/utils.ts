@@ -6,8 +6,8 @@ export function formatMXN(amount: number): string {
   return new Intl.NumberFormat("es-MX", {
     style: "currency",
     currency: "MXN",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
   }).format(amount);
 }
 

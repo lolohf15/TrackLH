@@ -1,10 +1,10 @@
 import { cn } from "@/lib/utils";
 
 const variants = {
-  Gasto:         "bg-red-bg text-red-fg border border-red-border",
-  Ingreso:       "bg-green-bg text-green-fg border border-green-border",
-  Transferencia: "bg-amber-bg text-amber-fg border border-amber-border",
-  default:       "bg-surface-2 text-text-dim border border-border",
+  Gasto:         "text-red-fg border-red-border",
+  Ingreso:       "text-green-fg border-green-border",
+  Transferencia: "text-amber-fg border-amber-border",
+  default:       "text-text-dim border-border",
 };
 
 interface BadgeProps {
@@ -17,7 +17,7 @@ export function Badge({ children, variant = "default", className }: BadgeProps) 
   return (
     <span
       className={cn(
-        "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium",
+        "inline-flex items-center px-2 py-0.5 border font-mono text-[10.5px] font-medium uppercase tracking-wide",
         variants[variant] ?? variants.default,
         className
       )}

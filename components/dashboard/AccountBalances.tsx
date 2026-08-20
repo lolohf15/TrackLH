@@ -13,16 +13,14 @@ export function AccountBalances({ data, bare = false }: { data: AccountBalance[]
   const body = data.length === 0 ? (
     <EmptyState title="Sin cuentas" description="Sincroniza tus transacciones" />
   ) : (
-    <div className="space-y-0.5">
+    <div>
       {assets.map((a) => <AccountRow key={a.account} account={a} />)}
 
       {credits.length > 0 && (
         <>
-          <div className="pt-4 pb-1.5">
-            <p className="text-xs font-semibold text-text-dim uppercase tracking-widest">
-              Crédito
-            </p>
-          </div>
+          <p className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em] pt-4 pb-1">
+            Crédito
+          </p>
           {credits.map((a) => <AccountRow key={a.account} account={a} credit />)}
         </>
       )}
@@ -40,29 +38,13 @@ export function AccountBalances({ data, bare = false }: { data: AccountBalance[]
 }
 
 function AccountRow({ account, credit }: { account: AccountBalance; credit?: boolean }) {
-  const isNegative = account.currentBalance < 0;
-
   return (
-    <div className="flex items-center justify-between py-2.5 group rounded-lg px-2 -mx-2 transition-colors duration-150 ease-out hover:bg-surface-2">
+    <div className="flex items-center justify-between py-2.5 border-t border-divider first:border-t-0">
       <div className="flex items-center gap-2.5">
-        <div
-          className="w-2 h-2 rounded-full shrink-0"
-          style={{ backgroundColor: account.color }}
-        />
-        <span className="text-sm text-text-dim group-hover:text-text transition-colors">
-          {account.account}
-        </span>
+        <span className="w-[7px] h-[7px] shrink-0" style={{ backgroundColor: account.color }} />
+        <span className="text-[13.5px] text-text">{account.account}</span>
       </div>
-      <span
-        className={cn(
-          "text-sm font-semibold tabular-nums",
-          credit
-            ? "text-violet-fg"
-            : isNegative
-            ? "text-red-fg"
-            : "text-text"
-        )}
-      >
+      <span className={cn("font-mono text-sm font-semibold", credit ? "text-red-fg" : "text-text")}>
         {formatMXN(account.currentBalance)}
       </span>
     </div>
