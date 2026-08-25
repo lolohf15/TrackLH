@@ -5,21 +5,22 @@
   --font-sans:             var(--font-archivo), Archivo, sans-serif;
   --font-mono:             var(--font-ibm-plex-mono), "IBM Plex Mono", monospace;
 
-  /* Surfaces — a real ramp, so a panel reads as a surface lying on the page
-     and the insets inside it (fields, bar tracks) still separate from it. */
-  --color-bg:              #08090a;
-  --color-surface:         #131619;
-  --color-surface-2:       #1d2125;
-  --color-surface-3:       #272b30;
-  --color-border:          #282c30;
-  --color-border-strong:   #383d42;
-  --color-divider:         #212528;
+  /* Surfaces — strictly neutral greys (R=G=B), so near-black stays black
+     instead of drifting blue. A panel separates by its outline first and its
+     fill second, which keeps the page reading almost black-on-black. */
+  --color-bg:              #000000;
+  --color-surface:         #090909;
+  --color-surface-2:       #151515;
+  --color-surface-3:       #1f1f1f;
+  --color-border:          #282828;
+  --color-border-strong:   #3a3a3a;
+  --color-divider:         #1b1b1b;
 
-  /* Text */
-  --color-text:            #eef0f0;
-  --color-text-muted:      #97a9a2;
-  --color-text-dim:        #6b7075;
-  --color-text-faint:      #525659;
+  /* Text — neutral too; the old muted tone carried a green cast */
+  --color-text:            #f0f0f0;
+  --color-text-muted:      #a3a3a3;
+  --color-text-dim:        #737373;
+  --color-text-faint:      #545454;
 
   /* Accent — interactive: active tab, links, filter chips */
   --color-accent:          #5b7fb5;
@@ -51,7 +52,7 @@
 
   /* Depth — every shadow carries an offset and a soft blur. The inset
      hairline is the light catching the top edge of the material. */
-  --shadow-panel:  inset 0 1px 0 rgba(255,255,255,0.045), 0 1px 1px rgba(0,0,0,0.5), 0 6px 16px -6px rgba(0,0,0,0.55);
+  --shadow-panel:  inset 0 1px 0 rgba(255,255,255,0.028), 0 1px 2px rgba(0,0,0,0.6);
   --shadow-float:  0 6px 14px -4px rgba(0,0,0,0.55), 0 18px 40px -12px rgba(0,0,0,0.5);
   --shadow-sheet:  0 -12px 48px -12px rgba(0,0,0,0.7);
 
@@ -90,7 +91,7 @@
   button, a, label, nav, header { -webkit-user-select: none; user-select: none; }
 
   /* Browser surfaces ship with defaults that belong to no design system. */
-  ::selection { background: rgba(91, 127, 181, 0.32); color: var(--color-text); }
+  ::selection { background: rgba(91, 127, 181, 0.3); color: var(--color-text); }
   input, textarea { caret-color: var(--color-accent); }
 
   ::-webkit-scrollbar { width: 5px; height: 5px; }
@@ -147,6 +148,7 @@
   .panel {
     background-color: var(--color-surface);
     border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border);
     box-shadow: var(--shadow-panel);
     overflow: hidden;
   }
@@ -157,7 +159,7 @@
     position: absolute;
     left: 0; right: 0; top: 100%;
     height: 16px;
-    background: linear-gradient(to bottom, rgba(8, 9, 10, 0.55), rgba(8, 9, 10, 0));
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0));
     pointer-events: none;
   }
 
