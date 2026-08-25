@@ -41,7 +41,7 @@ function AccountRow({ account, credit }: { account: AccountBalance; credit?: boo
   return (
     <div className="flex items-center justify-between py-2.5 border-t border-divider first:border-t-0">
       <div className="flex items-center gap-2.5">
-        <span className="w-[7px] h-[7px] shrink-0" style={{ backgroundColor: account.color }} />
+        <span className="w-[7px] h-[7px] rounded-full shrink-0" style={{ backgroundColor: account.color }} />
         <span className="text-[13.5px] text-text">{account.account}</span>
       </div>
       <span className={cn("font-mono text-sm font-semibold", credit ? "text-red-fg" : "text-text")}>

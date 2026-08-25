@@ -72,7 +72,7 @@ function BudgetRow({ item }: { item: BudgetItem }) {
           <span className="text-text-faint"> / {formatMXN(item.budget)}</span>
         </span>
       </div>
-      <div className="h-[3px] w-full bg-surface-2">
+      <div className="h-[3px] w-full rounded-full bg-surface-2 overflow-hidden">
         <div className="h-full" style={{ width: `${Math.min(item.percentage, 100)}%`, background: color }} />
       </div>
     </div>

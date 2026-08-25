@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import useSWR from "swr";
 import { CategoryDetail } from "@/components/dashboard/CategoryDetail";
@@ -16,11 +16,10 @@ export default function Categorias() {
     useSWR<{ months: string[]; trends: CategoryTrend[] }>("/api/categories/trend?months=6", fetcher);
 
   const trends = data?.trends ?? [];
-  const [selected, setSelected] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!selected && trends.length > 0) setSelected(trends[0].category);
-  }, [trends, selected]);
+  // Null means "nothing picked yet" and falls back to the first row, so the
+  // default needs no effect to install it.
+  const [picked, setPicked] = useState<string | null>(null);
+  const selected = picked ?? trends[0]?.category ?? null;
 
   const selectedTrend = trends.find((t) => t.category === selected) ?? null;
   const total = trends.reduce((s, t) => s + t.currentAmount, 0);
@@ -37,24 +36,26 @@ export default function Categorias() {
       ) : (
         <div className="md:grid md:grid-cols-[1fr_360px] md:gap-10 md:items-start">
           <div>
-            <p className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em] mb-1">
+            <p className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em] px-1 pb-2">
               {formatMonth(getCurrentMonth())} · {formatMXN(total)} en {trends.length} categorías
             </p>
-            {trends.map((t) => (
-              <CategoryRow
-                key={t.category}
-                trend={t}
-                max={max}
-                total={total}
-                active={t.category === selected}
-                onSelect={() => setSelected(t.category)}
-              />
-            ))}
+            <div className="panel px-4 pb-1">
+              {trends.map((t) => (
+                <CategoryRow
+                  key={t.category}
+                  trend={t}
+                  max={max}
+                  total={total}
+                  active={t.category === selected}
+                  onSelect={() => setPicked(t.category)}
+                />
+              ))}
+            </div>
           </div>
 
           {/* Desktop detail panel */}
           {selectedTrend && (
-            <div className="hidden md:block sticky top-6 border-l border-border pl-8 py-1">
+            <div className="panel hidden md:block sticky top-6 px-5 py-4">
               <CategoryDetail trend={selectedTrend} />
             </div>
           )}
@@ -99,7 +100,7 @@ function RowContent({ trend, pct, barPct }: { trend: CategoryTrend; pct: number;
     <>
       <div className="flex items-baseline justify-between mb-1.5">
         <span className="flex items-center gap-2 text-[13.5px] text-text min-w-0">
-          <span className="w-[7px] h-[7px] shrink-0" style={{ backgroundColor: trend.color }} />
+          <span className="w-[7px] h-[7px] rounded-full shrink-0" style={{ backgroundColor: trend.color }} />
           <span className="truncate">{trend.category}</span>
         </span>
         <span className="font-mono text-[13px] font-semibold text-text whitespace-nowrap shrink-0 ml-2.5">
@@ -107,7 +108,7 @@ function RowContent({ trend, pct, barPct }: { trend: CategoryTrend; pct: number;
           <span className="text-text-faint font-normal"> · {pct}%</span>
         </span>
       </div>
-      <div className="h-1 w-full bg-surface-2">
+      <div className="h-1 w-full rounded-full bg-surface-2 overflow-hidden">
         <div className="h-full" style={{ width: `${barPct}%`, background: trend.color }} />
       </div>
     </>

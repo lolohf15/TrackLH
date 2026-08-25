@@ -7,13 +7,13 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const month = searchParams.get("month") || getCurrentMonth();
 
-  const [transactions, accountConfigs, budgetConfigs, lastSync] = await Promise.all([
+  const [transactions, accountConfigs, budgetConfigs, latest] = await Promise.all([
     prisma.transaction.findMany({ orderBy: { date: "desc" } }),
     prisma.accountConfig.findMany(),
     prisma.budgetConfig.findMany(),
-    prisma.syncLog.findFirst({
-      where: { status: "success" },
-      orderBy: { syncedAt: "desc" },
+    prisma.transaction.findFirst({
+      orderBy: { createdAt: "desc" },
+      select: { createdAt: true },
     }),
   ]);
 
@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
     month,
     accountConfigs,
     budgetConfigs,
-    lastSync?.syncedAt.toISOString() ?? null
+    latest?.createdAt.toISOString() ?? null
   );
 
   return NextResponse.json(data);

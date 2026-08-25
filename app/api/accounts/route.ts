@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { round2, computeAccountBalances } from "@/services/finance";
-import { ensureDefaults } from "@/services/notion-sync";
+import { ensureDefaults } from "@/services/defaults";
 import type { Transaction } from "@/types";
 
 type AccountRow = {

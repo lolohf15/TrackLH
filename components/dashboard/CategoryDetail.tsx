@@ -15,12 +15,12 @@ export function CategoryDetail({ trend }: { trend: CategoryTrend }) {
     <div className="flex flex-col gap-6">
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-2.5">
-          <span className="w-2.5 h-2.5 shrink-0" style={{ backgroundColor: trend.color }} />
+          <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: trend.color }} />
           <h2 className="text-base font-semibold text-text">{trend.category}</h2>
         </div>
         <Link
           href={`/movimientos?category=${encodeURIComponent(trend.category)}`}
-          className="press font-mono text-[10.5px] font-medium border border-border px-3 py-1.5 text-text-muted hover:text-text hover:border-border-strong transition-colors duration-150 ease-out shrink-0 uppercase tracking-wide"
+          className="press rounded-full font-mono text-[10.5px] font-medium border border-border px-3.5 py-2 text-text-muted hover:text-text hover:border-border-strong transition-colors duration-150 ease-out shrink-0 uppercase tracking-wide"
         >
           Ver movimientos →
         </Link>
@@ -39,7 +39,7 @@ export function CategoryDetail({ trend }: { trend: CategoryTrend }) {
               {formatMXN(trend.currentAmount)} / {formatMXN(trend.budget)}
             </span>
           </div>
-          <div className="h-[3px] bg-surface-2">
+          <div className="h-[3px] rounded-full bg-surface-2 overflow-hidden">
             <div className="h-full" style={{ width: `${pct}%`, background: barColor }} />
           </div>
         </div>
@@ -65,7 +65,7 @@ function MiniTrendChart({ points, color }: { points: CategoryTrend["points"]; co
           <div key={p.month} className="flex-1 flex flex-col items-center gap-2 h-full justify-end">
             <div className="w-full flex items-end" style={{ height: "100%" }}>
               <div
-                className="w-full"
+                className="w-full rounded-t-sm"
                 style={{ height: `${heightPct}%`, background: isLast ? color : "var(--color-surface-2)" }}
               />
             </div>

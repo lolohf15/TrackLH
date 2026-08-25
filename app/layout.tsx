@@ -25,7 +25,8 @@ export const metadata: Metadata = {
   },
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
+    // Lets the app paint under the status bar, so the dark chrome runs edge to edge.
+    statusBarStyle: "black-translucent",
     title: "TrackLH",
   },
 };
@@ -36,6 +37,9 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
+  // Required for env(safe-area-inset-*) to report real values on iOS — without
+  // it the tab bar and the add button ignore the home indicator.
+  viewportFit: "cover",
 };
 
 export default function RootLayout({

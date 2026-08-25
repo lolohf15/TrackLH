@@ -34,29 +34,35 @@ export default function Cuentas() {
       <h1 className="text-[15px] font-semibold text-text mb-4">Cuentas</h1>
 
       <div className="md:grid md:grid-cols-2 md:gap-10 md:items-start">
-        <div>
-          <p className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em] mb-1">Débito</p>
-          {debit.map((a) => <AccountRow key={a.account} account={a} />)}
+        <div className="space-y-3">
+          <section>
+            <GroupLabel>Débito</GroupLabel>
+            <div className="panel px-4">
+              {debit.map((a) => <AccountRow key={a.account} account={a} />)}
+            </div>
+          </section>
 
           {credit.length > 0 && (
-            <>
-              <p className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em] mt-6 mb-1">Crédito</p>
-              {credit.map((a) => <AccountRow key={a.account} account={a} credit />)}
-            </>
+            <section>
+              <GroupLabel>Crédito</GroupLabel>
+              <div className="panel px-4">
+                {credit.map((a) => <AccountRow key={a.account} account={a} credit />)}
+              </div>
+            </section>
           )}
 
-          <div className="mt-6 pt-3.5 border-t border-border flex items-baseline justify-between">
+          <div className="panel px-4 py-3.5 flex items-baseline justify-between">
             <span className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em]">Total disponible</span>
             <span className="font-mono text-base font-semibold text-text">{formatMXN(totalAvailable)}</span>
           </div>
         </div>
 
-        <div className="mt-8 md:mt-0 border-t md:border-t-0 border-border pt-6 md:pt-0">
+        <div className="mt-3 md:mt-0">
           <button
             type="button"
             onClick={() => setBalancesOpen((v) => !v)}
             aria-expanded={balancesOpen}
-            className="press w-full flex items-center justify-between gap-3 text-left mb-4"
+            className="press panel w-full flex items-center justify-between gap-3 text-left px-4 py-3.5 mb-3"
           >
             <span className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em]">
               Ajuste de saldos actuales
@@ -82,11 +88,20 @@ export default function Cuentas() {
   );
 }
 
+/** Grouped-list caption: names the panel below it and sits outside it. */
+function GroupLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em] px-1 pb-2">
+      {children}
+    </p>
+  );
+}
+
 function AccountRow({ account, credit }: { account: AccountBalance; credit?: boolean }) {
   return (
     <div className="flex items-center justify-between py-3 border-t border-divider first:border-t-0">
       <div className="flex items-center gap-2.5">
-        <span className="w-[7px] h-[7px] shrink-0" style={{ backgroundColor: account.color }} />
+        <span className="w-[7px] h-[7px] rounded-full shrink-0" style={{ backgroundColor: account.color }} />
         <span className="text-[13.5px] text-text">{account.account}</span>
       </div>
       <span className={cn("font-mono text-sm font-semibold", credit ? "text-red-fg" : "text-text")}>

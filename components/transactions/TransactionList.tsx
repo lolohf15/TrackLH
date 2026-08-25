@@ -93,7 +93,7 @@ function Row({ tx }: { tx: Transaction }) {
   return (
     <div className="flex items-center justify-between py-[11px] border-t border-divider">
       <div className="flex items-center gap-2.5 min-w-0">
-        <div className={cn("w-[5px] h-[5px] shrink-0", dotColors[type])} />
+        <div className={cn("w-[5px] h-[5px] rounded-full shrink-0", dotColors[type])} />
         <div className="min-w-0">
           <p className="text-[13px] text-text truncate">
             {tx.description ?? tx.category ?? "Transacción"}

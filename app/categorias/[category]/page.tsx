@@ -28,9 +28,13 @@ export default function CategoryDetailPage({ params }: { params: Promise<{ categ
       {isLoading ? (
         <ChartSkeleton height="h-80" />
       ) : trend ? (
-        <CategoryDetail trend={trend} />
+        <div className="panel px-4 py-5">
+          <CategoryDetail trend={trend} />
+        </div>
       ) : (
-        <EmptyState title="Categoría no encontrada" />
+        <div className="panel">
+          <EmptyState title="Categoría no encontrada" />
+        </div>
       )}
     </div>
   );

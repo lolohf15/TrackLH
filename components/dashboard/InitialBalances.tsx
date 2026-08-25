@@ -39,8 +39,6 @@ export function InitialBalances({ onSaved }: Props) {
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const loadAccounts = useCallback(async () => {
-    setLoading(true);
-    setLoadError(null);
     try {
       const res = await fetch("/api/accounts");
       if (!res.ok) {
@@ -73,7 +71,19 @@ export function InitialBalances({ onSaved }: Props) {
     }
   }, []);
 
+  // Plain fetch-on-mount: the panel needs the write-back response shape that
+  // `save()` also consumes, which is why it isn't on SWR like the read-only
+  // views. The rule can't tell that apart from a render-loop.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { loadAccounts(); }, [loadAccounts]);
+
+  // The first pass already starts in the loading state, so only a manual
+  // re-fetch has to put it back there.
+  function refresh() {
+    setLoading(true);
+    setLoadError(null);
+    loadAccounts();
+  }
 
   function updateRow(account: string, patch: Partial<RowState>) {
     setRows((prev) => ({ ...prev, [account]: { ...prev[account], ...patch } }));
@@ -132,21 +142,21 @@ export function InitialBalances({ onSaved }: Props) {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-start gap-3 bg-amber-bg border border-amber-border px-4 py-3">
+      <div className="flex items-start gap-3 rounded-md bg-amber-bg border border-amber-border px-4 py-3">
         <svg className="w-4 h-4 text-amber-fg mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
         <p className="text-xs text-amber-fg leading-relaxed">
           Escribe el saldo real actual de cada cuenta. La app calculará un ajuste local para que el saldo mostrado coincida.{" "}
-          <span className="font-semibold">No se modifica Notion.</span>
+          <span className="font-semibold">No se modifican tus movimientos.</span>
         </p>
       </div>
 
       {loadError && (
-        <div className="flex items-center justify-between bg-red-bg border border-red-border px-4 py-3">
+        <div className="flex items-center justify-between rounded-md bg-red-bg border border-red-border px-4 py-3">
           <p className="text-xs text-red-fg">{loadError}</p>
           <button
-            onClick={loadAccounts}
+            onClick={refresh}
             className="text-xs text-accent hover:brightness-125 underline underline-offset-2 transition-colors ml-4 shrink-0"
           >
             Reintentar
@@ -188,7 +198,7 @@ function AccountGroup({
   return (
     <div className="space-y-2">
       <p className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em]">{title}</p>
-      <div className="border border-border divide-y divide-divider">
+      <div className="panel divide-y divide-divider">
         {accounts.map((a, i) => (
           <AccountRow
             key={a.account}
@@ -225,7 +235,7 @@ function AccountRow({
       style={{ animationDelay: `${Math.min(index, 6) * 30}ms` }}
     >
       <div className="flex items-center gap-2.5 mb-3">
-        <div className="w-2 h-2 shrink-0" style={{ backgroundColor: color }} />
+        <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
         <span className="text-sm font-semibold text-text">{account.account}</span>
         <span className={cn(
           "font-mono text-[10px] px-1.5 py-0.5 font-medium border uppercase tracking-wide",
@@ -275,7 +285,7 @@ function AccountRow({
               }
               onKeyDown={(e) => { if (e.key === "Enter" && row.dirty) onSave(); }}
               className={cn(
-                "w-44 pl-7 pr-3 py-2 text-sm font-mono bg-bg text-text tabular-nums",
+                "w-44 rounded-md pl-7 pr-3 py-2 text-sm font-mono bg-bg text-text tabular-nums",
                 "focus:outline-none focus:ring-1 focus:ring-accent/50 transition-colors duration-150",
                 row.error
                   ? "border border-red-fg/70"
@@ -304,7 +314,7 @@ function AccountRow({
         )}
         {row.savedAt && !row.error && (
           <p className="text-xs text-green-fg">
-            ✓ Saldos actualizados. Se aplicó un ajuste local sin modificar Notion.
+            ✓ Saldos actualizados. Se aplicó un ajuste sin tocar tus movimientos.
           </p>
         )}
         {!row.savedAt && !row.error && account.adjustmentDate && (

@@ -24,7 +24,7 @@ export function TransactionTable({ data, loading, page, onPageChange }: Props) {
   }
 
   return (
-    <div className="border-t border-border">
+    <div>
       <div className="overflow-x-auto" data-swipe-ignore>
         <table className="w-full">
           <thead>

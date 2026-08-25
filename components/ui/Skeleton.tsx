@@ -4,7 +4,7 @@ export function Skeleton({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        "animate-pulse bg-surface-2",
+        "animate-pulse bg-surface-2 rounded-sm",
         className
       )}
     />
@@ -15,7 +15,7 @@ export function ChartSkeleton({ height = "h-64" }: { height?: string }) {
   return (
     <div
       className={cn(
-        "w-full animate-pulse border-b border-border bg-surface-2/40",
+        "w-full animate-pulse rounded-lg bg-surface-2/40",
         height
       )}
     />

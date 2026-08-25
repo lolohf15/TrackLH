@@ -6,13 +6,13 @@ interface CardProps {
   onClick?: () => void;
 }
 
-/** A full-width ledger block, divided from its neighbors by a hairline border. */
+/** An inset ledger panel: rounded, lifted by shadow rather than fenced by a rule. */
 export function Card({ children, className, onClick }: CardProps) {
   return (
     <div
       onClick={onClick}
       className={cn(
-        "border-b border-border",
+        "panel",
         onClick && "cursor-pointer press hover:bg-surface-2/60 transition-colors duration-150 ease-out",
         className
       )}

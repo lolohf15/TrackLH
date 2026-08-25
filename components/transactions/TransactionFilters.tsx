@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { BottomSheet } from "@/components/ui/BottomSheet";
+import { Select } from "@/components/ui/Select";
 import { getMonthOptions, cn } from "@/lib/utils";
 import type { TransactionFilters } from "@/types";
 
@@ -56,7 +58,8 @@ export function TransactionFiltersPanel({ filters, categories, accounts, onChang
 
       {/* Mobile: type chips + sheet trigger for the rest */}
       <div className="sm:hidden flex items-center gap-2">
-        <div className="flex-1 flex gap-1.5 overflow-x-auto">
+        {/* Scrolls sideways itself, so the tab swipe has to keep its hands off. */}
+        <div className="flex-1 flex gap-1.5 overflow-x-auto" data-swipe-ignore>
           <Chip active={filters.type === ""} onClick={() => update("type", "")}>Todos</Chip>
           {TYPES.map((t) => (
             <Chip key={t} active={filters.type === t} onClick={() => update("type", filters.type === t ? "" : t)}>
@@ -66,61 +69,56 @@ export function TransactionFiltersPanel({ filters, categories, accounts, onChang
         </div>
         <button
           onClick={() => setSheetOpen(true)}
-          className="press flex items-center gap-1.5 font-mono text-[10.5px] font-medium border border-border px-2.5 py-[7px] text-text-muted shrink-0"
+          className="press flex items-center gap-1.5 rounded-full font-mono text-[10.5px] font-medium border border-border px-3 py-[7px] text-text-muted shrink-0"
         >
           Filtros
           {sheetActiveCount > 0 && (
-            <span className="w-3.5 h-3.5 bg-accent text-white text-[9px] flex items-center justify-center font-semibold">
+            <span className="w-3.5 h-3.5 rounded-full bg-accent text-white text-[9px] flex items-center justify-center font-semibold">
               {sheetActiveCount}
             </span>
           )}
         </button>
       </div>
 
-      {sheetOpen && (
-        <div className="sm:hidden fixed inset-0 z-50">
-          <div
-            className="absolute inset-0 bg-black/60 animate-fade-in"
-            onClick={() => setSheetOpen(false)}
-          />
-          <div className="absolute bottom-0 left-0 right-0 bg-surface border-t border-border-strong p-5 pb-safe animate-sheet-up max-h-[80vh] overflow-y-auto">
-            <div className="w-9 h-1 bg-surface-3 mx-auto mb-5" />
-            <div className="flex items-center justify-between mb-5">
-              <h3 className="font-mono text-xs font-semibold text-text uppercase tracking-wide">Filtros</h3>
-              {sheetActiveCount > 0 && (
-                <button onClick={reset} className="font-mono text-[10.5px] text-text-dim underline underline-offset-2">
-                  Limpiar
-                </button>
-              )}
+      <BottomSheet open={sheetOpen} onClose={() => setSheetOpen(false)} title="Filtros">
+        <div className="pb-6">
+          {sheetActiveCount > 0 && (
+            <div className="flex justify-end -mt-2 mb-3">
+              <button
+                onClick={reset}
+                className="press font-mono text-[10.5px] text-text-dim underline underline-offset-2 py-1.5"
+              >
+                Limpiar
+              </button>
             </div>
+          )}
 
-            <div className="space-y-4">
-              <SheetField label="Mes">
-                <Select value={filters.month} onChange={(v) => update("month", v)} placeholder="Todos los meses" full>
-                  {months.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
-                </Select>
-              </SheetField>
-              <SheetField label="Cuenta">
-                <Select value={filters.account} onChange={(v) => update("account", v)} placeholder="Todas las cuentas" full>
-                  {accounts.map((a) => <option key={a} value={a}>{a}</option>)}
-                </Select>
-              </SheetField>
-              <SheetField label="Categoría">
-                <Select value={filters.category} onChange={(v) => update("category", v)} placeholder="Todas las categorías" full>
-                  {categories.map((c) => <option key={c} value={c}>{c}</option>)}
-                </Select>
-              </SheetField>
-            </div>
-
-            <button
-              onClick={() => setSheetOpen(false)}
-              className="press w-full mt-6 bg-accent text-white text-sm font-medium py-3 transition-transform duration-150 ease-out"
-            >
-              Aplicar
-            </button>
+          <div className="space-y-4">
+            <SheetField label="Mes">
+              <Select value={filters.month} onChange={(v) => update("month", v)} placeholder="Todos los meses" block>
+                {months.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
+              </Select>
+            </SheetField>
+            <SheetField label="Cuenta">
+              <Select value={filters.account} onChange={(v) => update("account", v)} placeholder="Todas las cuentas" block>
+                {accounts.map((a) => <option key={a} value={a}>{a}</option>)}
+              </Select>
+            </SheetField>
+            <SheetField label="Categoría">
+              <Select value={filters.category} onChange={(v) => update("category", v)} placeholder="Todas las categorías" block>
+                {categories.map((c) => <option key={c} value={c}>{c}</option>)}
+              </Select>
+            </SheetField>
           </div>
+
+          <button
+            onClick={() => setSheetOpen(false)}
+            className="press w-full mt-6 rounded-md bg-accent text-white text-sm font-medium py-3.5 min-h-[48px]"
+          >
+            Aplicar
+          </button>
         </div>
-      )}
+      </BottomSheet>
     </>
   );
 }
@@ -130,7 +128,7 @@ function Chip({ active, onClick, children }: { active: boolean; onClick: () => v
     <button
       onClick={onClick}
       className={cn(
-        "press shrink-0 font-mono text-[10.5px] font-medium tracking-wide uppercase px-2.5 py-[7px] border transition-colors duration-150 ease-out",
+        "press shrink-0 rounded-full font-mono text-[10.5px] font-medium tracking-wide uppercase px-3 py-[7px] border transition-colors duration-150 ease-out",
         active ? "border-accent text-accent bg-accent/10" : "border-border text-text-dim"
       )}
     >
@@ -145,32 +143,5 @@ function SheetField({ label, children }: { label: string; children: React.ReactN
       <label className="text-xs text-text-dim">{label}</label>
       {children}
     </div>
-  );
-}
-
-function Select({
-  value, onChange, placeholder, children, full,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  placeholder: string;
-  children: React.ReactNode;
-  full?: boolean;
-}) {
-  return (
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className={cn(
-        "font-mono text-xs bg-surface border border-border px-2.5 py-1.5 text-text-muted",
-        "hover:border-border-strong hover:text-text",
-        "focus:outline-none focus:ring-1 focus:ring-accent/40 focus:border-accent/60",
-        "appearance-none cursor-pointer transition-colors duration-150",
-        full && "w-full py-2.5 bg-bg"
-      )}
-    >
-      <option value="">{placeholder}</option>
-      {children}
-    </select>
   );
 }

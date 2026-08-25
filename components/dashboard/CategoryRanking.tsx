@@ -27,7 +27,7 @@ export function CategoryRanking({ data, limit = 10 }: Props) {
               <div key={c.category} className="flex items-center gap-2.5 py-[7px]">
                 <span className="font-mono text-[11px] text-text-faint w-3.5 shrink-0">{i + 1}</span>
                 <span className="text-[13px] text-text-muted w-[100px] shrink-0 truncate">{c.category}</span>
-                <div className="flex-1 h-3 bg-surface-2">
+                <div className="flex-1 h-3 rounded-sm bg-surface-2 overflow-hidden">
                   <div className="h-full" style={{ background: c.color, width: `${Math.round((c.amount / max) * 100)}%` }} />
                 </div>
                 <span className="font-mono text-xs text-text-muted w-16 text-right shrink-0">

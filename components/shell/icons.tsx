@@ -6,38 +6,71 @@ export function ChevronDownIcon({ className }: { className?: string }) {
   );
 }
 
-/** Inicio — solid square */
-export function SquareIcon({ className }: { className?: string }) {
+export function PlusIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24">
-      <rect x="6" y="6" width="12" height="12" fill="currentColor" />
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" d="M12 5v14M5 12h14" />
     </svg>
   );
 }
 
-/** Movimientos — stacked lines */
-export function LinesIcon({ className }: { className?: string }) {
+export function CloseIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" d="M5 7h14M5 12h9.5M5 17h14" />
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+      <path strokeLinecap="round" d="M6 6l12 12M18 6L6 18" />
     </svg>
   );
 }
 
-/** Cuentas — rectangle outline */
-export function RectangleIcon({ className }: { className?: string }) {
+export function CheckIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6}>
-      <rect x="3.5" y="6" width="17" height="12" rx="1.5" />
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.5l5 5 10-11" />
     </svg>
   );
 }
 
-/** Categorías — diamond outline */
-export function DiamondIcon({ className }: { className?: string }) {
+/** Tab icons take an `active` flag: the stroke thickens instead of the tab
+ *  growing a top rule, which is how native tab bars signal selection. */
+type TabIconProps = { className?: string; active?: boolean };
+
+const sw = (active?: boolean) => (active ? 2 : 1.6);
+
+/** Inicio */
+export function HomeIcon({ className, active }: TabIconProps) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6}>
-      <rect x="7" y="7" width="10" height="10" transform="rotate(45 12 12)" />
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={sw(active)}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3.5 11.2 12 4l8.5 7.2" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M5.8 10v9.2h4.4V14h3.6v5.2h4.4V10" />
+    </svg>
+  );
+}
+
+/** Movimientos */
+export function LinesIcon({ className, active }: TabIconProps) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={sw(active)}>
+      <path strokeLinecap="round" d="M4 7h16M4 12h10.5M4 17h16" />
+    </svg>
+  );
+}
+
+/** Cuentas */
+export function WalletIcon({ className, active }: TabIconProps) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={sw(active)}>
+      <path strokeLinejoin="round" d="M3.2 7.2h17.6v12.4H3.2z" />
+      <path d="M3.2 11h17.6" />
+      <circle cx="17" cy="15.4" r="1.15" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+/** Categorías */
+export function GridIcon({ className, active }: TabIconProps) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={sw(active)}>
+      <path strokeLinejoin="round" d="M4 4h6.4v6.4H4zM13.6 4H20v6.4h-6.4zM4 13.6h6.4V20H4zM13.6 13.6H20V20h-6.4z" />
     </svg>
   );
 }

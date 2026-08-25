@@ -1,8 +1,8 @@
-import { SquareIcon, LinesIcon, RectangleIcon, DiamondIcon } from "./icons";
+import { HomeIcon, LinesIcon, WalletIcon, GridIcon } from "./icons";
 
 export const NAV_ITEMS = [
-  { href: "/", label: "Inicio", icon: SquareIcon },
+  { href: "/", label: "Inicio", icon: HomeIcon },
   { href: "/movimientos", label: "Movimientos", icon: LinesIcon },
-  { href: "/cuentas", label: "Cuentas", icon: RectangleIcon },
-  { href: "/categorias", label: "Categorías", icon: DiamondIcon },
+  { href: "/cuentas", label: "Cuentas", icon: WalletIcon },
+  { href: "/categorias", label: "Categorías", icon: GridIcon },
 ] as const;

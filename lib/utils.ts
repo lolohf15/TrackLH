@@ -41,6 +41,24 @@ export function formatRelativeTime(dateStr: string): string {
   return `hace ${diffDays}d`;
 }
 
+/** Today in the device's own timezone, as `YYYY-MM-DD`. */
+export function getToday(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+/**
+ * Attach a wall-clock time to a `YYYY-MM-DD` day: the current local time when
+ * it's today, otherwise midday — so a back-dated entry doesn't land at a
+ * misleading hour.
+ */
+export function withLocalTime(day: string): string {
+  if (day !== getToday()) return `${day}T12:00:00`;
+  const d = new Date();
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${day}T${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+}
+
 export function getCurrentMonth(): string {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;

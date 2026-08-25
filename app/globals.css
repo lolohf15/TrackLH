@@ -5,14 +5,15 @@
   --font-sans:             var(--font-archivo), Archivo, sans-serif;
   --font-mono:             var(--font-ibm-plex-mono), "IBM Plex Mono", monospace;
 
-  /* Surfaces — ledger, not bento */
-  --color-bg:              #0a0b0c;
-  --color-surface:         #0e0f11;
-  --color-surface-2:       #17191c;
-  --color-surface-3:       #1a1c1e;
-  --color-border:          #232527;
-  --color-border-strong:   #2f3234;
-  --color-divider:         #1a1c1e;
+  /* Surfaces — a real ramp, so a panel reads as a surface lying on the page
+     and the insets inside it (fields, bar tracks) still separate from it. */
+  --color-bg:              #08090a;
+  --color-surface:         #131619;
+  --color-surface-2:       #1d2125;
+  --color-surface-3:       #272b30;
+  --color-border:          #282c30;
+  --color-border-strong:   #383d42;
+  --color-divider:         #212528;
 
   /* Text */
   --color-text:            #eef0f0;
@@ -39,6 +40,21 @@
   --color-amber-bg:        rgba(217, 154, 21, 0.12);
   --color-amber-border:    rgba(217, 154, 21, 0.32);
 
+  /* Corners — the radius steps with the surface it wraps: marks, then
+     controls, then panels, then the sheet. Nothing lands on a hard 90°. */
+  --radius-xs:             5px;
+  --radius-sm:             9px;
+  --radius-md:             13px;
+  --radius-lg:             18px;
+  --radius-xl:             24px;
+  --radius-sheet:          28px;
+
+  /* Depth — every shadow carries an offset and a soft blur. The inset
+     hairline is the light catching the top edge of the material. */
+  --shadow-panel:  inset 0 1px 0 rgba(255,255,255,0.045), 0 1px 1px rgba(0,0,0,0.5), 0 6px 16px -6px rgba(0,0,0,0.55);
+  --shadow-float:  0 6px 14px -4px rgba(0,0,0,0.55), 0 18px 40px -12px rgba(0,0,0,0.5);
+  --shadow-sheet:  0 -12px 48px -12px rgba(0,0,0,0.7);
+
   /* Motion — strong custom curves; the built-ins are punchless */
   --ease-out:              cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out:           cubic-bezier(0.77, 0, 0.175, 1);
@@ -54,13 +70,28 @@
     -moz-osx-font-smoothing: grayscale;
     color-scheme: dark;
     overscroll-behavior-x: none;
+    /* Keep pull-to-refresh and scroll-chaining out; the in-page rubber-band
+       stays, since it's the correct "end of content" signal on long tabs. */
+    overscroll-behavior-y: contain;
+    -webkit-text-size-adjust: 100%;
   }
 
   body {
     background-color: var(--color-bg);
     color: var(--color-text);
     overscroll-behavior-x: none;
+    overscroll-behavior-y: contain;
+    /* Native app feel: no blue flash on tap, no 300ms double-tap delay. */
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
   }
+
+  /* Text is content, not chrome — let it be selected; UI shouldn't be. */
+  button, a, label, nav, header { -webkit-user-select: none; user-select: none; }
+
+  /* Browser surfaces ship with defaults that belong to no design system. */
+  ::selection { background: rgba(91, 127, 181, 0.32); color: var(--color-text); }
+  input, textarea { caret-color: var(--color-accent); }
 
   ::-webkit-scrollbar { width: 5px; height: 5px; }
   ::-webkit-scrollbar-track { background: var(--color-bg); }
@@ -108,20 +139,33 @@
   to { transform: rotate(360deg); }
 }
 
-@keyframes sheetUp {
-  from { transform: translateY(100%); }
-  to   { transform: translateY(0); }
-}
-
 @layer utilities {
   .tabular-nums        { font-variant-numeric: tabular-nums; }
+
+  /* An inset group of rows — the app's main surface. Rounded, lifted off the
+     page by shadow rather than fenced in by a hairline. */
+  .panel {
+    background-color: var(--color-surface);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-panel);
+    overflow: hidden;
+  }
+
+  /* Floating chrome meeting scrolling content: a soft edge, not a 1px rule. */
+  .scroll-edge::after {
+    content: "";
+    position: absolute;
+    left: 0; right: 0; top: 100%;
+    height: 16px;
+    background: linear-gradient(to bottom, rgba(8, 9, 10, 0.55), rgba(8, 9, 10, 0));
+    pointer-events: none;
+  }
 
   .animate-fade-in-up  { animation: fadeInUp 0.25s var(--ease-out) both; }
   .animate-fade-in     { animation: fadeIn 0.2s var(--ease-out) both; }
   .animate-bar-grow    { animation: barGrow 0.5s var(--ease-out) both; transform-origin: left; }
   .animate-pulse-dot   { animation: pulseDot 1.4s ease-in-out infinite; }
   .animate-spin-fast   { animation: spin 0.7s linear infinite; }
-  .animate-sheet-up    { animation: sheetUp 280ms var(--ease-drawer) both; }
 
   /* Interruptible press feedback */
   .press               { transition: transform 160ms var(--ease-out); }
@@ -131,12 +175,21 @@
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-in-up,
   .animate-bar-grow,
-  .animate-pulse-dot,
-  .animate-sheet-up { animation: none; }
+  .animate-pulse-dot { animation: none; }
   .animate-spin-fast { animation-duration: 1.4s; }
   .press { transition: none; }
   .transition-\[max-height\] { transition: none; }
   * { scroll-behavior: auto !important; }
+}
+
+/* Reduced transparency wants a frostier, solid material — not a blurred one. */
+@media (prefers-reduced-transparency: reduce) {
+  .backdrop-blur-xl { backdrop-filter: none; }
+  .bg-surface\/80 { background-color: var(--color-surface); }
+}
+
+@media (prefers-contrast: more) {
+  .panel { box-shadow: none; outline: 1px solid var(--color-border-strong); }
 }
 
 @media (hover: none) {

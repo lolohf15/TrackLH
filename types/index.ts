@@ -53,8 +53,8 @@ export const TRANSACTION_TYPE_COLORS: Record<string, string> = {
 
 // Category colors — mapped by meaning onto the redesign's 7-swatch palette
 // (3 warm / 3 cool / 1 neutral), plus one extra warm tone for the 8th
-// category since our real Notion categories don't line up 1:1 with the
-// design mockup's placeholder set.
+// category since our real categories don't line up 1:1 with the design
+// mockup's placeholder set.
 export const CATEGORY_COLORS: Record<string, string> = {
   Alimentos: "#e0703a",  // warm orange (food)
   Gustos: "#d99a15",     // warm gold (discretionary treats)
@@ -85,6 +85,12 @@ export const DEFAULT_BUDGETS: Array<{ category: string; amount: number }> = [
 ];
 
 export const TOTAL_BUDGET = DEFAULT_BUDGETS.reduce((s, b) => s + b.amount, 0); // 8250
+
+// Category options offered when logging a transaction, matching what the iOS
+// shortcut writes.
+export const EXPENSE_CATEGORIES: string[] = DEFAULT_BUDGETS.map((b) => b.category);
+
+export const INCOME_CATEGORIES: string[] = ["Dinero Mes", "Extra Cash", "Otro"];
 
 export interface Transaction {
   id: string;
@@ -177,11 +183,13 @@ export interface PaginatedTransactions {
   totalPages: number;
 }
 
-export interface SyncResult {
-  success: boolean;
-  count: number;
-  skipped: number;
-  warnings: string[];
-  message: string;
-  syncedAt: string;
+export interface NewTransactionInput {
+  type: TransactionType;
+  account: string;
+  toAccount?: string;
+  category?: string;
+  amount: number;
+  /** Local wall clock, `YYYY-MM-DDTHH:mm:ss`. */
+  date: string;
+  description?: string;
 }

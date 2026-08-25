@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useEffect } from "react";
+import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import useSWR from "swr";
 import { TransactionTable } from "@/components/transactions/TransactionTable";
@@ -27,17 +27,16 @@ function MovimientosContent() {
   const searchParams = useSearchParams();
   const categoryParam = searchParams.get("category") ?? "";
 
+  // Arriving with a different ?category= is a different starting point, so the
+  // filters restart from it instead of an effect syncing them after the fact.
+  return <MovimientosFilters key={categoryParam} categoryParam={categoryParam} />;
+}
+
+function MovimientosFilters({ categoryParam }: { categoryParam: string }) {
   const [filters, setFilters] = useState<TransactionFilters>({
     month: categoryParam ? "" : getCurrentMonth(),
     category: categoryParam, account: "", type: "", page: 1, limit: 50,
   });
-
-  useEffect(() => {
-    if (categoryParam) {
-      setFilters((f) => ({ ...f, category: categoryParam, month: "", page: 1 }));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [categoryParam]);
 
   const { data: transactions, isLoading: txLoading } =
     useSWR<PaginatedTransactions>(buildTxUrl(filters), fetcher);
@@ -57,7 +56,7 @@ function MovimientosContent() {
         />
       </div>
 
-      <div className="hidden md:block">
+      <div className="panel hidden md:block">
         <TransactionTable
           data={transactions ?? null}
           loading={txLoading}
@@ -65,7 +64,7 @@ function MovimientosContent() {
           onPageChange={(p) => setFilters((f) => ({ ...f, page: p }))}
         />
       </div>
-      <div className="md:hidden">
+      <div className="panel px-4 pb-2 md:hidden">
         <TransactionList
           data={transactions ?? null}
           loading={txLoading}
