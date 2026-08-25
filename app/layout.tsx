@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Archivo, IBM_Plex_Mono } from "next/font/google";
-import { AppShell } from "@/components/shell/AppShell";
+import { SessionProvider } from "next-auth/react";
 import "./globals.css";
 
 const archivo = Archivo({
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0a0b0c",
+  themeColor: "#000000",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -50,7 +50,9 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body className={`${archivo.variable} ${ibmPlexMono.variable} ${archivo.className}`}>
-        <AppShell>{children}</AppShell>
+        {/* The shell now lives in the (app) route group, so signed-out and
+            onboarding screens render without a tab bar. */}
+        <SessionProvider>{children}</SessionProvider>
       </body>
     </html>
   );

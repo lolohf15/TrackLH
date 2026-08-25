@@ -1,17 +1,16 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { mutate } from "swr";
+import Link from "next/link";
+import useSWR, { mutate } from "swr";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
 import { CheckIcon } from "@/components/shell/icons";
 import { cn, getToday, withLocalTime } from "@/lib/utils";
 import {
-  ALL_ACCOUNTS,
-  EXPENSE_CATEGORIES,
-  INCOME_CATEGORIES,
   VALID_TRANSACTION_TYPES,
+  type Catalog,
   type TransactionType,
 } from "@/types";
 
@@ -20,11 +19,16 @@ interface Props {
   onClose: () => void;
 }
 
-const DEFAULT_ACCOUNT = "Revolut";
+const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 export function AddRecordSheet({ open, onClose }: Props) {
+  // The options come from the same rows the server validates against, so the
+  // form can never offer something the POST would reject.
+  const { data: catalog } = useSWR<Catalog>("/api/catalog", fetcher);
+  const accounts = catalog?.accounts ?? [];
+
   const [type, setType] = useState<TransactionType>("Gasto");
-  const [account, setAccount] = useState<string>(DEFAULT_ACCOUNT);
+  const [account, setAccount] = useState<string>("");
   const [toAccount, setToAccount] = useState("");
   const [category, setCategory] = useState("");
   const [amount, setAmount] = useState("");
@@ -46,15 +50,20 @@ export function AddRecordSheet({ open, onClose }: Props) {
   }, []);
 
   const isTransfer = type === "Transferencia";
-  const categories = type === "Ingreso" ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
+  const categories =
+    type === "Ingreso" ? catalog?.incomeCategories ?? [] : catalog?.expenseCategories ?? [];
   const parsedAmount = Number(amount);
+
+  // Nothing selected yet and the catalog just arrived: lead with the first
+  // account rather than an empty select the user has to open.
+  const selectedAccount = account || accounts[0]?.account || "";
 
   const canSubmit =
     !saving &&
     isFinite(parsedAmount) &&
     parsedAmount > 0 &&
-    !!account &&
-    (isTransfer ? !!toAccount && toAccount !== account : !!category);
+    !!selectedAccount &&
+    (isTransfer ? !!toAccount && toAccount !== selectedAccount : !!category);
 
   async function submit() {
     if (!canSubmit) return;
@@ -67,7 +76,7 @@ export function AddRecordSheet({ open, onClose }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           type,
-          account,
+          account: selectedAccount,
           toAccount: isTransfer ? toAccount : undefined,
           category: isTransfer ? undefined : category,
           amount: parsedAmount,
@@ -92,6 +101,28 @@ export function AddRecordSheet({ open, onClose }: Props) {
     } finally {
       setSaving(false);
     }
+  }
+
+  // A user who skipped the wizard has nothing to pick from. Say so and point
+  // at the fix instead of showing empty dropdowns.
+  if (catalog && accounts.length === 0) {
+    return (
+      <BottomSheet open={open} onClose={onClose} title="Nuevo movimiento">
+        <div className="pb-8 pt-2 text-center space-y-4">
+          <p className="text-[15px] text-text">Todavía no tienes cuentas</p>
+          <p className="text-[13px] text-text-dim leading-relaxed max-w-xs mx-auto">
+            Agrega al menos una cuenta para poder registrar movimientos.
+          </p>
+          <Link
+            href="/bienvenida"
+            onClick={onClose}
+            className="press inline-flex items-center justify-center rounded-md bg-accent text-white text-sm font-medium px-5 py-3 min-h-[48px]"
+          >
+            Configurar mis cuentas
+          </Link>
+        </div>
+      </BottomSheet>
+    );
   }
 
   return (
@@ -135,9 +166,9 @@ export function AddRecordSheet({ open, onClose }: Props) {
         </Field>
 
         <Field label={isTransfer ? "Cuenta origen" : "Cuenta"}>
-          <Select value={account} onChange={setAccount} block aria-label="Cuenta">
-            {ALL_ACCOUNTS.map((a) => (
-              <option key={a} value={a}>{a}</option>
+          <Select value={selectedAccount} onChange={setAccount} block aria-label="Cuenta">
+            {accounts.map((a) => (
+              <option key={a.account} value={a.account}>{a.account}</option>
             ))}
           </Select>
         </Field>
@@ -151,8 +182,8 @@ export function AddRecordSheet({ open, onClose }: Props) {
               block
               aria-label="Cuenta destino"
             >
-              {ALL_ACCOUNTS.filter((a) => a !== account).map((a) => (
-                <option key={a} value={a}>{a}</option>
+              {accounts.filter((a) => a.account !== selectedAccount).map((a) => (
+                <option key={a.account} value={a.account}>{a.account}</option>
               ))}
             </Select>
           </Field>
@@ -166,7 +197,7 @@ export function AddRecordSheet({ open, onClose }: Props) {
               aria-label="Categoría"
             >
               {categories.map((c) => (
-                <option key={c} value={c}>{c}</option>
+                <option key={c.id} value={c.name}>{c.name}</option>
               ))}
             </Select>
           </Field>

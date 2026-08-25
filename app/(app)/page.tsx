@@ -31,8 +31,10 @@ export default function Home() {
   const income = dashboard?.monthlyIncome ?? 0;
   const expenses = dashboard?.monthlyExpenses ?? 0;
   const net = dashboard?.netBalance ?? 0;
-  const netTotal = income + expenses || 1;
-  const incomePct = Math.round((income / netTotal) * 100);
+  // A month with no activity at all is not "100% spent" — it has nothing to
+  // split, so the bar stays an empty track rather than going fully red.
+  const hasActivity = income + expenses > 0;
+  const incomePct = hasActivity ? Math.round((income / (income + expenses)) * 100) : 0;
 
   const prevExpenses = dashboard?.prevMonthExpenses ?? 0;
   const prevIncome = dashboard?.prevMonthIncome ?? 0;
@@ -114,8 +116,12 @@ export default function Home() {
                 </span>
               </div>
               <div className="flex h-1.5 w-full rounded-full bg-surface-2 overflow-hidden">
-                <div className="h-full bg-green-fg" style={{ width: `${incomePct}%` }} />
-                <div className="h-full bg-red-fg" style={{ width: `${100 - incomePct}%` }} />
+                {hasActivity && (
+                  <>
+                    <div className="h-full bg-green-fg" style={{ width: `${incomePct}%` }} />
+                    <div className="h-full bg-red-fg" style={{ width: `${100 - incomePct}%` }} />
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -129,7 +135,14 @@ export default function Home() {
               </Link>
             </SectionLabel>
             <div className="panel px-4 pb-2">
-              <TransactionList data={recent ?? null} loading={recentLoading} page={1} onPageChange={() => {}} />
+              <TransactionList
+                data={recent ?? null}
+                loading={recentLoading}
+                page={1}
+                onPageChange={() => {}}
+                emptyTitle="Aún no hay movimientos"
+                emptyHint="Toca el botón + para registrar tu primer gasto o ingreso"
+              />
             </div>
           </section>
 

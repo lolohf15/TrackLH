@@ -6,9 +6,10 @@ import type {
   DashboardData,
   CategoryTrend,
 } from "@/types";
-import { ACCOUNT_COLORS, CATEGORY_COLORS, DEFAULT_BUDGETS, TOTAL_BUDGET } from "@/types";
+import { UNKNOWN_COLOR } from "@/types";
 
-const UNKNOWN_CATEGORY_COLOR = "#6b7075";
+/** Category name -> color, built from this user's Category rows. */
+export type ColorMap = Map<string, string>;
 
 // Rule 12: all amounts rounded to 2 decimals
 export function round2(n: number): number {
@@ -58,7 +59,7 @@ export function computeAccountBalances(
     const config = configMap.get(account);
     const initialBalance = config?.initialBalance ?? 0;
     const isCredit = config?.isCredit ?? false;
-    const color = config?.color ?? ACCOUNT_COLORS[account] ?? "#9CA3AF";
+    const color = config?.color ?? UNKNOWN_COLOR;
     const balanceAdjustment = config?.balanceAdjustment ?? 0;
 
     let income = 0;
@@ -115,7 +116,8 @@ export function computeMonthlyExpenses(transactions: Transaction[], month: strin
 
 export function computeCategoryExpenses(
   transactions: Transaction[],
-  month: string
+  month: string,
+  colors: ColorMap
 ): CategorySummary[] {
   // Rule 11: only Gasto counts toward categories
   const monthly = filterByMonth(transactions, month).filter((t) => t.type === "Gasto");
@@ -136,18 +138,19 @@ export function computeCategoryExpenses(
       amount,
       count,
       percentage: total > 0 ? round2((amount / total) * 100) : 0,
-      color: CATEGORY_COLORS[category] ?? UNKNOWN_CATEGORY_COLOR,
+      color: colors.get(category) ?? UNKNOWN_COLOR,
     }));
 }
 
 export function computeCategoryTrends(
   transactions: Transaction[],
   months: string[],
-  budgets: Array<{ category: string; amount: number }>
+  budgets: Array<{ category: string; amount: number }>,
+  colors: ColorMap
 ): CategoryTrend[] {
   const budgetMap = new Map(budgets.map((b) => [b.category, b.amount]));
 
-  const perMonth = months.map((m) => computeCategoryExpenses(transactions, m));
+  const perMonth = months.map((m) => computeCategoryExpenses(transactions, m, colors));
   const currentSummaries = perMonth[perMonth.length - 1];
 
   const categories = new Set<string>();
@@ -164,7 +167,7 @@ export function computeCategoryTrends(
       }));
       return {
         category,
-        color: currentEntry?.color ?? CATEGORY_COLORS[category] ?? UNKNOWN_CATEGORY_COLOR,
+        color: currentEntry?.color ?? colors.get(category) ?? UNKNOWN_COLOR,
         points,
         currentAmount: currentEntry?.amount ?? 0,
         budget: budgetMap.get(category) ?? 0,
@@ -176,9 +179,10 @@ export function computeCategoryTrends(
 export function computeBudgetItems(
   transactions: Transaction[],
   month: string,
-  budgets: Array<{ category: string; amount: number }>
+  budgets: Array<{ category: string; amount: number }>,
+  colors: ColorMap
 ): BudgetItem[] {
-  const categoryExpenses = computeCategoryExpenses(transactions, month);
+  const categoryExpenses = computeCategoryExpenses(transactions, month, colors);
   const expMap = new Map(categoryExpenses.map((c) => [c.category, c.amount]));
 
   return budgets.map(({ category, amount: budget }) => {
@@ -189,16 +193,18 @@ export function computeBudgetItems(
       spent,
       percentage: budget > 0 ? Math.min(round2((spent / budget) * 100), 100) : 0,
       remaining: round2(budget - spent),
+      color: colors.get(category) ?? UNKNOWN_COLOR,
     };
   });
 }
 
-// Rule 11: budget utilization — use actual configured totals, not the hardcoded constant
+// Rule 11: budget utilization — always the user's own configured totals
 function computeBudgetUtilization(
   budgetItems: BudgetItem[]
 ): { budgetUsed: number; budgetTotal: number; budgetUsedPercent: number } {
   const budgetUsed  = round2(budgetItems.reduce((s, b) => s + b.spent, 0));
-  const budgetTotal = round2(budgetItems.reduce((s, b) => s + b.budget, 0)) || TOTAL_BUDGET;
+  // `??` not `||`: a user who has budgeted nothing genuinely has a total of 0.
+  const budgetTotal = round2(budgetItems.reduce((s, b) => s + b.budget, 0));
   const budgetUsedPercent = budgetTotal > 0 ? Math.min(round2((budgetUsed / budgetTotal) * 100), 100) : 0;
   return { budgetUsed, budgetTotal, budgetUsedPercent };
 }
@@ -208,22 +214,22 @@ export function buildDashboardData(
   month: string,
   accountConfigs: Array<{ account: string; initialBalance: number; isCredit: boolean; color: string | null; balanceAdjustment?: number }>,
   budgetConfigs: Array<{ category: string; amount: number }>,
-  lastSyncAt: string | null
+  lastSyncAt: string | null,
+  colors: ColorMap
 ): DashboardData {
   const accountBalances = computeAccountBalances(transactions, accountConfigs);
   const totalAvailable = computeTotalAvailable(accountBalances);
   const monthlyExpenses = computeMonthlyExpenses(transactions, month);
   const monthlyIncome = computeMonthlyIncome(transactions, month);
   const netBalance = round2(monthlyIncome - monthlyExpenses);
-  const categoryExpenses = computeCategoryExpenses(transactions, month);
+  const categoryExpenses = computeCategoryExpenses(transactions, month, colors);
 
   const prevMonth = getPrevMonth(month);
   const prevMonthExpenses = computeMonthlyExpenses(transactions, prevMonth);
   const prevMonthIncome   = computeMonthlyIncome(transactions, prevMonth);
 
-  // Use DEFAULT_BUDGETS if no DB configs exist yet
-  const effectiveBudgets = budgetConfigs.length > 0 ? budgetConfigs : DEFAULT_BUDGETS;
-  const budgetItems = computeBudgetItems(transactions, month, effectiveBudgets);
+  // No global fallback: a new user simply has no budgets until they set some.
+  const budgetItems = computeBudgetItems(transactions, month, budgetConfigs, colors);
   const { budgetUsed, budgetTotal, budgetUsedPercent } = computeBudgetUtilization(budgetItems);
 
   return {

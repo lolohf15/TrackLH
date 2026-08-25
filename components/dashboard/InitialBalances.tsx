@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { formatMXN, formatDate } from "@/lib/utils";
 import { cn } from "@/lib/utils";
-import { ACCOUNT_COLORS } from "@/types";
+import { UNKNOWN_COLOR } from "@/types";
 
 interface AccountConfig {
   id: number;
@@ -224,7 +224,7 @@ function AccountRow({
   onSave: () => void;
 }) {
   if (!row) return null;
-  const color = account.color ?? ACCOUNT_COLORS[account.account] ?? "#737373";
+  const color = account.color ?? UNKNOWN_COLOR;
 
   const adjustmentSign = account.balanceAdjustment >= 0 ? "+" : "";
   const hasAdjustment = account.balanceAdjustment !== 0;

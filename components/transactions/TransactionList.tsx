@@ -11,6 +11,9 @@ interface Props {
   loading: boolean;
   page: number;
   onPageChange: (page: number) => void;
+  /** Shown when there is nothing to list. Defaults to the filtered-view copy. */
+  emptyTitle?: string;
+  emptyHint?: string;
 }
 
 const dotColors: Record<TransactionType, string> = {
@@ -44,13 +47,17 @@ function dayLabel(dateStr: string): string {
   }).format(d).replace(/^\w/, (c) => c.toUpperCase());
 }
 
-export function TransactionList({ data, loading, page, onPageChange }: Props) {
+export function TransactionList({
+  data, loading, page, onPageChange,
+  emptyTitle = "Sin transacciones",
+  emptyHint = "Ajusta los filtros para ver otros movimientos",
+}: Props) {
   if (loading) {
     return <TableSkeleton rows={6} />;
   }
 
   if (!data || data.data.length === 0) {
-    return <EmptyState icon="—" title="Sin transacciones" description="Ajusta los filtros para ver otros movimientos" />;
+    return <EmptyState icon="—" title={emptyTitle} description={emptyHint} />;
   }
 
   const groups: Array<{ label: string; items: Transaction[] }> = [];

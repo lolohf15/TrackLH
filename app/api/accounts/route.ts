@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireUser, errorResponse } from "@/lib/auth";
 import { round2, computeAccountBalances } from "@/services/finance";
-import { ensureDefaults } from "@/services/defaults";
 import type { Transaction } from "@/types";
 
 type AccountRow = {
   id: number;
+  userId: string;
   account: string;
   initialBalance: number;
   initialBalanceDate: Date | null;
@@ -34,8 +35,8 @@ function serializeAccount(a: AccountRow, calculatedBalance: number, currentBalan
   };
 }
 
-async function fetchTxs(): Promise<Transaction[]> {
-  const rows = await prisma.transaction.findMany();
+async function fetchTxs(userId: string): Promise<Transaction[]> {
+  const rows = await prisma.transaction.findMany({ where: { userId } });
   return rows.map((t) => ({
     id: t.id,
     date: t.date.toISOString(),
@@ -53,10 +54,14 @@ async function fetchTxs(): Promise<Transaction[]> {
 
 export async function GET() {
   try {
-    await ensureDefaults();
+    const userId = await requireUser();
+
     const [accounts, txs] = await Promise.all([
-      prisma.accountConfig.findMany({ orderBy: [{ isCredit: "asc" }, { account: "asc" }] }),
-      fetchTxs(),
+      prisma.accountConfig.findMany({
+        where: { userId },
+        orderBy: [{ isCredit: "asc" }, { account: "asc" }],
+      }),
+      fetchTxs(userId),
     ]);
 
     const balances = computeAccountBalances(txs, accounts);
@@ -73,13 +78,14 @@ export async function GET() {
       })
     );
   } catch (err) {
-    console.error("[GET /api/accounts]", err);
-    return NextResponse.json({ error: "No se pudieron cargar las cuentas" }, { status: 500 });
+    return errorResponse(err, "GET /api/accounts");
   }
 }
 
 export async function PUT(req: NextRequest) {
   try {
+    const userId = await requireUser();
+
     let body: unknown;
     try {
       body = await req.json();
@@ -105,11 +111,9 @@ export async function PUT(req: NextRequest) {
     }
     const rounded = round2(parsed);
 
-    await ensureDefaults();
-
     const [accounts, txs] = await Promise.all([
-      prisma.accountConfig.findMany(),
-      fetchTxs(),
+      prisma.accountConfig.findMany({ where: { userId } }),
+      fetchTxs(userId),
     ]);
 
     const config = accounts.find((a) => a.account === account.trim());
@@ -123,8 +127,10 @@ export async function PUT(req: NextRequest) {
 
     const adjustment = round2(rounded - calculatedBalance);
 
+    // Account names are only unique within a tenant now, so the update has to
+    // travel through the compound key rather than the bare name.
     const updated = await prisma.accountConfig.update({
-      where: { account: account.trim() },
+      where: { userId_account: { userId, account: account.trim() } },
       data: {
         balanceAdjustment: adjustment,
         adjustmentDate: new Date(),
@@ -137,8 +143,6 @@ export async function PUT(req: NextRequest) {
 
     return NextResponse.json(serializeAccount(updated, calculatedBalance, rounded));
   } catch (err) {
-    console.error("[PUT /api/accounts]", err);
-    const message = err instanceof Error ? err.message : "Error interno del servidor";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return errorResponse(err, "PUT /api/accounts");
   }
 }

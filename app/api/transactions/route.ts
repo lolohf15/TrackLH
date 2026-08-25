@@ -1,54 +1,61 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
-import { ensureDefaults } from "@/services/defaults";
-import { ALL_ACCOUNTS, isValidTransactionType } from "@/types";
+import { requireUser, errorResponse } from "@/lib/auth";
+import { isValidTransactionType } from "@/types";
 import type { Transaction } from "@/types";
 
 export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const month    = searchParams.get("month")    ?? "";
-  const category = searchParams.get("category") ?? "";
-  const account  = searchParams.get("account")  ?? "";
-  const type     = searchParams.get("type")     ?? "";
-  const page     = Math.max(1, parseInt(searchParams.get("page")  ?? "1"));
-  const limit    = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") ?? "50")));
+  try {
+    const userId = await requireUser();
 
-  const where: Prisma.TransactionWhereInput = {};
-  if (category) where.category = category;
-  if (account)  where.account  = account;
-  if (type)     where.type     = type;
+    const { searchParams } = new URL(req.url);
+    const month    = searchParams.get("month")    ?? "";
+    const category = searchParams.get("category") ?? "";
+    const account  = searchParams.get("account")  ?? "";
+    const type     = searchParams.get("type")     ?? "";
+    const page     = Math.max(1, parseInt(searchParams.get("page")  ?? "1"));
+    const limit    = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") ?? "50")));
 
-  if (month) {
-    const [year, m] = month.split("-").map(Number);
-    where.date = { gte: new Date(Date.UTC(year, m - 1, 1)), lt: new Date(Date.UTC(year, m, 1)) };
+    // Seeded with the tenant so the count and the page always share a scope.
+    const where: Prisma.TransactionWhereInput = { userId };
+    if (category) where.category = category;
+    if (account)  where.account  = account;
+    if (type)     where.type     = type;
+
+    if (month) {
+      const [year, m] = month.split("-").map(Number);
+      where.date = { gte: new Date(Date.UTC(year, m - 1, 1)), lt: new Date(Date.UTC(year, m, 1)) };
+    }
+
+    const [total, rows] = await Promise.all([
+      prisma.transaction.count({ where }),
+      prisma.transaction.findMany({
+        where,
+        orderBy: { date: "desc" },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+    ]);
+
+    const data: Transaction[] = rows.map((t) => ({
+      id: t.id,
+      date: t.date.toISOString(),
+      amount: t.amount,
+      type: t.type as Transaction["type"],
+      category: t.category,
+      account: t.account,
+      toAccount: t.toAccount,
+      description: t.description,
+      notes: t.notes,
+      procesado: t.procesado,
+      syncedAt: t.syncedAt.toISOString(),
+    }));
+
+    return NextResponse.json({ data, total, page, limit, totalPages: Math.ceil(total / limit) });
+  } catch (err) {
+    return errorResponse(err, "GET /api/transactions");
   }
-
-  const [total, rows] = await Promise.all([
-    prisma.transaction.count({ where }),
-    prisma.transaction.findMany({
-      where,
-      orderBy: { date: "desc" },
-      skip: (page - 1) * limit,
-      take: limit,
-    }),
-  ]);
-
-  const data: Transaction[] = rows.map((t) => ({
-    id: t.id,
-    date: t.date.toISOString(),
-    amount: t.amount,
-    type: t.type as Transaction["type"],
-    category: t.category,
-    account: t.account,
-    toAccount: t.toAccount,
-    description: t.description,
-    notes: t.notes,
-    procesado: t.procesado,
-    syncedAt: t.syncedAt.toISOString(),
-  }));
-
-  return NextResponse.json({ data, total, page, limit, totalPages: Math.ceil(total / limit) });
 }
 
 /** "2026-08-25T09:33:39" — a local wall clock, no zone. Seconds optional. */
@@ -81,9 +88,11 @@ function buildId(at: Date): string {
   return `${stamp} - ${p(Math.floor(Math.random() * 10000), 4)}`;
 }
 
-/** Log a transaction straight into the database the shortcut also writes to. */
+/** Log a transaction into the signed-in user's ledger. */
 export async function POST(req: NextRequest) {
   try {
+    const userId = await requireUser();
+
     let body: unknown;
     try {
       body = await req.json();
@@ -99,7 +108,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Tipo de movimiento inválido" }, { status: 400 });
     }
 
-    if (typeof account !== "string" || !ALL_ACCOUNTS.includes(account as never)) {
+    // Accounts are per-user rows now, so the valid set comes from the database
+    // — the same source the add-record form reads its options from.
+    const ownAccounts = new Set(
+      (await prisma.accountConfig.findMany({
+        where: { userId },
+        select: { account: true },
+      })).map((a) => a.account)
+    );
+
+    if (typeof account !== "string" || !ownAccounts.has(account)) {
       return NextResponse.json({ error: "Cuenta inválida" }, { status: 400 });
     }
 
@@ -117,7 +135,7 @@ export async function POST(req: NextRequest) {
     let resolvedCategory: string | null = null;
 
     if (type === "Transferencia") {
-      if (typeof toAccount !== "string" || !ALL_ACCOUNTS.includes(toAccount as never)) {
+      if (typeof toAccount !== "string" || !ownAccounts.has(toAccount)) {
         return NextResponse.json({ error: "Cuenta destino inválida" }, { status: 400 });
       }
       if (toAccount === account) {
@@ -134,9 +152,8 @@ export async function POST(req: NextRequest) {
       resolvedCategory = category.trim();
     }
 
-    await ensureDefaults();
-
     const data = {
+      userId,
       date: when,
       amount: Math.round(parsedAmount * 100) / 100, // rule 12
       type,
@@ -148,7 +165,8 @@ export async function POST(req: NextRequest) {
       procesado: false,
     };
 
-    // The random suffix can theoretically collide within the same second.
+    // The random suffix can collide within the same second, and the id space
+    // is shared across users.
     for (let attempt = 0; ; attempt++) {
       try {
         const created = await prisma.transaction.create({
@@ -162,8 +180,6 @@ export async function POST(req: NextRequest) {
       }
     }
   } catch (err) {
-    console.error("[POST /api/transactions]", err);
-    const message = err instanceof Error ? err.message : "Error interno del servidor";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return errorResponse(err, "POST /api/transactions");
   }
 }

@@ -4,6 +4,7 @@ import { useState } from "react";
 import useSWR from "swr";
 import { mutate } from "swr";
 import { InitialBalances } from "@/components/dashboard/InitialBalances";
+import { AccountPanel } from "@/components/auth/AccountPanel";
 import { ChartSkeleton } from "@/components/ui/Skeleton";
 import { ChevronDownIcon } from "@/components/shell/icons";
 import { formatMXN, getCurrentMonth, cn } from "@/lib/utils";
@@ -81,6 +82,10 @@ export default function Cuentas() {
             )}
           >
             <InitialBalances onSaved={() => mutate(() => true)} />
+          </div>
+
+          <div className="mt-3">
+            <AccountPanel />
           </div>
         </div>
       </div>

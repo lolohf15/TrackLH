@@ -4,13 +4,14 @@ import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { formatMXN } from "@/lib/utils";
 import { cn } from "@/lib/utils";
-import { CATEGORY_COLORS, BUDGET_COLOR_OVERRIDES } from "@/types";
 import type { BudgetItem } from "@/types";
 
+/** Over budget shouts red, near budget shouts amber, otherwise the category
+ *  keeps its own colour — which now travels on the item from the database. */
 function rowColor(item: BudgetItem): string {
   if (item.percentage >= 100) return "#e5484d";
   if (item.percentage >= 90) return "#d99a15";
-  return BUDGET_COLOR_OVERRIDES[item.category] ?? CATEGORY_COLORS[item.category] ?? "#6b7075";
+  return item.color;
 }
 
 export function BudgetTracker({ data, bare = false }: { data: BudgetItem[]; bare?: boolean }) {

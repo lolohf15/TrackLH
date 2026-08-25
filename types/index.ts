@@ -10,87 +10,31 @@ export function isValidTransactionType(t: string): t is TransactionType {
   return VALID_TRANSACTION_TYPES.includes(t as TransactionType);
 }
 
-export type AccountName =
-  | "Nu Crédito"
-  | "Nu Débito"
-  | "Revolut"
-  | "Revolut Débito"
-  | "BBVA Débito"
-  | "Efectivo"
-  | "Inversiones";
+/** Fallback for a category or account that exists on a row but has no config. */
+export const UNKNOWN_COLOR = "#6b7075";
 
-// Debit accounts: rule 6
-export const DEBIT_ACCOUNTS: AccountName[] = [
-  "Nu Débito",
-  "Revolut Débito",
-  "BBVA Débito",
-  "Efectivo",
-  "Inversiones",
-];
+export type CategoryKind = "expense" | "income";
 
-// Credit accounts: rule 7 — Revolut is credit, not debit
-export const CREDIT_ACCOUNTS: AccountName[] = ["Nu Crédito", "Revolut"];
+export interface Category {
+  id: string;
+  name: string;
+  color: string;
+  kind: CategoryKind;
+  sortOrder: number;
+}
 
-export const ALL_ACCOUNTS: AccountName[] = [...DEBIT_ACCOUNTS, ...CREDIT_ACCOUNTS];
+export interface AccountOption {
+  account: string;
+  isCredit: boolean;
+  color: string | null;
+}
 
-// Ledger dot colors — one distinct hue per debit account. Credit accounts
-// are always red (rule: credit = red, never a neutral/positive color).
-export const ACCOUNT_COLORS: Record<string, string> = {
-  "Nu Débito": "#d99a15",
-  "Revolut Débito": "#3a8f95",
-  "BBVA Débito": "#5b7fb5",
-  Efectivo: "#6b7075",
-  Inversiones: "#4f9d5f",
-  "Nu Crédito": "#e5484d",
-  Revolut: "#e5484d",
-};
-
-export const TRANSACTION_TYPE_COLORS: Record<string, string> = {
-  Gasto: "#e5484d",
-  Ingreso: "#22a355",
-  Transferencia: "#d99a15",
-};
-
-// Category colors — mapped by meaning onto the redesign's 7-swatch palette
-// (3 warm / 3 cool / 1 neutral), plus one extra warm tone for the 8th
-// category since our real categories don't line up 1:1 with the design
-// mockup's placeholder set.
-export const CATEGORY_COLORS: Record<string, string> = {
-  Alimentos: "#e0703a",  // warm orange (food)
-  Gustos: "#d99a15",     // warm gold (discretionary treats)
-  Salidas: "#d2452e",    // warm red (going out)
-  Regalos: "#c2547a",    // warm rose (gifts)
-  Servicios: "#3a8f95",  // cool teal (utilities)
-  Gas: "#8b5cd9",        // cool violet (fuel/transport)
-  Esenciales: "#4f9d5f", // cool green (essentials)
-  Otro: "#6b7075",       // neutral gray
-};
-
-// Budget section exception: Gas (fuel/transport) shows green instead of
-// its usual violet, matching the redesign's one-off contrast rule.
-export const BUDGET_COLOR_OVERRIDES: Record<string, string> = {
-  Gas: "#22a355",
-};
-
-// Rule 11: monthly category budgets
-export const DEFAULT_BUDGETS: Array<{ category: string; amount: number }> = [
-  { category: "Gas", amount: 3200 },
-  { category: "Regalos", amount: 1000 },
-  { category: "Salidas", amount: 1000 },
-  { category: "Alimentos", amount: 1250 },
-  { category: "Servicios", amount: 500 },
-  { category: "Esenciales", amount: 500 },
-  { category: "Gustos", amount: 500 },
-  { category: "Otro", amount: 300 },
-];
-
-export const TOTAL_BUDGET = DEFAULT_BUDGETS.reduce((s, b) => s + b.amount, 0); // 8250
-
-// Category options offered when logging a transaction, matching what the iOS
-// shortcut writes.
-export const EXPENSE_CATEGORIES: string[] = DEFAULT_BUDGETS.map((b) => b.category);
-
-export const INCOME_CATEGORIES: string[] = ["Dinero Mes", "Extra Cash", "Otro"];
+/** What the add-record form needs: this user's accounts and categories. */
+export interface Catalog {
+  accounts: AccountOption[];
+  expenseCategories: Category[];
+  incomeCategories: Category[];
+}
 
 export interface Transaction {
   id: string;
@@ -134,6 +78,7 @@ export interface BudgetItem {
   spent: number;
   percentage: number;
   remaining: number;
+  color: string;
 }
 
 export interface DashboardData {
