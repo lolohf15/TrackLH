@@ -11,29 +11,47 @@ import { cn, getToday, withLocalTime } from "@/lib/utils";
 import {
   VALID_TRANSACTION_TYPES,
   type Catalog,
+  type Transaction,
   type TransactionType,
 } from "@/types";
 
 interface Props {
   open: boolean;
   onClose: () => void;
+  /** Null (or absent) means a brand-new movement. */
+  transaction?: Transaction | null;
 }
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
-export function AddRecordSheet({ open, onClose }: Props) {
+/** The stored clock, as `YYYY-MM-DD`. Rows are wall clocks pinned to UTC. */
+function dayOf(iso: string): string {
+  return iso.slice(0, 10);
+}
+
+/**
+ * Keep the original time of day when only the date is changed, so editing a
+ * note doesn't silently move a movement to midday.
+ */
+function keepClock(iso: string, day: string): string {
+  return `${day}T${iso.slice(11, 19)}`;
+}
+
+export function TransactionSheet({ open, onClose, transaction = null }: Props) {
+  const isEdit = transaction !== null;
   // The options come from the same rows the server validates against, so the
   // form can never offer something the POST would reject.
   const { data: catalog } = useSWR<Catalog>("/api/catalog", fetcher);
   const accounts = catalog?.accounts ?? [];
 
-  const [type, setType] = useState<TransactionType>("Gasto");
-  const [account, setAccount] = useState<string>("");
-  const [toAccount, setToAccount] = useState("");
-  const [category, setCategory] = useState("");
-  const [amount, setAmount] = useState("");
-  const [description, setDescription] = useState("");
-  const [day, setDay] = useState(getToday());
+  const [type, setType] = useState<TransactionType>(transaction?.type ?? "Gasto");
+  const [account, setAccount] = useState<string>(transaction?.account ?? "");
+  const [toAccount, setToAccount] = useState(transaction?.toAccount ?? "");
+  const [category, setCategory] = useState(transaction?.category ?? "");
+  const [amount, setAmount] = useState(transaction ? String(transaction.amount) : "");
+  const [description, setDescription] = useState(transaction?.description ?? "");
+  const [day, setDay] = useState(transaction ? dayOf(transaction.date) : getToday());
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -71,19 +89,22 @@ export function AddRecordSheet({ open, onClose }: Props) {
     setError(null);
 
     try {
-      const res = await fetch("/api/transactions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type,
-          account: selectedAccount,
-          toAccount: isTransfer ? toAccount : undefined,
-          category: isTransfer ? undefined : category,
-          amount: parsedAmount,
-          date: withLocalTime(day),
-          description: description.trim() || undefined,
-        }),
-      });
+      const res = await fetch(
+        isEdit ? `/api/transactions/${encodeURIComponent(transaction.id)}` : "/api/transactions",
+        {
+          method: isEdit ? "PATCH" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            type,
+            account: selectedAccount,
+            toAccount: isTransfer ? toAccount : undefined,
+            category: isTransfer ? undefined : category,
+            amount: parsedAmount,
+            date: isEdit ? keepClock(transaction.date, day) : withLocalTime(day),
+            description: description.trim() || undefined,
+          }),
+        }
+      );
 
       const payload = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -99,6 +120,29 @@ export function AddRecordSheet({ open, onClose }: Props) {
     } catch {
       setError("Sin conexión. Revisa tu red e inténtalo de nuevo.");
     } finally {
+      setSaving(false);
+    }
+  }
+
+  async function remove() {
+    if (!isEdit || saving) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/transactions/${encodeURIComponent(transaction.id)}`, {
+        method: "DELETE",
+      });
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(payload?.error ?? "No se pudo eliminar el movimiento");
+        setSaving(false);
+        setConfirmingDelete(false);
+        return;
+      }
+      mutate((key) => typeof key === "string" && key.startsWith("/api/"));
+      onClose();
+    } catch {
+      setError("Sin conexión. Revisa tu red e inténtalo de nuevo.");
       setSaving(false);
     }
   }
@@ -126,7 +170,7 @@ export function AddRecordSheet({ open, onClose }: Props) {
   }
 
   return (
-    <BottomSheet open={open} onClose={onClose} title="Nuevo movimiento">
+    <BottomSheet open={open} onClose={onClose} title={isEdit ? "Editar movimiento" : "Nuevo movimiento"}>
       <div className="pb-6 space-y-5">
         {/* Tipo — a pill riding inside a track, the way iOS segments work */}
         <div className="grid grid-cols-3 gap-1 rounded-md bg-surface-2 p-1">
@@ -242,10 +286,34 @@ export function AddRecordSheet({ open, onClose }: Props) {
               <CheckIcon className="w-4 h-4" />
               Guardado
             </>
+          ) : isEdit ? (
+            "Guardar cambios"
           ) : (
             "Guardar movimiento"
           )}
         </Button>
+
+        {isEdit &&
+          (confirmingDelete ? (
+            <div className="flex gap-2.5">
+              <Button variant="secondary" size="lg" className="flex-1 py-3.5"
+                onClick={() => setConfirmingDelete(false)}>
+                Cancelar
+              </Button>
+              <Button variant="danger" size="lg" className="flex-1 py-3.5" loading={saving}
+                onClick={remove}>
+                Sí, eliminar
+              </Button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setConfirmingDelete(true)}
+              className="press w-full font-mono text-[10.5px] text-red-fg uppercase tracking-wide py-2.5"
+            >
+              Eliminar movimiento
+            </button>
+          ))}
       </div>
     </BottomSheet>
   );

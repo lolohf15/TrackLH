@@ -1,6 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { Badge } from "@/components/ui/Badge";
+import { TransactionSheet } from "./TransactionSheet";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { TableSkeleton } from "@/components/ui/Skeleton";
 import { formatMXN, formatDate } from "@/lib/utils";
@@ -15,6 +17,8 @@ interface Props {
 }
 
 export function TransactionTable({ data, loading, page, onPageChange }: Props) {
+  const [editing, setEditing] = useState<Transaction | null>(null);
+
   if (loading) {
     return <TableSkeleton rows={8} />;
   }
@@ -25,6 +29,13 @@ export function TransactionTable({ data, loading, page, onPageChange }: Props) {
 
   return (
     <div>
+      <TransactionSheet
+        key={editing?.id ?? "none"}
+        transaction={editing}
+        open={editing !== null}
+        onClose={() => setEditing(null)}
+      />
+
       <div className="overflow-x-auto" data-swipe-ignore>
         <table className="w-full">
           <thead>
@@ -38,7 +49,9 @@ export function TransactionTable({ data, loading, page, onPageChange }: Props) {
             </tr>
           </thead>
           <tbody>
-            {data.data.map((tx) => <DesktopRow key={tx.id} tx={tx} />)}
+            {data.data.map((tx) => (
+              <DesktopRow key={tx.id} tx={tx} onEdit={() => setEditing(tx)} />
+            ))}
           </tbody>
         </table>
       </div>
@@ -61,11 +74,13 @@ function Th({ children, right }: { children: React.ReactNode; right?: boolean })
   );
 }
 
-function DesktopRow({ tx }: { tx: Transaction }) {
+function DesktopRow({ tx, onEdit }: { tx: Transaction; onEdit: () => void }) {
   const type = tx.type as TransactionType;
 
   return (
-    <tr className="border-t border-divider transition-colors duration-150 ease-out hover:bg-surface-2/50">
+    <tr
+      onClick={onEdit}
+      className="cursor-pointer border-t border-divider transition-colors duration-150 ease-out hover:bg-surface-2/50">
       <td className="px-4 py-3 whitespace-nowrap">
         <span className="font-mono text-xs text-text-dim">{formatDate(tx.date)}</span>
       </td>

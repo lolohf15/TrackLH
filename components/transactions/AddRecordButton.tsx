@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { AddRecordSheet } from "./AddRecordSheet";
+import { TransactionSheet } from "./TransactionSheet";
 import { PlusIcon } from "@/components/shell/icons";
 
 /**
@@ -31,7 +31,7 @@ export function AddRecordButton() {
         <PlusIcon className="w-6 h-6" />
       </button>
 
-      <AddRecordSheet key={session} open={open} onClose={() => setOpen(false)} />
+      <TransactionSheet key={session} open={open} onClose={() => setOpen(false)} />
     </>
   );
 }

@@ -1,6 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { TransactionSheet } from "./TransactionSheet";
 import { TableSkeleton } from "@/components/ui/Skeleton";
 import { formatMXN } from "@/lib/utils";
 import { cn } from "@/lib/utils";
@@ -52,6 +54,7 @@ export function TransactionList({
   emptyTitle = "Sin transacciones",
   emptyHint = "Ajusta los filtros para ver otros movimientos",
 }: Props) {
+  const [editing, setEditing] = useState<Transaction | null>(null);
   if (loading) {
     return <TableSkeleton rows={6} />;
   }
@@ -75,9 +78,18 @@ export function TransactionList({
           <p className="font-mono text-[9px] font-semibold text-text-faint uppercase tracking-[0.1em] pt-3.5 pb-1">
             {group.label}
           </p>
-          {group.items.map((tx) => <Row key={tx.id} tx={tx} />)}
+          {group.items.map((tx) => (
+            <Row key={tx.id} tx={tx} onEdit={() => setEditing(tx)} />
+          ))}
         </div>
       ))}
+
+      <TransactionSheet
+        key={editing?.id ?? "none"}
+        transaction={editing}
+        open={editing !== null}
+        onClose={() => setEditing(null)}
+      />
 
       {data.totalPages > 1 && (
         <div className="flex items-center justify-between pt-3">
@@ -94,11 +106,14 @@ export function TransactionList({
   );
 }
 
-function Row({ tx }: { tx: Transaction }) {
+function Row({ tx, onEdit }: { tx: Transaction; onEdit: () => void }) {
   const type = tx.type as TransactionType;
 
   return (
-    <div className="flex items-center justify-between py-[11px] border-t border-divider">
+    <button
+      type="button"
+      onClick={onEdit}
+      className="press w-full text-left flex items-center justify-between py-[11px] border-t border-divider">
       <div className="flex items-center gap-2.5 min-w-0">
         <div className={cn("w-[5px] h-[5px] rounded-full shrink-0", dotColors[type])} />
         <div className="min-w-0">
@@ -112,7 +127,7 @@ function Row({ tx }: { tx: Transaction }) {
         {type === "Gasto" ? "−" : type === "Ingreso" ? "+" : ""}
         {formatMXN(tx.amount)}
       </span>
-    </div>
+    </button>
   );
 }
 
