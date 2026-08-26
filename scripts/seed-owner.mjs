@@ -1,43 +1,89 @@
 /**
- * Sets the owner account's password from the local .env, which is gitignored.
- * The password never enters the repository or any command line.
+ * Sets the owner account's password.
  *
- *   OWNER_EMAIL=tu@correo.com
- *   OWNER_PASSWORD=algo-largo-y-privado
+ * Run it and it asks for the password, hiding what you type:
  *
- * Run with:  npm run seed:owner
+ *   npm run seed:owner
+ *
+ * For an unattended run it also accepts OWNER_EMAIL / OWNER_PASSWORD from the
+ * local .env, which is gitignored. Either way the password is never written to
+ * the repository and never appears in shell history.
  */
 import { PrismaClient } from "@prisma/client";
 import { hash } from "bcryptjs";
+import { createInterface } from "node:readline";
+import { stdin, stdout } from "node:process";
 
 const prisma = new PrismaClient();
 
-const email = (process.env.OWNER_EMAIL ?? "").trim().toLowerCase();
-const password = process.env.OWNER_PASSWORD ?? "";
+/** Reads a line without echoing it back to the terminal. */
+function askHidden(question) {
+  return new Promise((resolve) => {
+    const rl = createInterface({ input: stdin, output: stdout, terminal: true });
+    // Swallow the echo so the password never appears on screen.
+    const onData = () => {
+      stdout.clearLine?.(0);
+      stdout.cursorTo?.(0);
+      stdout.write(question);
+    };
+    stdout.write(question);
+    stdin.on("data", onData);
+    rl.question("", (answer) => {
+      stdin.off("data", onData);
+      rl.close();
+      stdout.write("\n");
+      resolve(answer);
+    });
+  });
+}
 
-if (!email || !password) {
-  console.error(
-    "Faltan OWNER_EMAIL y/o OWNER_PASSWORD en .env.\n" +
-      "Agrégalos ahí (el archivo está en .gitignore) y vuelve a correr `npm run seed:owner`."
-  );
+function ask(question) {
+  return new Promise((resolve) => {
+    const rl = createInterface({ input: stdin, output: stdout });
+    rl.question(question, (answer) => {
+      rl.close();
+      resolve(answer);
+    });
+  });
+}
+
+let email = (process.env.OWNER_EMAIL ?? "").trim().toLowerCase();
+let password = process.env.OWNER_PASSWORD ?? "";
+
+if (!email) {
+  email = (await ask("Correo de tu cuenta: ")).trim().toLowerCase();
+}
+
+if (!password) {
+  password = await askHidden("Contraseña nueva (no se muestra): ");
+  const again = await askHidden("Repítela: ");
+  if (password !== again) {
+    console.error("\nLas contraseñas no coinciden. No se cambió nada.");
+    process.exit(1);
+  }
+}
+
+if (!email) {
+  console.error("Hace falta un correo.");
   process.exit(1);
 }
 
 if (password.length < 8) {
-  console.error("La contraseña debe tener al menos 8 caracteres.");
+  console.error("La contraseña debe tener al menos 8 caracteres. No se cambió nada.");
   process.exit(1);
 }
 
-const passwordHash = await hash(password, 12);
+const existing = await prisma.user.findUnique({ where: { email } });
+if (!existing) {
+  console.error(`No existe ninguna cuenta con el correo ${email}.`);
+  process.exit(1);
+}
 
-const user = await prisma.user.upsert({
+await prisma.user.update({
   where: { email },
-  create: { email, passwordHash, onboardedAt: new Date() },
-  update: { passwordHash },
-  select: { id: true, email: true, onboardedAt: true },
+  data: { passwordHash: await hash(password, 12) },
 });
 
-console.log(`Contraseña establecida para ${user.email} (id ${user.id}).`);
-console.log("Ya puedes entrar en /login.");
+console.log(`\nListo. Ya puedes entrar en /login con ${email}.`);
 
 await prisma.$disconnect();

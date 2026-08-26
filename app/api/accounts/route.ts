@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireUser, errorResponse } from "@/lib/auth";
 import { round2, computeAccountBalances } from "@/services/finance";
@@ -50,6 +51,44 @@ async function fetchTxs(userId: string): Promise<Transaction[]> {
     procesado: t.procesado,
     syncedAt: t.syncedAt.toISOString(),
   }));
+}
+
+/** Add an account after onboarding. */
+export async function POST(req: NextRequest) {
+  try {
+    const userId = await requireUser();
+
+    const body = (await req.json().catch(() => null)) as Record<string, unknown> | null;
+    if (!body) {
+      return NextResponse.json({ error: "Cuerpo de solicitud inválido (JSON)" }, { status: 400 });
+    }
+
+    const account =
+      typeof body.account === "string" ? body.account.trim().slice(0, 60) : "";
+    if (account === "") {
+      return NextResponse.json({ error: "Escribe un nombre para la cuenta" }, { status: 400 });
+    }
+
+    try {
+      const created = await prisma.accountConfig.create({
+        data: {
+          userId,
+          account,
+          isCredit: !!body.isCredit,
+          color: typeof body.color === "string" ? body.color : null,
+          initialBalance: 0,
+        },
+      });
+      return NextResponse.json({ success: true, id: created.id }, { status: 201 });
+    } catch (err) {
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
+        return NextResponse.json({ error: "Ya tienes una cuenta con ese nombre" }, { status: 409 });
+      }
+      throw err;
+    }
+  } catch (err) {
+    return errorResponse(err, "POST /api/accounts");
+  }
 }
 
 export async function GET() {

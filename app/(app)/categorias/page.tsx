@@ -6,6 +6,8 @@ import useSWR from "swr";
 import { CategoryDetail } from "@/components/dashboard/CategoryDetail";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ChartSkeleton } from "@/components/ui/Skeleton";
+import { PlusIcon } from "@/components/shell/icons";
+import { CategoryEditSheet, type EditableCategory } from "@/components/settings/CategoryEditSheet";
 import { formatMXN, formatMonth, getCurrentMonth, cn } from "@/lib/utils";
 import type { CategoryTrend } from "@/types";
 
@@ -14,6 +16,12 @@ const fetcher = (url: string) => fetch(url).then((r) => r.json());
 export default function Categorias() {
   const { data, isLoading } =
     useSWR<{ months: string[]; trends: CategoryTrend[] }>("/api/categories/trend?months=6", fetcher);
+
+  // The trends view only knows categories that have spending; managing them
+  // needs the full list, including the ones still at zero.
+  const { data: all } = useSWR<EditableCategory[]>("/api/categories", fetcher);
+  const [editMode, setEditMode] = useState(false);
+  const [editing, setEditing] = useState<EditableCategory | "new" | null>(null);
 
   const trends = data?.trends ?? [];
   // Null means "nothing picked yet" and falls back to the first row, so the
@@ -27,12 +35,32 @@ export default function Categorias() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 md:px-8 pt-4 pb-6">
-      <h1 className="text-[15px] font-semibold text-text mb-4">Categorías</h1>
+      <div className="flex items-baseline justify-between mb-4">
+        <h1 className="text-[15px] font-semibold text-text">Categorías</h1>
+        <button
+          type="button"
+          onClick={() => setEditMode((v) => !v)}
+          className="press -my-2 -mr-2 px-2 py-2 font-mono text-[10.5px] uppercase tracking-wide text-accent"
+        >
+          {editMode ? "Listo" : "Editar"}
+        </button>
+      </div>
 
-      {isLoading ? (
+      {editMode ? (
+        <ManageList
+          categories={all ?? []}
+          onEdit={(c) => setEditing(c)}
+          onAdd={() => setEditing("new")}
+        />
+      ) : isLoading ? (
         <ChartSkeleton height="h-96" />
       ) : trends.length === 0 ? (
-        <EmptyState title="Sin categorías" description="Sincroniza tus transacciones para ver el desglose" />
+        <div className="panel">
+          <EmptyState
+            title="Aún no hay gastos"
+            description="Registra un movimiento y aquí verás en qué se te va el dinero"
+          />
+        </div>
       ) : (
         <div className="md:grid md:grid-cols-[1fr_360px] md:gap-10 md:items-start">
           <div>
@@ -61,7 +89,79 @@ export default function Categorias() {
           )}
         </div>
       )}
+
+      <CategoryEditSheet
+        key={editing === "new" ? "new" : editing?.id ?? "none"}
+        category={editing === "new" ? null : editing}
+        open={editing !== null}
+        onClose={() => setEditing(null)}
+      />
     </div>
+  );
+}
+
+/** Edit mode: every category the user has, spending or not. */
+function ManageList({
+  categories, onEdit, onAdd,
+}: {
+  categories: EditableCategory[];
+  onEdit: (c: EditableCategory) => void;
+  onAdd: () => void;
+}) {
+  const expense = categories.filter((c) => c.kind === "expense");
+  const income = categories.filter((c) => c.kind === "income");
+
+  return (
+    <div className="space-y-3 max-w-xl">
+      <section>
+        <p className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em] px-1 pb-2">
+          Gasto
+        </p>
+        <div className="panel px-4">
+          {expense.map((c) => <ManageRow key={c.id} category={c} onClick={() => onEdit(c)} />)}
+          <button
+            type="button"
+            onClick={onAdd}
+            className="press w-full flex items-center gap-2.5 py-3 border-t border-divider text-left text-accent"
+          >
+            <PlusIcon className="w-3.5 h-3.5 shrink-0" />
+            <span className="text-[13.5px]">Agregar categoría</span>
+          </button>
+        </div>
+      </section>
+
+      {income.length > 0 && (
+        <section>
+          <p className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em] px-1 pb-2">
+            Ingreso
+          </p>
+          <div className="panel px-4">
+            {income.map((c) => <ManageRow key={c.id} category={c} onClick={() => onEdit(c)} />)}
+          </div>
+        </section>
+      )}
+    </div>
+  );
+}
+
+function ManageRow({ category, onClick }: { category: EditableCategory; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="press w-full flex items-center justify-between py-3 border-t border-divider first:border-t-0 text-left"
+    >
+      <span className="flex items-center gap-2.5 min-w-0">
+        <span
+          className="w-[7px] h-[7px] rounded-full shrink-0"
+          style={{ backgroundColor: category.color }}
+        />
+        <span className="text-[13.5px] text-text truncate">{category.name}</span>
+      </span>
+      <span className="font-mono text-[11px] text-text-dim shrink-0 ml-2.5">
+        {category.kind === "expense" && category.budget > 0 ? formatMXN(category.budget) : "—"}
+      </span>
+    </button>
   );
 }
 

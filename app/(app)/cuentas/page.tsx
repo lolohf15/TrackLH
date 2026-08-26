@@ -6,7 +6,8 @@ import { mutate } from "swr";
 import { InitialBalances } from "@/components/dashboard/InitialBalances";
 import { AccountPanel } from "@/components/auth/AccountPanel";
 import { ChartSkeleton } from "@/components/ui/Skeleton";
-import { ChevronDownIcon } from "@/components/shell/icons";
+import { ChevronDownIcon, PlusIcon } from "@/components/shell/icons";
+import { AccountEditSheet, type EditableAccount } from "@/components/settings/AccountEditSheet";
 import { formatMXN, getCurrentMonth, cn } from "@/lib/utils";
 import type { DashboardData, AccountBalance } from "@/types";
 
@@ -15,7 +16,15 @@ const fetcher = (url: string) => fetch(url).then((r) => r.json());
 export default function Cuentas() {
   const { data: dashboard, isLoading } =
     useSWR<DashboardData>(`/api/dashboard?month=${getCurrentMonth()}`, fetcher);
+  // The dashboard reports balances by name; the config carries the id an edit
+  // needs, so both are read here.
+  const { data: configs } = useSWR<EditableAccount[]>("/api/accounts", fetcher);
   const [balancesOpen, setBalancesOpen] = useState(false);
+
+  // null = closed, "new" = create, otherwise the account being edited.
+  const [editing, setEditing] = useState<EditableAccount | "new" | null>(null);
+
+  const configById = new Map((configs ?? []).map((c) => [c.account, c]));
 
   const balances = dashboard?.accountBalances ?? [];
   const debit = balances.filter((a) => !a.isCredit);
@@ -39,7 +48,14 @@ export default function Cuentas() {
           <section>
             <GroupLabel>Débito</GroupLabel>
             <div className="panel px-4">
-              {debit.map((a) => <AccountRow key={a.account} account={a} />)}
+              {debit.map((a) => (
+                <AccountRow
+                  key={a.account}
+                  account={a}
+                  onEdit={configById.get(a.account) ? () => setEditing(configById.get(a.account)!) : undefined}
+                />
+              ))}
+              <AddRow label="Agregar cuenta de débito" onClick={() => setEditing("new")} />
             </div>
           </section>
 
@@ -47,7 +63,14 @@ export default function Cuentas() {
             <section>
               <GroupLabel>Crédito</GroupLabel>
               <div className="panel px-4">
-                {credit.map((a) => <AccountRow key={a.account} account={a} credit />)}
+                {credit.map((a) => (
+                  <AccountRow
+                    key={a.account}
+                    account={a}
+                    credit
+                    onEdit={configById.get(a.account) ? () => setEditing(configById.get(a.account)!) : undefined}
+                  />
+                ))}
               </div>
             </section>
           )}
@@ -87,6 +110,13 @@ export default function Cuentas() {
           <div className="mt-3">
             <AccountPanel />
           </div>
+
+          <AccountEditSheet
+            key={editing === "new" ? "new" : editing?.id ?? "none"}
+            account={editing === "new" ? null : editing}
+            open={editing !== null}
+            onClose={() => setEditing(null)}
+          />
         </div>
       </div>
     </div>
@@ -102,16 +132,51 @@ function GroupLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
-function AccountRow({ account, credit }: { account: AccountBalance; credit?: boolean }) {
-  return (
-    <div className="flex items-center justify-between py-3 border-t border-divider first:border-t-0">
-      <div className="flex items-center gap-2.5">
+function AccountRow({
+  account, credit, onEdit,
+}: { account: AccountBalance; credit?: boolean; onEdit?: () => void }) {
+  const body = (
+    <>
+      <div className="flex items-center gap-2.5 min-w-0">
         <span className="w-[7px] h-[7px] rounded-full shrink-0" style={{ backgroundColor: account.color }} />
-        <span className="text-[13.5px] text-text">{account.account}</span>
+        <span className="text-[13.5px] text-text truncate">{account.account}</span>
       </div>
-      <span className={cn("font-mono text-sm font-semibold", credit ? "text-red-fg" : "text-text")}>
+      <span className={cn("font-mono text-sm font-semibold shrink-0 ml-2.5", credit ? "text-red-fg" : "text-text")}>
         {formatMXN(account.currentBalance)}
       </span>
-    </div>
+    </>
+  );
+
+  // An account that exists only inside old movements has no config row to
+  // edit, so it stays a plain row rather than a dead button.
+  if (!onEdit) {
+    return (
+      <div className="flex items-center justify-between py-3 border-t border-divider first:border-t-0">
+        {body}
+      </div>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={onEdit}
+      className="press w-full flex items-center justify-between py-3 border-t border-divider first:border-t-0 text-left"
+    >
+      {body}
+    </button>
+  );
+}
+
+function AddRow({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="press w-full flex items-center gap-2.5 py-3 border-t border-divider text-left text-accent"
+    >
+      <PlusIcon className="w-3.5 h-3.5 shrink-0" />
+      <span className="text-[13.5px]">{label}</span>
+    </button>
   );
 }
