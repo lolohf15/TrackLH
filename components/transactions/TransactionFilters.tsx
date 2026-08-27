@@ -59,7 +59,7 @@ export function TransactionFiltersPanel({ filters, categories, accounts, onChang
       {/* Mobile: type chips + sheet trigger for the rest */}
       <div className="sm:hidden flex items-center gap-2">
         {/* Scrolls sideways itself, so the tab swipe has to keep its hands off. */}
-        <div className="flex-1 flex gap-1.5 overflow-x-auto" data-swipe-ignore>
+        <div className="flex-1 flex gap-1.5 overflow-x-auto">
           <Chip active={filters.type === ""} onClick={() => update("type", "")}>Todos</Chip>
           {TYPES.map((t) => (
             <Chip key={t} active={filters.type === t} onClick={() => update("type", filters.type === t ? "" : t)}>

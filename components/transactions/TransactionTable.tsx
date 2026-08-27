@@ -36,7 +36,7 @@ export function TransactionTable({ data, loading, page, onPageChange }: Props) {
         onClose={() => setEditing(null)}
       />
 
-      <div className="overflow-x-auto" data-swipe-ignore>
+      <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
             <tr className="border-b border-border">

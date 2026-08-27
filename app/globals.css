@@ -99,6 +99,13 @@
   ::-webkit-scrollbar-thumb { background: var(--color-surface-3); border-radius: 99px; }
   ::-webkit-scrollbar-thumb:hover { background: var(--color-border-strong); }
 
+  /* A scrollbar is a pointer affordance. On touch there's nothing to grab, and
+     the bar only ever flashed into view mid-gesture — so it goes away. */
+  @media (pointer: coarse) {
+    * { scrollbar-width: none; -ms-overflow-style: none; }
+    ::-webkit-scrollbar { width: 0; height: 0; display: none; }
+  }
+
   input[type="date"]::-webkit-calendar-picker-indicator {
     filter: invert(0.8);
     cursor: pointer;
