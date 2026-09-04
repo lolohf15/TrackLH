@@ -111,7 +111,7 @@ function Page({
           ? { duration: 0.15, ease: "linear" }
           : { type: "spring", visualDuration: 0.28, bounce: 0 }
       }
-      className="[grid-area:1/1] bg-surface md:bg-transparent pb-28 md:pb-8"
+      className="[grid-area:1/1] min-w-0 bg-surface md:bg-transparent pb-28 md:pb-8"
     >
       {children}
     </motion.main>
