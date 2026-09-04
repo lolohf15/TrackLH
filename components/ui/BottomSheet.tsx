@@ -63,9 +63,14 @@ export function BottomSheet({ open, onClose, title, children, className }: Props
 
           <motion.div
             className={cn(
-              "relative bg-surface rounded-t-[var(--radius-sheet)] shadow-sheet max-h-[88dvh] flex flex-col",
+              "glass relative rounded-t-[var(--radius-sheet)] max-h-[88dvh] flex flex-col",
               className
             )}
+            // .glass's own box-shadow is for chrome that floats generically; a
+            // sheet needs the stronger directional cast of --shadow-sheet too.
+            // Set inline so it composes with .glass's shadow unambiguously,
+            // instead of two utility classes racing for the same property.
+            style={{ boxShadow: "var(--shadow-glass), var(--shadow-sheet)" }}
             initial={reduceMotion ? { opacity: 0 } : { y: "100%" }}
             animate={reduceMotion ? { opacity: 1 } : { y: 0 }}
             exit={reduceMotion ? { opacity: 0 } : { y: "100%" }}

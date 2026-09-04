@@ -20,6 +20,9 @@ interface Props {
   onClose: () => void;
   /** Null (or absent) means a brand-new movement. */
   transaction?: Transaction | null;
+  /** Opens straight into the delete confirm step — the swipe-to-delete row
+   *  action skips the trip through the form to get there by hand. */
+  initialConfirmingDelete?: boolean;
 }
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
@@ -37,7 +40,12 @@ function keepClock(iso: string, day: string): string {
   return `${day}T${iso.slice(11, 19)}`;
 }
 
-export function TransactionSheet({ open, onClose, transaction = null }: Props) {
+export function TransactionSheet({
+  open,
+  onClose,
+  transaction = null,
+  initialConfirmingDelete = false,
+}: Props) {
   const isEdit = transaction !== null;
   // The options come from the same rows the server validates against, so the
   // form can never offer something the POST would reject.
@@ -51,7 +59,7 @@ export function TransactionSheet({ open, onClose, transaction = null }: Props) {
   const [amount, setAmount] = useState(transaction ? String(transaction.amount) : "");
   const [description, setDescription] = useState(transaction?.description ?? "");
   const [day, setDay] = useState(transaction ? dayOf(transaction.date) : getToday());
-  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(initialConfirmingDelete);
 
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);

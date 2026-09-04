@@ -7,6 +7,7 @@ import { Sidebar } from "./Sidebar";
 import { TabBar } from "./TabBar";
 import { NAV_ITEMS } from "./nav";
 import { AddRecordButton } from "@/components/transactions/AddRecordButton";
+import { GlassFilter } from "@/components/ui/GlassFilter";
 
 function tabIndex(pathname: string): number {
   return NAV_ITEMS.findIndex((item) =>
@@ -35,10 +36,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-dvh flex-col bg-bg">
+      <GlassFilter />
       <Sidebar />
 
       <div className="relative flex flex-1 flex-col overflow-x-hidden md:pl-[72px]">
-        <header className="scroll-edge sticky top-0 z-20 shrink-0 pt-safe bg-bg/75 backdrop-blur-xl md:hidden">
+        <header className="glass scroll-edge sticky top-0 z-20 shrink-0 pt-safe md:hidden">
           <div className="px-4 py-3 flex items-center gap-2.5">
             <img src="/TrackLHLogo.png" alt="TrackLH" className="w-6 h-6 shrink-0 object-cover" />
             <h1 className="font-mono text-xs font-semibold tracking-[0.15em] text-text truncate">TRACKLH</h1>

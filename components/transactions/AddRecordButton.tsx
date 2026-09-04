@@ -24,8 +24,8 @@ export function AddRecordButton() {
           setOpen(true);
         }}
         aria-label="Agregar movimiento"
-        className="press fixed right-4 z-40 w-14 h-14 rounded-full flex items-center justify-center
-                   bg-accent text-white shadow-float
+        className="glass-accent press fixed right-4 z-40 w-14 h-14 rounded-full flex items-center justify-center
+                   text-white
                    bottom-[calc(4.5rem+env(safe-area-inset-bottom))] md:bottom-6"
       >
         <PlusIcon className="w-6 h-6" />

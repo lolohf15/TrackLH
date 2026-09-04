@@ -9,6 +9,7 @@ import { BudgetTracker } from "@/components/dashboard/BudgetTracker";
 import { TransactionList } from "@/components/transactions/TransactionList";
 import { ChartSkeleton } from "@/components/ui/Skeleton";
 import { formatMXN, formatMonth, getCurrentMonth, cn } from "@/lib/utils";
+import { useCountUp } from "@/lib/useCountUp";
 import type { DashboardData, PaginatedTransactions } from "@/types";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
@@ -40,6 +41,11 @@ export default function Home() {
   const prevIncome = dashboard?.prevMonthIncome ?? 0;
   const expensesTrend = prevExpenses > 0 ? Math.round(((expenses - prevExpenses) / prevExpenses) * 100) : null;
   const incomeTrend = prevIncome > 0 ? Math.round(((income - prevIncome) / prevIncome) * 100) : null;
+
+  const totalAvailableDisplay = useCountUp(dashboard?.totalAvailable ?? 0, formatMXN);
+  const incomeDisplay = useCountUp(income, formatMXN);
+  const expensesDisplay = useCountUp(expenses, formatMXN);
+  const netDisplay = useCountUp(net, formatMXN);
 
   if (dashLoading) {
     return (
@@ -79,8 +85,8 @@ export default function Home() {
           <div className="panel">
             <div className="px-4 pt-4 pb-4">
               <div className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em] mb-2">Saldo total</div>
-              <div className="font-mono text-[38px] font-semibold text-text tracking-tight leading-none">
-                {formatMXN(dashboard?.totalAvailable ?? 0)}
+              <div className="font-mono text-[38px] font-semibold text-text tracking-tight leading-none tabular-nums">
+                {totalAvailableDisplay}
               </div>
               <div className="text-xs text-text-dim mt-1.5">
                 {(dashboard?.accountBalances ?? []).filter((a) => !a.isCredit).length} cuentas de débito
@@ -90,7 +96,7 @@ export default function Home() {
             <div className="grid grid-cols-2 border-t border-divider">
               <div className="px-4 py-3.5 border-r border-divider">
                 <div className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em]">Ingresos</div>
-                <div className="font-mono text-[19px] font-semibold text-text mt-1.5">{formatMXN(income)}</div>
+                <div className="font-mono text-[19px] font-semibold text-text mt-1.5 tabular-nums">{incomeDisplay}</div>
                 {incomeTrend !== null && (
                   <div className={cn("font-mono text-[11px] mt-1", incomeTrend >= 0 ? "text-green-fg" : "text-red-fg")}>
                     {incomeTrend >= 0 ? "▲" : "▼"} {Math.abs(incomeTrend)}%
@@ -99,7 +105,7 @@ export default function Home() {
               </div>
               <div className="px-4 py-3.5">
                 <div className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em]">Gastos</div>
-                <div className="font-mono text-[19px] font-semibold text-text mt-1.5">{formatMXN(expenses)}</div>
+                <div className="font-mono text-[19px] font-semibold text-text mt-1.5 tabular-nums">{expensesDisplay}</div>
                 {expensesTrend !== null && (
                   <div className={cn("font-mono text-[11px] mt-1", expensesTrend <= 0 ? "text-green-fg" : "text-red-fg")}>
                     {expensesTrend >= 0 ? "▲" : "▼"} {Math.abs(expensesTrend)}%
@@ -111,15 +117,15 @@ export default function Home() {
             <div className="px-4 py-3.5 border-t border-divider">
               <div className="flex items-center justify-between mb-2">
                 <span className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em]">Ahorro del mes</span>
-                <span className={cn("font-mono text-[13px] font-semibold", net >= 0 ? "text-green-fg" : "text-red-fg")}>
-                  {formatMXN(net)}
+                <span className={cn("font-mono text-[13px] font-semibold tabular-nums", net >= 0 ? "text-green-fg" : "text-red-fg")}>
+                  {netDisplay}
                 </span>
               </div>
               <div className="flex h-1.5 w-full rounded-full bg-surface-2 overflow-hidden">
                 {hasActivity && (
                   <>
-                    <div className="h-full bg-green-fg" style={{ width: `${incomePct}%` }} />
-                    <div className="h-full bg-red-fg" style={{ width: `${100 - incomePct}%` }} />
+                    <div className="h-full bg-green-fg transition-[width] duration-300 ease-out" style={{ width: `${incomePct}%` }} />
+                    <div className="h-full bg-red-fg transition-[width] duration-300 ease-out" style={{ width: `${100 - incomePct}%` }} />
                   </>
                 )}
               </div>

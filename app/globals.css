@@ -56,6 +56,11 @@
   --shadow-float:  0 6px 14px -4px rgba(0,0,0,0.55), 0 18px 40px -12px rgba(0,0,0,0.5);
   --shadow-sheet:  0 -12px 48px -12px rgba(0,0,0,0.7);
 
+  /* Glass — a brighter edge than --shadow-panel (a pane catches more light
+     than a flat surface) plus the same lift as --shadow-float, since glass
+     chrome always floats. */
+  --shadow-glass:  inset 0 1px 0 rgba(255,255,255,0.09), inset 0 0 0 1px rgba(255,255,255,0.05), 0 8px 24px -8px rgba(0,0,0,0.65), 0 1px 2px rgba(0,0,0,0.5);
+
   /* Motion — strong custom curves; the built-ins are punchless */
   --ease-out:              cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out:           cubic-bezier(0.77, 0, 0.175, 1);
@@ -160,6 +165,35 @@
     overflow: hidden;
   }
 
+  /* A pane of glass, not a blurred box: translucent fill + brighter top edge
+     + saturation lift, so color bleeding through from underneath still reads
+     as color instead of going muddy. Reserved for chrome that floats over
+     moving content — a static card on flat black has nothing to refract. */
+  .glass {
+    background-color: color-mix(in srgb, var(--color-surface) 62%, transparent);
+    backdrop-filter: blur(20px) saturate(150%);
+    -webkit-backdrop-filter: blur(20px) saturate(150%);
+    box-shadow: var(--shadow-glass);
+  }
+
+  /* Same pane, tinted with the accent instead of the surface — the FAB is
+     the app's one colored affordance, and glass shouldn't wash that out. */
+  .glass-accent {
+    background-color: color-mix(in srgb, var(--color-accent) 78%, transparent);
+    backdrop-filter: blur(20px) saturate(150%);
+    -webkit-backdrop-filter: blur(20px) saturate(150%);
+    box-shadow: var(--shadow-glass), var(--shadow-float);
+  }
+
+  /* Opt-in refraction layer: an SVG displacement filter (see GlassFilter.tsx)
+     chained onto the same backdrop-filter, gated to surfaces where it's been
+     verified to render — WebKit's support for backdrop-filter: url(#id) is
+     inconsistent. */
+  .glass-refract {
+    backdrop-filter: blur(6px) url(#app-glass-distortion) saturate(150%);
+    -webkit-backdrop-filter: blur(6px) url(#app-glass-distortion) saturate(150%);
+  }
+
   /* Floating chrome meeting scrolling content: a soft edge, not a 1px rule. */
   .scroll-edge::after {
     content: "";
@@ -195,10 +229,21 @@
 @media (prefers-reduced-transparency: reduce) {
   .backdrop-blur-xl { backdrop-filter: none; }
   .bg-surface\/80 { background-color: var(--color-surface); }
+  .glass, .glass-refract {
+    background-color: var(--color-surface);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+  .glass-accent {
+    background-color: var(--color-accent);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
 }
 
 @media (prefers-contrast: more) {
   .panel { box-shadow: none; outline: 1px solid var(--color-border-strong); }
+  .glass { box-shadow: none; outline: 1px solid var(--color-border-strong); }
 }
 
 @media (hover: none) {

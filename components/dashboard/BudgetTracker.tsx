@@ -4,6 +4,7 @@ import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { formatMXN } from "@/lib/utils";
 import { cn } from "@/lib/utils";
+import { useCountUp } from "@/lib/useCountUp";
 import type { BudgetItem } from "@/types";
 
 /** Over budget shouts red, near budget shouts amber, otherwise the category
@@ -21,6 +22,7 @@ export function BudgetTracker({ data, bare = false }: { data: BudgetItem[]; bare
   const isOver      = totalPct >= 100;
   const isNear      = totalPct >= 90;
   const totalColor  = isOver ? "text-red-fg" : isNear ? "text-amber-fg" : "text-text";
+  const totalSpentDisplay = useCountUp(totalSpent, formatMXN);
 
   const body = data.length === 0 ? (
     <EmptyState
@@ -35,8 +37,8 @@ export function BudgetTracker({ data, bare = false }: { data: BudgetItem[]; bare
 
       <div className="mt-4 pt-3 border-t border-divider flex items-baseline justify-between">
         <span className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em]">Total</span>
-        <span className="font-mono text-[13px]">
-          <span className={cn("font-semibold", totalColor)}>{formatMXN(totalSpent)}</span>
+        <span className="font-mono text-[13px] tabular-nums">
+          <span className={cn("font-semibold", totalColor)}>{totalSpentDisplay}</span>
           <span className="text-text-faint"> / {formatMXN(totalBudget)}</span>
         </span>
       </div>
@@ -63,18 +65,22 @@ export function BudgetTracker({ data, bare = false }: { data: BudgetItem[]; bare
 function BudgetRow({ item }: { item: BudgetItem }) {
   const color = rowColor(item);
   const valueColor = item.percentage >= 100 ? "text-red-fg" : item.percentage >= 90 ? "text-amber-fg" : "text-text";
+  const spentDisplay = useCountUp(item.spent, formatMXN);
 
   return (
     <div>
       <div className="flex items-baseline justify-between mb-[5px]">
         <span className="text-[13px] text-text-muted">{item.category}</span>
-        <span className="font-mono text-xs">
-          <span className={cn("font-semibold", valueColor)}>{formatMXN(item.spent)}</span>
+        <span className="font-mono text-xs tabular-nums">
+          <span className={cn("font-semibold", valueColor)}>{spentDisplay}</span>
           <span className="text-text-faint"> / {formatMXN(item.budget)}</span>
         </span>
       </div>
       <div className="h-[3px] w-full rounded-full bg-surface-2 overflow-hidden">
-        <div className="h-full" style={{ width: `${Math.min(item.percentage, 100)}%`, background: color }} />
+        <div
+          className="h-full transition-[width] duration-300 ease-out"
+          style={{ width: `${Math.min(item.percentage, 100)}%`, background: color }}
+        />
       </div>
     </div>
   );

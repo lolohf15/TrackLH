@@ -30,6 +30,22 @@ export function CheckIcon({ className }: { className?: string }) {
   );
 }
 
+export function PencilIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4 12.5-12.5z" />
+    </svg>
+  );
+}
+
+export function TrashIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M5 7h14M9 7V5a2 2 0 012-2h2a2 2 0 012 2v2m2 0-.8 12.1a2 2 0 01-2 1.9H7.8a2 2 0 01-2-1.9L5 7h14z" />
+    </svg>
+  );
+}
+
 /** Tab icons take an `active` flag: the stroke thickens instead of the tab
  *  growing a top rule, which is how native tab bars signal selection. */
 type TabIconProps = { className?: string; active?: boolean };
