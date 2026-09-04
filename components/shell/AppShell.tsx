@@ -47,11 +47,24 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        <AnimatePresence mode="popLayout" custom={direction} initial={false}>
-          <Page key={pathname} direction={direction}>
-            {children}
-          </Page>
-        </AnimatePresence>
+        {/*
+          A CSS-grid stack, not `mode="popLayout"`: popLayout leans on
+          Framer's layout-projection measurement to know when it's safe to
+          drop the exiting page from the DOM, and under Next's App Router
+          that measurement can land at the wrong moment — an exiting page
+          would occasionally never get removed, piling up as duplicate,
+          pushed-down content on the next navigation. Every page here shares
+          the same grid cell instead, so exiting and entering always overlap
+          rather than stack, regardless of exactly when Framer clears the
+          old one out.
+        */}
+        <div className="relative flex-1 grid">
+          <AnimatePresence custom={direction} initial={false}>
+            <Page key={pathname} direction={direction}>
+              {children}
+            </Page>
+          </AnimatePresence>
+        </div>
       </div>
 
       <AddRecordButton />
@@ -98,7 +111,7 @@ function Page({
           ? { duration: 0.15, ease: "linear" }
           : { type: "spring", visualDuration: 0.28, bounce: 0 }
       }
-      className="flex-1 bg-surface md:bg-transparent pb-28 md:pb-8"
+      className="[grid-area:1/1] bg-surface md:bg-transparent pb-28 md:pb-8"
     >
       {children}
     </motion.main>
