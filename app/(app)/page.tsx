@@ -6,16 +6,19 @@ import useSWR from "swr";
 import { CategoryRanking } from "@/components/dashboard/CategoryRanking";
 import { AccountBalances } from "@/components/dashboard/AccountBalances";
 import { BudgetTracker } from "@/components/dashboard/BudgetTracker";
+import { MonthPickerSheet } from "@/components/dashboard/MonthPickerSheet";
 import { TransactionList } from "@/components/transactions/TransactionList";
 import { ChartSkeleton } from "@/components/ui/Skeleton";
 import { formatMXN, formatMonth, getCurrentMonth, cn } from "@/lib/utils";
 import { useCountUp } from "@/lib/useCountUp";
-import type { DashboardData, PaginatedTransactions } from "@/types";
+import type { DashboardData, PaginatedTransactions, YearlyDashboardData } from "@/types";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 export default function Home() {
   const [dashMonth, setDashMonth] = useState(getCurrentMonth());
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerYear, setPickerYear] = useState(() => Number(getCurrentMonth().split("-")[0]));
 
   const { data: dashboard, isLoading: dashLoading } =
     useSWR<DashboardData>(`/api/dashboard?month=${dashMonth}`, fetcher);
@@ -23,10 +26,18 @@ export default function Home() {
   const { data: recent, isLoading: recentLoading } =
     useSWR<PaginatedTransactions>(`/api/transactions?limit=5&page=1`, fetcher);
 
+  const { data: yearly, isLoading: yearlyLoading } =
+    useSWR<YearlyDashboardData>(pickerOpen ? `/api/dashboard/yearly?year=${pickerYear}` : null, fetcher);
+
   function navigateMonth(dir: -1 | 1) {
     const [y, m] = dashMonth.split("-").map(Number);
     const d = new Date(y, m - 1 + dir, 1);
     setDashMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+  }
+
+  function openPicker() {
+    setPickerYear(Number(dashMonth.split("-")[0]));
+    setPickerOpen(true);
   }
 
   const income = dashboard?.monthlyIncome ?? 0;
@@ -65,9 +76,12 @@ export default function Home() {
           <MonthNavButton label="Mes anterior" onClick={() => navigateMonth(-1)}>
             ‹
           </MonthNavButton>
-          <span className="font-mono text-[11px] text-text-muted min-w-[88px] text-center uppercase tracking-wide">
+          <button
+            onClick={openPicker}
+            className="press font-mono text-[11px] text-text-muted min-w-[88px] text-center uppercase tracking-wide hover:text-text transition-colors duration-150 ease-out"
+          >
             {formatMonth(dashMonth)}
-          </span>
+          </button>
           <MonthNavButton
             label="Mes siguiente"
             onClick={() => navigateMonth(1)}
@@ -172,6 +186,17 @@ export default function Home() {
           <AccountBalances data={dashboard?.accountBalances ?? []} />
         </div>
       </div>
+
+      <MonthPickerSheet
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        year={pickerYear}
+        onYearChange={setPickerYear}
+        data={yearly}
+        loading={yearlyLoading}
+        selectedMonth={dashMonth}
+        onSelect={(month) => { setDashMonth(month); setPickerOpen(false); }}
+      />
     </div>
   );
 }

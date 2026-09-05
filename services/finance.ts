@@ -5,6 +5,7 @@ import type {
   BudgetItem,
   DashboardData,
   CategoryTrend,
+  YearlyNetPoint,
 } from "@/types";
 import { UNKNOWN_COLOR } from "@/types";
 
@@ -207,6 +208,21 @@ function computeBudgetUtilization(
   const budgetTotal = round2(budgetItems.reduce((s, b) => s + b.budget, 0));
   const budgetUsedPercent = budgetTotal > 0 ? Math.min(round2((budgetUsed / budgetTotal) * 100), 100) : 0;
   return { budgetUsed, budgetTotal, budgetUsedPercent };
+}
+
+export function computeYearlyNet(transactions: Transaction[], year: number): YearlyNetPoint[] {
+  return Array.from({ length: 12 }, (_, i) => {
+    const month = `${year}-${String(i + 1).padStart(2, "0")}`;
+    const income = computeMonthlyIncome(transactions, month);
+    const expenses = computeMonthlyExpenses(transactions, month);
+    return {
+      month,
+      income,
+      expenses,
+      net: round2(income - expenses),
+      hasData: filterByMonth(transactions, month).length > 0,
+    };
+  });
 }
 
 export function buildDashboardData(

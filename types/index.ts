@@ -111,6 +111,19 @@ export interface CategoryTrend {
   budget: number;
 }
 
+export interface YearlyNetPoint {
+  month: string;
+  income: number;
+  expenses: number;
+  net: number;
+  hasData: boolean;
+}
+
+export interface YearlyDashboardData {
+  year: number;
+  months: YearlyNetPoint[];
+}
+
 export interface TransactionFilters {
   month: string;
   category: string;

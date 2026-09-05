@@ -9,7 +9,7 @@ export function CategoryDetail({ trend }: { trend: CategoryTrend }) {
   const isWarning = trend.budget > 0 && trend.currentAmount / trend.budget >= 0.9;
   const pct = trend.budget > 0 ? Math.min((trend.currentAmount / trend.budget) * 100, 100) : 0;
 
-  const barColor = isOver ? "#e5484d" : isWarning ? "#d99a15" : trend.color;
+  const barColor = isOver ? "var(--color-red)" : isWarning ? "var(--color-amber)" : trend.color;
 
   return (
     <div className="flex flex-col gap-6">

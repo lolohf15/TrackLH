@@ -1,53 +1,54 @@
 @import "tailwindcss";
 
 @theme {
-  /* Type — Archivo for UI, IBM Plex Mono for every number */
-  --font-sans:             var(--font-archivo), Archivo, sans-serif;
-  --font-mono:             var(--font-ibm-plex-mono), "IBM Plex Mono", monospace;
+  /* Type — Manrope for UI, JetBrains Mono for every number */
+  --font-sans:             var(--font-manrope), Manrope, sans-serif;
+  --font-mono:             var(--font-jetbrains-mono), "JetBrains Mono", monospace;
 
-  /* Surfaces — strictly neutral greys (R=G=B), so near-black stays black
-     instead of drifting blue. A panel separates by its outline first and its
-     fill second, which keeps the page reading almost black-on-black. */
-  --color-bg:              #000000;
-  --color-surface:         #090909;
-  --color-surface-2:       #151515;
-  --color-surface-3:       #1f1f1f;
-  --color-border:          #282828;
-  --color-border-strong:   #3a3a3a;
-  --color-divider:         #1b1b1b;
+  /* Surfaces — warm, near-black neutrals (a touch of red/yellow in the mix)
+     instead of strict greys, so the app reads as an ink-and-brass ledger
+     rather than a cold black-on-black screen. A panel still separates by its
+     outline first and its fill second. */
+  --color-bg:              #151412;
+  --color-surface:         #1c1a16;
+  --color-surface-2:       #211f1a;
+  --color-surface-3:       #2b2820;
+  --color-border:          #2a2620;
+  --color-border-strong:   #3a352c;
+  --color-divider:         #242019;
 
-  /* Text — neutral too; the old muted tone carried a green cast */
-  --color-text:            #f0f0f0;
-  --color-text-muted:      #a3a3a3;
-  --color-text-dim:        #737373;
-  --color-text-faint:      #545454;
+  /* Text — warm greys to match, dimming from body copy down to rank numbers */
+  --color-text:            #f3f1ec;
+  --color-text-muted:      #a39c8e;
+  --color-text-dim:        #7a756c;
+  --color-text-faint:      #57534a;
 
   /* Accent — interactive: active tab, links, filter chips */
-  --color-accent:          #5b7fb5;
+  --color-accent:          #c99b57;
 
   /* Semantic */
-  --color-green:           #22a355;
-  --color-green-fg:        #22a355;
-  --color-green-bg:        rgba(34, 163, 85, 0.14);
-  --color-green-border:    rgba(34, 163, 85, 0.35);
+  --color-green:           #6ea377;
+  --color-green-fg:        #6ea377;
+  --color-green-bg:        rgba(110, 163, 119, 0.14);
+  --color-green-border:    rgba(110, 163, 119, 0.35);
 
-  --color-red:             #e5484d;
-  --color-red-fg:          #e5484d;
-  --color-red-bg:          rgba(229, 72, 77, 0.12);
-  --color-red-border:      rgba(229, 72, 77, 0.32);
+  --color-red:             #e0736a;
+  --color-red-fg:          #e0736a;
+  --color-red-bg:          rgba(224, 115, 106, 0.12);
+  --color-red-border:      rgba(224, 115, 106, 0.32);
 
-  --color-amber:           #d99a15;
-  --color-amber-fg:        #d99a15;
-  --color-amber-bg:        rgba(217, 154, 21, 0.12);
-  --color-amber-border:    rgba(217, 154, 21, 0.32);
+  --color-amber:           #d1a24a;
+  --color-amber-fg:        #d1a24a;
+  --color-amber-bg:        rgba(209, 162, 74, 0.12);
+  --color-amber-border:    rgba(209, 162, 74, 0.32);
 
   /* Corners — the radius steps with the surface it wraps: marks, then
      controls, then panels, then the sheet. Nothing lands on a hard 90°. */
   --radius-xs:             5px;
   --radius-sm:             9px;
   --radius-md:             13px;
-  --radius-lg:             18px;
-  --radius-xl:             24px;
+  --radius-lg:             16px;
+  --radius-xl:             22px;
   --radius-sheet:          28px;
 
   /* Depth — every shadow carries an offset and a soft blur. The inset

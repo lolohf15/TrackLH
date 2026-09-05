@@ -10,8 +10,8 @@ import type { BudgetItem } from "@/types";
 /** Over budget shouts red, near budget shouts amber, otherwise the category
  *  keeps its own colour — which now travels on the item from the database. */
 function rowColor(item: BudgetItem): string {
-  if (item.percentage >= 100) return "#e5484d";
-  if (item.percentage >= 90) return "#d99a15";
+  if (item.percentage >= 100) return "var(--color-red)";
+  if (item.percentage >= 90) return "var(--color-amber)";
   return item.color;
 }
 
