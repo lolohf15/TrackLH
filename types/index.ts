@@ -90,12 +90,15 @@ export interface BudgetItem {
 }
 
 export interface DashboardData {
+  /** Which span the figures below cover — week, month, year or all. */
+  period: "week" | "month" | "year" | "all";
   totalAvailable: number;
-  monthlyExpenses: number;
-  monthlyIncome: number;
+  periodExpenses: number;
+  periodIncome: number;
   netBalance: number;
-  prevMonthExpenses: number;
-  prevMonthIncome: number;
+  /** Zero for all-time, which has no previous span to compare against. */
+  prevPeriodExpenses: number;
+  prevPeriodIncome: number;
   budgetUsed: number;
   budgetTotal: number;
   budgetUsedPercent: number;

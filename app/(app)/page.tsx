@@ -10,9 +10,11 @@ import { MonthPickerSheet } from "@/components/dashboard/MonthPickerSheet";
 import { TransactionList } from "@/components/transactions/TransactionList";
 import { ChartSkeleton } from "@/components/ui/Skeleton";
 import { MetricTile } from "@/components/ui/MetricTile";
-import { useT } from "@/lib/i18n-react";
+import { SegmentedControl } from "@/components/ui/SegmentedControl";
+import { useLocale, useT } from "@/lib/i18n-react";
 import { ProgressBar } from "@/components/ui/ProgressBar";
-import { formatMXN, formatMonth, getCurrentMonth, cn } from "@/lib/utils";
+import { dayKey, monthKey, resolvePeriod, type Period, type PeriodKind } from "@/services/period";
+import { formatMXN, formatMonth, cn } from "@/lib/utils";
 import { useCountUp } from "@/lib/useCountUp";
 import type { DashboardData, PaginatedTransactions, YearlyDashboardData } from "@/types";
 
@@ -20,12 +22,25 @@ const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 export default function Home() {
   const t = useT();
-  const [dashMonth, setDashMonth] = useState(getCurrentMonth());
+  const locale = useLocale();
+  const [kind, setKind] = useState<PeriodKind>("month");
+  // The day being looked at. Every period is "the week/month/year containing
+  // this date", so navigating is a matter of moving it rather than of
+  // special-casing each span.
+  const [anchor, setAnchor] = useState(() => new Date());
+  // Captured once rather than read during render: reading the clock while
+  // rendering makes the component non-deterministic, and a dashboard left
+  // open across midnight is not worth that.
+  const [openedAt] = useState(() => Date.now());
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [pickerYear, setPickerYear] = useState(() => Number(getCurrentMonth().split("-")[0]));
+  const [pickerYear, setPickerYear] = useState(() => new Date().getUTCFullYear());
 
-  const { data: dashboard, isLoading: dashLoading } =
-    useSWR<DashboardData>(`/api/dashboard?month=${dashMonth}`, fetcher);
+  const period = resolvePeriod(kind, anchor);
+
+  const { data: dashboard, isLoading: dashLoading } = useSWR<DashboardData>(
+    `/api/dashboard?period=${kind}&anchor=${dayKey(anchor)}`,
+    fetcher
+  );
 
   const { data: recent, isLoading: recentLoading } =
     useSWR<PaginatedTransactions>(`/api/transactions?limit=5&page=1`, fetcher);
@@ -33,27 +48,38 @@ export default function Home() {
   const { data: yearly, isLoading: yearlyLoading } =
     useSWR<YearlyDashboardData>(pickerOpen ? `/api/dashboard/yearly?year=${pickerYear}` : null, fetcher);
 
-  function navigateMonth(dir: -1 | 1) {
-    const [y, m] = dashMonth.split("-").map(Number);
-    const d = new Date(y, m - 1 + dir, 1);
-    setDashMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+  function navigate(dir: -1 | 1) {
+    const next = new Date(anchor);
+    if (kind === "week") next.setUTCDate(next.getUTCDate() + dir * 7);
+    else if (kind === "month") next.setUTCMonth(next.getUTCMonth() + dir);
+    else if (kind === "year") next.setUTCFullYear(next.getUTCFullYear() + dir);
+    setAnchor(next);
+  }
+
+  function pickPeriod(next: PeriodKind) {
+    // Jumping back to today on every switch would lose the place someone
+    // navigated to; the anchor stays put and the span around it changes.
+    setKind(next);
   }
 
   function openPicker() {
-    setPickerYear(Number(dashMonth.split("-")[0]));
+    setPickerYear(anchor.getUTCFullYear());
     setPickerOpen(true);
   }
 
-  const income = dashboard?.monthlyIncome ?? 0;
-  const expenses = dashboard?.monthlyExpenses ?? 0;
+  // A period that already contains today has no "next" to walk into.
+  const atLatest = kind === "all" || period.range.to.getTime() > openedAt;
+
+  const income = dashboard?.periodIncome ?? 0;
+  const expenses = dashboard?.periodExpenses ?? 0;
   const net = dashboard?.netBalance ?? 0;
-  // A month with no activity at all is not "100% spent" — it has nothing to
+  // A span with no activity at all is not "100% spent" — it has nothing to
   // split, so the bar stays an empty track rather than going fully red.
   const hasActivity = income + expenses > 0;
   const incomePct = hasActivity ? Math.round((income / (income + expenses)) * 100) : 0;
 
-  const prevExpenses = dashboard?.prevMonthExpenses ?? 0;
-  const prevIncome = dashboard?.prevMonthIncome ?? 0;
+  const prevExpenses = dashboard?.prevPeriodExpenses ?? 0;
+  const prevIncome = dashboard?.prevPeriodIncome ?? 0;
   const expensesTrend = prevExpenses > 0 ? Math.round(((expenses - prevExpenses) / prevExpenses) * 100) : null;
   const incomeTrend = prevIncome > 0 ? Math.round(((income - prevIncome) / prevIncome) * 100) : null;
 
@@ -73,27 +99,46 @@ export default function Home() {
   return (
     <div className="max-w-6xl mx-auto md:px-8">
 
-      {/* Month nav */}
-      <div className="flex items-center justify-between px-4 md:px-0 pt-4 pb-3">
-        <span className="text-[15px] font-semibold text-text">{t.home.title}</span>
-        <div className="flex items-center gap-0.5 -my-2 -mr-2">
-          <MonthNavButton label={t.home.prevMonth} onClick={() => navigateMonth(-1)}>
-            ‹
-          </MonthNavButton>
-          <button
-            onClick={openPicker}
-            className="press font-mono text-[11px] text-text-muted min-w-[88px] text-center uppercase tracking-wide hover:text-text transition-colors duration-150 ease-out"
-          >
-            {formatMonth(dashMonth)}
-          </button>
-          <MonthNavButton
-            label={t.home.nextMonth}
-            onClick={() => navigateMonth(1)}
-            disabled={dashMonth >= getCurrentMonth()}
-          >
-            ›
-          </MonthNavButton>
+      {/* Period nav */}
+      <div className="px-4 md:px-0 pt-4 pb-3 space-y-2.5">
+        <div className="flex items-center justify-between">
+          <span className="text-[15px] font-semibold text-text">{t.home.title}</span>
+          <div className="flex items-center gap-0.5 -my-2 -mr-2">
+            <MonthNavButton
+              label={t.home.prevPeriod}
+              onClick={() => navigate(-1)}
+              disabled={kind === "all"}
+            >
+              ‹
+            </MonthNavButton>
+            <button
+              onClick={openPicker}
+              disabled={kind !== "month"}
+              className="press font-mono text-[11px] text-text-muted min-w-[120px] text-center uppercase tracking-wide hover:text-text transition-colors duration-150 ease-out disabled:hover:text-text-muted"
+            >
+              {periodLabel(period, locale, t.home.allTime)}
+            </button>
+            <MonthNavButton
+              label={t.home.nextPeriod}
+              onClick={() => navigate(1)}
+              disabled={atLatest}
+            >
+              ›
+            </MonthNavButton>
+          </div>
         </div>
+
+        <SegmentedControl
+          options={[
+            { value: "week", label: t.home.periodWeek },
+            { value: "month", label: t.home.periodMonth },
+            { value: "year", label: t.home.periodYear },
+            { value: "all", label: t.home.periodAll },
+          ]}
+          value={kind}
+          onChange={pickPeriod}
+          label={t.home.title}
+        />
       </div>
 
       <div className="md:grid md:grid-cols-[1fr_360px] md:gap-8 md:items-start">
@@ -127,7 +172,7 @@ export default function Home() {
 
             <div className="px-4 py-3.5 border-t border-divider">
               <div className="flex items-center justify-between mb-2">
-                <span className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em]">{t.home.monthlySavings}</span>
+                <span className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em]">{kind === "month" ? t.home.monthlySavings : t.home.savings}</span>
                 <span className={cn("text-[13px] font-semibold tabular-nums", net >= 0 ? "text-green-fg" : "text-red-fg")}>
                   {netDisplay}
                 </span>
@@ -168,7 +213,7 @@ export default function Home() {
 
           {/* Mobile: budget + ranking continue the same stack */}
           <section className="md:hidden">
-            <SectionLabel>{t.home.budget}</SectionLabel>
+            <SectionLabel>{kind === "month" ? t.home.budget : t.home.budgetThisMonth}</SectionLabel>
             <div className="panel px-4 py-4">
               <BudgetTracker data={(dashboard?.budgetItems ?? []).slice(0, 4)} bare />
             </div>
@@ -194,11 +239,34 @@ export default function Home() {
         onYearChange={setPickerYear}
         data={yearly}
         loading={yearlyLoading}
-        selectedMonth={dashMonth}
-        onSelect={(month) => { setDashMonth(month); setPickerOpen(false); }}
+        selectedMonth={monthKey(period.range.from)}
+        onSelect={(month) => {
+          const [y, m] = month.split("-").map(Number);
+          setAnchor(new Date(Date.UTC(y, m - 1, 1)));
+          setPickerOpen(false);
+        }}
       />
     </div>
   );
+}
+
+/**
+ * What the arrows are sitting on. A week names its two ends, since "week of
+ * the 8th" means nothing at a glance; the longer spans name themselves.
+ */
+function periodLabel(period: Period, locale: string, allLabel: string): string {
+  const { kind, range } = period;
+  if (kind === "all") return allLabel;
+  if (kind === "year") return String(range.from.getUTCFullYear());
+  if (kind === "month") return formatMonth(monthKey(range.from));
+
+  // The range is half-open, so the last day it covers is the instant before it ends.
+  const last = new Date(range.to.getTime() - 1);
+  const day = new Intl.DateTimeFormat(locale, { day: "numeric", timeZone: "UTC" });
+  const dayMonth = new Intl.DateTimeFormat(locale, {
+    day: "numeric", month: "short", timeZone: "UTC",
+  });
+  return `${day.format(range.from)} – ${dayMonth.format(last)}`;
 }
 
 /** 44px hit area around a 22px glyph box — the target grows, the chrome doesn't. */

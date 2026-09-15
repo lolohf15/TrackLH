@@ -9,6 +9,7 @@ import type {
 } from "@/types";
 import { UNKNOWN_COLOR } from "@/types";
 import { getCurrentMonth, getPrevMonth } from "@/lib/utils";
+import type { Bucket, DateRange, Period } from "./period";
 
 /** Category name -> color, built from this user's Category rows. */
 export type ColorMap = Map<string, string>;
@@ -27,9 +28,15 @@ export function getTransactionMonth(date: string): string {
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
 }
 
-export function filterByMonth(transactions: Transaction[], month: string): Transaction[] {
-  if (!month) return transactions;
-  return transactions.filter((t) => getTransactionMonth(t.date) === month);
+/** Half-open, matching `DateRange`: a movement at midnight belongs to the day
+ *  that starts, not the one that ends. */
+export function filterByRange(transactions: Transaction[], range: DateRange): Transaction[] {
+  const from = range.from.getTime();
+  const to = range.to.getTime();
+  return transactions.filter((t) => {
+    const at = new Date(t.date).getTime();
+    return at >= from && at < to;
+  });
 }
 
 /** Per-account totals across the user's whole history (rule 6/7 inputs). */
@@ -107,33 +114,45 @@ export function computeTotalAvailable(balances: AccountBalance[]): number {
 }
 
 // Rule 9: only Ingreso type
-export function computeMonthlyIncome(transactions: Transaction[], month: string): number {
+export function computeIncome(transactions: Transaction[], range: DateRange): number {
   return round2(
-    filterByMonth(transactions, month)
+    filterByRange(transactions, range)
       .filter((t) => t.type === "Ingreso")
       .reduce((sum, t) => sum + t.amount, 0)
   );
 }
 
 // Rule 9: only Gasto type
-export function computeMonthlyExpenses(transactions: Transaction[], month: string): number {
+export function computeExpenses(transactions: Transaction[], range: DateRange): number {
   return round2(
-    filterByMonth(transactions, month)
+    filterByRange(transactions, range)
       .filter((t) => t.type === "Gasto")
       .reduce((sum, t) => sum + t.amount, 0)
   );
 }
 
+/** Income and spending per chart slice, in the order the buckets came in. */
+export function computeBuckets(
+  transactions: Transaction[],
+  buckets: Bucket[]
+): Array<{ key: string; income: number; expenses: number; net: number }> {
+  return buckets.map((bucket) => {
+    const income = computeIncome(transactions, bucket.range);
+    const expenses = computeExpenses(transactions, bucket.range);
+    return { key: bucket.key, income, expenses, net: round2(income - expenses) };
+  });
+}
+
 export function computeCategoryExpenses(
   transactions: Transaction[],
-  month: string,
+  range: DateRange,
   colors: ColorMap
 ): CategorySummary[] {
   // Rule 11: only Gasto counts toward categories
-  const monthly = filterByMonth(transactions, month).filter((t) => t.type === "Gasto");
+  const inRange = filterByRange(transactions, range).filter((t) => t.type === "Gasto");
 
   const map = new Map<string, { amount: number; count: number }>();
-  for (const t of monthly) {
+  for (const t of inRange) {
     const cat = t.category ?? "Sin categoría";
     const existing = map.get(cat) ?? { amount: 0, count: 0 };
     map.set(cat, { amount: round2(existing.amount + t.amount), count: existing.count + 1 });
@@ -154,26 +173,26 @@ export function computeCategoryExpenses(
 
 export function computeCategoryTrends(
   transactions: Transaction[],
-  months: string[],
+  buckets: Bucket[],
   budgets: Array<{ category: string; amount: number }>,
   colors: ColorMap
 ): CategoryTrend[] {
   const budgetMap = new Map(budgets.map((b) => [b.category, b.amount]));
 
-  const perMonth = months.map((m) => computeCategoryExpenses(transactions, m, colors));
-  const currentSummaries = perMonth[perMonth.length - 1];
+  const perBucket = buckets.map((b) => computeCategoryExpenses(transactions, b.range, colors));
+  const currentSummaries = perBucket[perBucket.length - 1] ?? [];
 
   const categories = new Set<string>();
-  for (const summary of perMonth) {
+  for (const summary of perBucket) {
     for (const c of summary) categories.add(c.category);
   }
 
   return Array.from(categories)
     .map((category) => {
       const currentEntry = currentSummaries.find((c) => c.category === category);
-      const points = months.map((month, i) => ({
-        month,
-        amount: perMonth[i].find((c) => c.category === category)?.amount ?? 0,
+      const points = buckets.map((bucket, i) => ({
+        month: bucket.key,
+        amount: perBucket[i].find((c) => c.category === category)?.amount ?? 0,
       }));
       return {
         category,
@@ -188,11 +207,11 @@ export function computeCategoryTrends(
 
 export function computeBudgetItems(
   transactions: Transaction[],
-  month: string,
+  range: DateRange,
   budgets: Array<{ category: string; amount: number }>,
   colors: ColorMap
 ): BudgetItem[] {
-  const categoryExpenses = computeCategoryExpenses(transactions, month, colors);
+  const categoryExpenses = computeCategoryExpenses(transactions, range, colors);
   const expMap = new Map(categoryExpenses.map((c) => [c.category, c.amount]));
 
   return budgets.map(({ category, amount: budget }) => {
@@ -221,48 +240,58 @@ function computeBudgetUtilization(
 
 export function computeYearlyNet(transactions: Transaction[], year: number): YearlyNetPoint[] {
   return Array.from({ length: 12 }, (_, i) => {
-    const month = `${year}-${String(i + 1).padStart(2, "0")}`;
-    const income = computeMonthlyIncome(transactions, month);
-    const expenses = computeMonthlyExpenses(transactions, month);
+    const range = {
+      from: new Date(Date.UTC(year, i, 1)),
+      to: new Date(Date.UTC(year, i + 1, 1)),
+    };
+    const income = computeIncome(transactions, range);
+    const expenses = computeExpenses(transactions, range);
     return {
-      month,
+      month: `${year}-${String(i + 1).padStart(2, "0")}`,
       income,
       expenses,
       net: round2(income - expenses),
-      hasData: filterByMonth(transactions, month).length > 0,
+      hasData: filterByRange(transactions, range).length > 0,
     };
   });
 }
 
 export function buildDashboardData(
   transactions: Transaction[],
-  month: string,
+  period: Period,
   accountBalances: AccountBalance[],
   budgetConfigs: Array<{ category: string; amount: number }>,
+  /**
+   * Budgets are a monthly idea and stay one whatever period is on screen —
+   * comparing a week of spending to a month's budget would read as being
+   * wildly under. The calendar month holding the anchor, always.
+   */
+  budgetRange: DateRange,
   lastSyncAt: string | null,
   colors: ColorMap
 ): DashboardData {
   const totalAvailable = computeTotalAvailable(accountBalances);
-  const monthlyExpenses = computeMonthlyExpenses(transactions, month);
-  const monthlyIncome = computeMonthlyIncome(transactions, month);
-  const netBalance = round2(monthlyIncome - monthlyExpenses);
-  const categoryExpenses = computeCategoryExpenses(transactions, month, colors);
+  const periodExpenses = computeExpenses(transactions, period.range);
+  const periodIncome = computeIncome(transactions, period.range);
+  const netBalance = round2(periodIncome - periodExpenses);
+  const categoryExpenses = computeCategoryExpenses(transactions, period.range, colors);
 
-  const prevMonth = getPrevMonth(month);
-  const prevMonthExpenses = computeMonthlyExpenses(transactions, prevMonth);
-  const prevMonthIncome   = computeMonthlyIncome(transactions, prevMonth);
+  // All-time has nothing before it, so its trend arrows simply don't appear.
+  const prevPeriodExpenses = period.previous ? computeExpenses(transactions, period.previous) : 0;
+  const prevPeriodIncome = period.previous ? computeIncome(transactions, period.previous) : 0;
 
   // No global fallback: a new user simply has no budgets until they set some.
-  const budgetItems = computeBudgetItems(transactions, month, budgetConfigs, colors);
+  const budgetItems = computeBudgetItems(transactions, budgetRange, budgetConfigs, colors);
   const { budgetUsed, budgetTotal, budgetUsedPercent } = computeBudgetUtilization(budgetItems);
 
   return {
+    period: period.kind,
     totalAvailable,
-    monthlyExpenses,
-    monthlyIncome,
+    periodExpenses,
+    periodIncome,
     netBalance,
-    prevMonthExpenses,
-    prevMonthIncome,
+    prevPeriodExpenses,
+    prevPeriodIncome,
     budgetUsed,
     budgetTotal,
     budgetUsedPercent,
