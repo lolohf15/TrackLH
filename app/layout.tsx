@@ -49,7 +49,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es">
+    // The boot script below stamps `data-theme` before React hydrates, so the
+    // server's markup and the client's element disagree by design. Suppression
+    // is scoped to this element's own attributes, not its subtree.
+    <html lang="es" suppressHydrationWarning>
       <head>
         {/* Runs before first paint: a saved light preference has to be on the
             element already, or the app flashes dark on every load. */}
