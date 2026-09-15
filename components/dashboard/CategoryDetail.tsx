@@ -29,7 +29,7 @@ export function CategoryDetail({ trend }: { trend: CategoryTrend }) {
           <h2 className="text-base font-semibold text-text">{trend.category}</h2>
         </div>
         <Link
-          href={`/movimientos?category=${encodeURIComponent(trend.category)}`}
+          href={`/wallet?category=${encodeURIComponent(trend.category)}`}
           className="press rounded-full font-mono text-[10.5px] font-medium border border-border px-3.5 py-2 text-text-muted hover:text-text hover:border-border-strong transition-colors duration-150 ease-out shrink-0 uppercase tracking-wide"
         >
           {t.wallet.seeMovements.toLowerCase()} →

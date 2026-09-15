@@ -252,12 +252,12 @@ function AccountRow({
 
       <div className="flex flex-wrap gap-x-5 gap-y-1.5 mb-3 text-xs">
         <span className="text-text-faint">
-          Calculado:{" "}
+          {t.balances.calculated}:{" "}
           <span className="text-text-muted tabular-nums">{formatMXN(account.calculatedBalance)}</span>
         </span>
         {hasAdjustment && (
           <span className="text-text-faint">
-            Ajuste:{" "}
+            {t.balances.adjustment}:{" "}
             <span className={cn(
               "tabular-nums font-medium",
               account.balanceAdjustment >= 0 ? "text-green-fg" : "text-red-fg"
@@ -267,7 +267,7 @@ function AccountRow({
           </span>
         )}
         <span className="text-text-faint">
-          Mostrado:{" "}
+          {t.balances.shown}:{" "}
           <span className="text-text font-semibold tabular-nums">{formatMXN(account.currentBalance)}</span>
         </span>
       </div>
@@ -317,12 +317,12 @@ function AccountRow({
         )}
         {row.savedAt && !row.error && (
           <p className="text-xs text-green-fg">
-            ✓ Saldos actualizados. Se aplicó un ajuste sin tocar tus movimientos.
+            ✓ {t.balances.saved}
           </p>
         )}
         {!row.savedAt && !row.error && account.adjustmentDate && (
           <p className="text-xs text-text-dim">
-            Último ajuste: {formatDate(account.adjustmentDate)}
+            {t.balances.lastAdjustment}: {formatDate(account.adjustmentDate)}
           </p>
         )}
       </div>

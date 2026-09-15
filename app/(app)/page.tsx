@@ -166,7 +166,7 @@ export default function Home() {
           <section>
             <SectionLabel>
               {t.home.recentActivity}
-              <Link href="/movimientos" className="font-mono text-[10px] font-medium text-accent hover:brightness-125 tracking-wide normal-case">
+              <Link href="/wallet" className="font-mono text-[10px] font-medium text-accent hover:brightness-125 tracking-wide normal-case">
                 {t.home.seeAll} →
               </Link>
             </SectionLabel>

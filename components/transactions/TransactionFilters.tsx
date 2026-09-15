@@ -52,7 +52,7 @@ export function TransactionFiltersPanel({ filters, categories, accounts, onChang
             onClick={reset}
             className="font-mono text-[10.5px] text-text-dim hover:text-text-muted underline underline-offset-2 transition-colors"
           >
-            Limpiar
+            {t.movements.clear}
           </button>
         )}
       </div>

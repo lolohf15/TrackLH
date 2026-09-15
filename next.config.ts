@@ -9,6 +9,7 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       { source: "/cuentas", destination: "/wallet", permanent: false },
+      { source: "/movimientos", destination: "/wallet", permanent: false },
       { source: "/categorias", destination: "/analytics", permanent: false },
       { source: "/categorias/:category", destination: "/analytics/:category", permanent: false },
     ];
