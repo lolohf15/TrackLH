@@ -10,6 +10,7 @@ import { MonthPickerSheet } from "@/components/dashboard/MonthPickerSheet";
 import { TransactionList } from "@/components/transactions/TransactionList";
 import { ChartSkeleton } from "@/components/ui/Skeleton";
 import { MetricTile } from "@/components/ui/MetricTile";
+import { useT } from "@/lib/i18n-react";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { formatMXN, formatMonth, getCurrentMonth, cn } from "@/lib/utils";
 import { useCountUp } from "@/lib/useCountUp";
@@ -18,6 +19,7 @@ import type { DashboardData, PaginatedTransactions, YearlyDashboardData } from "
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 export default function Home() {
+  const t = useT();
   const [dashMonth, setDashMonth] = useState(getCurrentMonth());
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerYear, setPickerYear] = useState(() => Number(getCurrentMonth().split("-")[0]));
@@ -73,9 +75,9 @@ export default function Home() {
 
       {/* Month nav */}
       <div className="flex items-center justify-between px-4 md:px-0 pt-4 pb-3">
-        <span className="text-[15px] font-semibold text-text">Resumen</span>
+        <span className="text-[15px] font-semibold text-text">{t.home.title}</span>
         <div className="flex items-center gap-0.5 -my-2 -mr-2">
-          <MonthNavButton label="Mes anterior" onClick={() => navigateMonth(-1)}>
+          <MonthNavButton label={t.home.prevMonth} onClick={() => navigateMonth(-1)}>
             ‹
           </MonthNavButton>
           <button
@@ -85,7 +87,7 @@ export default function Home() {
             {formatMonth(dashMonth)}
           </button>
           <MonthNavButton
-            label="Mes siguiente"
+            label={t.home.nextMonth}
             onClick={() => navigateMonth(1)}
             disabled={dashMonth >= getCurrentMonth()}
           >
@@ -100,22 +102,22 @@ export default function Home() {
           {/* This month, as one group: the total, then how it split, then what's left */}
           <div className="panel">
             <MetricTile
-              label="Saldo total"
+              label={t.home.totalBalance}
               value={totalAvailableDisplay}
               size="lg"
-              hint={`${(dashboard?.accountBalances ?? []).filter((a) => !a.isCredit).length} cuentas de débito`}
+              hint={t.home.debitAccounts((dashboard?.accountBalances ?? []).filter((a) => !a.isCredit).length)}
               className="px-4 pt-4 pb-4"
             />
 
             <div className="grid grid-cols-2 border-t border-divider">
               <MetricTile
-                label="Ingresos"
+                label={t.home.income}
                 value={incomeDisplay}
                 trend={incomeTrend}
                 className="px-4 py-3.5 border-r border-divider"
               />
               <MetricTile
-                label="Gastos"
+                label={t.home.expenses}
                 value={expensesDisplay}
                 trend={expensesTrend}
                 trendPolarity="down-good"
@@ -125,7 +127,7 @@ export default function Home() {
 
             <div className="px-4 py-3.5 border-t border-divider">
               <div className="flex items-center justify-between mb-2">
-                <span className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em]">Ahorro del mes</span>
+                <span className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em]">{t.home.monthlySavings}</span>
                 <span className={cn("text-[13px] font-semibold tabular-nums", net >= 0 ? "text-green-fg" : "text-red-fg")}>
                   {netDisplay}
                 </span>
@@ -147,9 +149,9 @@ export default function Home() {
           {/* Recent activity — the group label sits above its group, not inside it */}
           <section>
             <SectionLabel>
-              Actividad reciente
+              {t.home.recentActivity}
               <Link href="/movimientos" className="font-mono text-[10px] font-medium text-accent hover:brightness-125 tracking-wide normal-case">
-                Ver todo →
+                {t.home.seeAll} →
               </Link>
             </SectionLabel>
             <div className="panel px-4 pb-2">
@@ -158,15 +160,15 @@ export default function Home() {
                 loading={recentLoading}
                 page={1}
                 onPageChange={() => {}}
-                emptyTitle="Aún no hay movimientos"
-                emptyHint="Toca el botón + para registrar tu primer gasto o ingreso"
+                emptyTitle={t.home.emptyTitle}
+                emptyHint={t.home.emptyHint}
               />
             </div>
           </section>
 
           {/* Mobile: budget + ranking continue the same stack */}
           <section className="md:hidden">
-            <SectionLabel>Presupuesto</SectionLabel>
+            <SectionLabel>{t.home.budget}</SectionLabel>
             <div className="panel px-4 py-4">
               <BudgetTracker data={(dashboard?.budgetItems ?? []).slice(0, 4)} bare />
             </div>

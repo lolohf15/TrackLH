@@ -4,10 +4,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n-react";
 import { NAV_ITEMS } from "./nav";
 
 export function Sidebar() {
   const pathname = usePathname();
+  const t = useT();
 
   return (
     <aside className="hidden md:flex flex-col fixed top-0 left-0 bottom-0 z-30 w-[72px] hover:w-[220px] group bg-surface border-r border-border transition-[width] duration-200 ease-out overflow-hidden">
@@ -19,7 +21,8 @@ export function Sidebar() {
       </div>
 
       <nav className="flex-1 flex flex-col gap-0.5 px-3 pt-2">
-        {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+        {NAV_ITEMS.map(({ href, key, icon: Icon }) => {
+          const label = t.nav[key];
           const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
           return (
             <Link

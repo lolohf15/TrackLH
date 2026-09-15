@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { SessionProvider } from "next-auth/react";
 import { THEME_BOOT_SCRIPT } from "@/lib/theme";
+import { LANG_BOOT_SCRIPT } from "@/lib/i18n";
 import "./globals.css";
 
 const inter = Inter({
@@ -49,14 +50,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    // The boot script below stamps `data-theme` before React hydrates, so the
-    // server's markup and the client's element disagree by design. Suppression
-    // is scoped to this element's own attributes, not its subtree.
+    // The boot scripts below stamp `data-theme` and `lang` before React
+    // hydrates, so the server's markup and the client's element disagree by
+    // design. Suppression is scoped to this element's own attributes, not
+    // its subtree.
     <html lang="es" suppressHydrationWarning>
       <head>
-        {/* Runs before first paint: a saved light preference has to be on the
-            element already, or the app flashes dark on every load. */}
+        {/* Both run before first paint: a saved preference has to be on the
+            element already, or the app flashes the wrong one on every load. */}
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
+        <script dangerouslySetInnerHTML={{ __html: LANG_BOOT_SCRIPT }} />
       </head>
       <body className={`${inter.variable} ${jetbrainsMono.variable} ${inter.className}`}>
         {/* The shell now lives in the (app) route group, so signed-out and

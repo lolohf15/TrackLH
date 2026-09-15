@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { signOut, useSession } from "next-auth/react";
+import { useT } from "@/lib/i18n-react";
 
 /** Who is signed in, and the way out. */
 export function AccountPanel() {
+  const t = useT();
   const { data: session } = useSession();
   const [busy, setBusy] = useState(false);
 
@@ -23,7 +25,7 @@ export function AccountPanel() {
     <div className="panel px-4 py-3.5 flex items-center justify-between gap-3">
       <div className="min-w-0">
         <p className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em]">
-          Sesión
+          {t.profile.session}
         </p>
         <p className="text-[13.5px] text-text truncate mt-1">
           {session?.user?.email ?? "—"}
@@ -35,7 +37,7 @@ export function AccountPanel() {
         disabled={busy}
         className="press shrink-0 rounded-full border border-border px-3.5 py-2 font-mono text-[10.5px] uppercase tracking-wide text-text-muted hover:border-border-strong hover:text-text transition-colors duration-150 disabled:opacity-40"
       >
-        {busy ? "Saliendo…" : "Cerrar sesión"}
+        {busy ? t.profile.signingOut : t.profile.signOut}
       </button>
     </div>
   );

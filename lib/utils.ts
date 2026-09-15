@@ -1,18 +1,23 @@
+import { currentLocale } from "./i18n";
+
 export function cn(...classes: (string | undefined | false | null)[]): string {
   return classes.filter(Boolean).join(" ");
 }
 
 export function formatMXN(amount: number): string {
-  return new Intl.NumberFormat("es-MX", {
+  return new Intl.NumberFormat(currentLocale(), {
     style: "currency",
     currency: "MXN",
+    // The money is pesos in both languages. Without this, en-US renders it
+    // as "MX$12,482" — correct, and not what anyone wants to read all day.
+    currencyDisplay: "narrowSymbol",
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(amount);
 }
 
 export function formatDate(dateStr: string): string {
-  return new Intl.DateTimeFormat("es-MX", {
+  return new Intl.DateTimeFormat(currentLocale(), {
     day: "numeric",
     month: "short",
     year: "numeric",
@@ -22,7 +27,7 @@ export function formatDate(dateStr: string): string {
 
 export function formatMonth(monthStr: string): string {
   const [year, month] = monthStr.split("-").map(Number);
-  const label = new Intl.DateTimeFormat("es-MX", { month: "long", year: "numeric" }).format(
+  const label = new Intl.DateTimeFormat(currentLocale(), { month: "long", year: "numeric" }).format(
     new Date(year, month - 1)
   );
   return label.charAt(0).toUpperCase() + label.slice(1);
@@ -76,7 +81,7 @@ export function getMonthOptions(count = 12): Array<{ value: string; label: strin
   for (let i = 0; i < count; i++) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
     const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-    const label = new Intl.DateTimeFormat("es-MX", { month: "long", year: "numeric" }).format(d);
+    const label = new Intl.DateTimeFormat(currentLocale(), { month: "long", year: "numeric" }).format(d);
     options.push({ value, label: label.charAt(0).toUpperCase() + label.slice(1) });
   }
   return options;

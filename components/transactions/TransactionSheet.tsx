@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { CheckIcon } from "@/components/shell/icons";
 import { cn, getToday, withLocalTime } from "@/lib/utils";
+import { useT } from "@/lib/i18n-react";
 import {
   VALID_TRANSACTION_TYPES,
   type Catalog,
@@ -16,7 +17,6 @@ import {
   type TransactionType,
 } from "@/types";
 
-const TYPE_OPTIONS = VALID_TRANSACTION_TYPES.map((t) => ({ value: t, label: t }));
 
 interface Props {
   open: boolean;
@@ -50,6 +50,13 @@ export function TransactionSheet({
   initialConfirmingDelete = false,
 }: Props) {
   const isEdit = transaction !== null;
+  const tr = useT();
+  // The value stays the stored Spanish one the rules compare against; only
+  // what the button says changes with the language.
+  const typeOptions = VALID_TRANSACTION_TYPES.map((type) => ({
+    value: type,
+    label: tr.txType[type],
+  }));
   // The options come from the same rows the server validates against, so the
   // form can never offer something the POST would reject.
   const { data: catalog } = useSWR<Catalog>("/api/catalog", fetcher);
@@ -184,7 +191,7 @@ export function TransactionSheet({
     <BottomSheet open={open} onClose={onClose} title={isEdit ? "Editar movimiento" : "Nuevo movimiento"}>
       <div className="pb-6 space-y-5">
         <SegmentedControl
-          options={TYPE_OPTIONS}
+          options={typeOptions}
           value={type}
           onChange={(t) => {
             setType(t);

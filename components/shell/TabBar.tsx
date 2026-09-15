@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, useReducedMotion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n-react";
 import { NAV_ITEMS } from "./nav";
 
 /**
@@ -49,7 +50,9 @@ function Tab({
   pathname: string;
   reduceMotion: boolean | null;
 }) {
-  const { href, label, icon: Icon } = item;
+  const t = useT();
+  const { href, key, icon: Icon } = item;
+  const label = t.nav[key];
   const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
 
   return (

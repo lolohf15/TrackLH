@@ -3,22 +3,27 @@
 import Link from "next/link";
 import { AccountPanel } from "@/components/auth/AccountPanel";
 import { ThemeToggle } from "@/components/settings/ThemeToggle";
+import { LanguageToggle } from "@/components/settings/LanguageToggle";
 import { ChevronDownIcon } from "@/components/shell/icons";
+import { useT } from "@/lib/i18n-react";
 
 export default function Perfil() {
+  const t = useT();
+
   return (
     <div className="max-w-xl mx-auto px-4 md:px-8 pt-4 pb-6 space-y-3">
-      <h1 className="text-[15px] font-semibold text-text mb-4">Perfil</h1>
+      <h1 className="text-[15px] font-semibold text-text mb-4">{t.profile.title}</h1>
 
       <ThemeToggle />
+      <LanguageToggle />
 
       <section>
         <p className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em] px-1 pb-2">
-          Administrar
+          {t.profile.manage}
         </p>
         <div className="panel px-4">
-          <SettingLink href="/wallet" label="Cuentas" hint="Saldos, límites y ajustes" />
-          <SettingLink href="/analytics" label="Categorías" hint="Nombres, colores y presupuestos" />
+          <SettingLink href="/wallet" label={t.profile.accounts} hint={t.profile.accountsHint} />
+          <SettingLink href="/analytics" label={t.profile.categories} hint={t.profile.categoriesHint} />
         </div>
       </section>
 

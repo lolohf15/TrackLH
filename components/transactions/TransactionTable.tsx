@@ -7,6 +7,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { TableSkeleton } from "@/components/ui/Skeleton";
 import { formatMXN, formatDate } from "@/lib/utils";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n-react";
 import type { Transaction, TransactionType, PaginatedTransactions } from "@/types";
 
 interface Props {
@@ -75,6 +76,7 @@ function Th({ children, right }: { children: React.ReactNode; right?: boolean })
 }
 
 function DesktopRow({ tx, onEdit }: { tx: Transaction; onEdit: () => void }) {
+  const t = useT();
   const type = tx.type as TransactionType;
 
   return (
@@ -98,7 +100,9 @@ function DesktopRow({ tx, onEdit }: { tx: Transaction; onEdit: () => void }) {
         </span>
       </td>
       <td className="px-4 py-3">
-        <Badge variant={type}>{tx.type}</Badge>
+        {/* The stored value is Spanish and the rules compare against it —
+            only the label travels. */}
+        <Badge variant={type}>{t.txType[type]}</Badge>
       </td>
       <td className="px-4 py-3 text-right whitespace-nowrap">
         <span className={cn(

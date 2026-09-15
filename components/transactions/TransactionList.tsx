@@ -8,6 +8,9 @@ import { TableSkeleton } from "@/components/ui/Skeleton";
 import { PencilIcon, TrashIcon } from "@/components/shell/icons";
 import { formatMXN } from "@/lib/utils";
 import { cn } from "@/lib/utils";
+import { currentLocale } from "@/lib/i18n";
+import { useT } from "@/lib/i18n-react";
+import type { Dictionary } from "@/lib/dictionary";
 import type { Transaction, TransactionType, PaginatedTransactions } from "@/types";
 
 interface Props {
@@ -38,7 +41,9 @@ const ACTION_WIDTH = 144;
 const OPEN_THRESHOLD = 56;
 const VELOCITY_PROJECTION = 0.2;
 
-function dayLabel(dateStr: string): string {
+/** Takes the dictionary rather than reading it: this runs per row, outside
+ *  a component, so it can't hold a hook of its own. */
+function dayLabel(dateStr: string, t: Dictionary): string {
   const d = new Date(dateStr);
   const today = new Date();
   const yesterday = new Date();
@@ -49,10 +54,10 @@ function dayLabel(dateStr: string): string {
     a.getUTCMonth() === b.getMonth() &&
     a.getUTCDate() === b.getDate();
 
-  if (sameDay(d, today)) return "Hoy";
-  if (sameDay(d, yesterday)) return "Ayer";
+  if (sameDay(d, today)) return t.dates.today;
+  if (sameDay(d, yesterday)) return t.dates.yesterday;
 
-  return new Intl.DateTimeFormat("es-MX", {
+  return new Intl.DateTimeFormat(currentLocale(), {
     weekday: "long", day: "numeric", month: "short", timeZone: "UTC",
   }).format(d).replace(/^\w/, (c) => c.toUpperCase());
 }
@@ -62,6 +67,7 @@ export function TransactionList({
   emptyTitle = "Sin transacciones",
   emptyHint = "Ajusta los filtros para ver otros movimientos",
 }: Props) {
+  const t = useT();
   const [editing, setEditing] = useState<Transaction | null>(null);
   const [deleteIntent, setDeleteIntent] = useState(false);
   // Bumped on every open so the sheet remounts fresh, same as AddRecordButton
@@ -95,7 +101,7 @@ export function TransactionList({
 
   const groups: Array<{ label: string; items: Transaction[] }> = [];
   for (const tx of data.data) {
-    const label = dayLabel(tx.date);
+    const label = dayLabel(tx.date, t);
     const last = groups[groups.length - 1];
     if (last && last.label === label) last.items.push(tx);
     else groups.push({ label, items: [tx] });
@@ -153,6 +159,7 @@ function Row({
   onEdit: () => void;
   onDelete: () => void;
 }) {
+  const t = useT();
   const type = tx.type as TransactionType;
   const reduceMotion = useReducedMotion();
   const x = useMotionValue(0);
@@ -180,10 +187,10 @@ function Row({
     <div className="relative overflow-hidden border-t border-divider">
       {!reduceMotion && (
         <div className="absolute inset-y-0 right-0 flex" style={{ width: ACTION_WIDTH }}>
-          <ActionButton label="Editar" tone="neutral" onClick={onEdit}>
+          <ActionButton label={t.actions.edit} tone="neutral" onClick={onEdit}>
             <PencilIcon className="w-[18px] h-[18px]" />
           </ActionButton>
-          <ActionButton label="Eliminar" tone="danger" onClick={onDelete}>
+          <ActionButton label={t.actions.delete} tone="danger" onClick={onDelete}>
             <TrashIcon className="w-[18px] h-[18px]" />
           </ActionButton>
         </div>
