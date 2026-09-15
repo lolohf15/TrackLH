@@ -241,7 +241,16 @@ function Row({
         // layer sitting behind them, which read as the row "resetting".
         whileTap={{ scale: 0.98 }}
         onClick={() => (isOpen ? onOpenChange(false) : onEdit())}
-        className="relative bg-surface w-full text-left flex items-center justify-between py-[13px] cursor-pointer"
+        // Opaque only while there's something behind it to hide. A row that
+        // carries its own background all the time cuts a flat rectangle out
+        // of the panel's edge glow, which reads as every transaction sitting
+        // in a box of its own. The delay matches the action layer's, so the
+        // cover outlasts the close animation.
+        className={cn(
+          "relative w-full text-left flex items-center justify-between py-[13px] cursor-pointer",
+          "transition-[background-color] duration-0",
+          isOpen || dragging ? "bg-surface" : "bg-transparent delay-300"
+        )}
       >
         <div className="flex items-center gap-3 min-w-0">
           {/* A dot inside a ring, not a bare dot: at this size the ring is
