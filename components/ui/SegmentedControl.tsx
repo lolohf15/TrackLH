@@ -12,11 +12,19 @@ export interface SegmentOption<T extends string> {
  * three places before this — the movement type, the account type, and now the
  * theme — which is two too many for a control this opinionated.
  */
+const SIZES = {
+  /** Inside a form, where it sits among 48px fields and should match them. */
+  md: "text-[11px] py-2.5 min-h-[40px]",
+  /** Page chrome, where the control is navigation rather than an answer. */
+  sm: "text-[10px] py-1.5 min-h-[30px]",
+};
+
 export function SegmentedControl<T extends string>({
   options,
   value,
   onChange,
   label,
+  size = "md",
   className,
 }: {
   options: ReadonlyArray<SegmentOption<T>>;
@@ -24,13 +32,18 @@ export function SegmentedControl<T extends string>({
   onChange: (value: T) => void;
   /** Names the group for screen readers, since the track itself says nothing. */
   label?: string;
+  size?: keyof typeof SIZES;
   className?: string;
 }) {
   return (
     <div
       role="group"
       aria-label={label}
-      className={cn("grid gap-1 rounded-md bg-surface-2 p-1", className)}
+      className={cn(
+        "grid gap-1 rounded-md bg-surface-2",
+        size === "sm" ? "p-[3px]" : "p-1",
+        className
+      )}
       style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}
     >
       {options.map((option) => {
@@ -42,8 +55,9 @@ export function SegmentedControl<T extends string>({
             onClick={() => onChange(option.value)}
             aria-pressed={active}
             className={cn(
-              "press rounded-sm font-mono text-[11px] font-medium uppercase tracking-wide py-2.5 min-h-[40px]",
+              "press rounded-sm font-mono font-medium uppercase tracking-wide",
               "transition-colors duration-150 ease-out",
+              SIZES[size],
               // Dark ink on the brass, not white: white on this gold sits at
               // about 2:1 and fails every contrast floor there is.
               active ? "bg-accent text-accent-ink shadow-panel" : "text-text-dim"

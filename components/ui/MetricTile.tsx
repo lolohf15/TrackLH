@@ -1,8 +1,8 @@
 import { cn } from "@/lib/utils";
 
 const SIZES = {
-  lg: "text-[38px] tracking-[-0.03em] leading-none",
-  md: "text-[19px] tracking-[-0.02em]",
+  lg: "text-[32px] tracking-[-0.03em] leading-none",
+  md: "text-[18px] tracking-[-0.02em]",
 };
 
 /**
@@ -40,14 +40,14 @@ export function MetricTile({
         {label}
       </div>
 
-      <div className={cn("font-semibold text-text tabular-nums mt-1.5", SIZES[size])}>
+      <div className={cn("font-semibold text-text tabular-nums mt-1", SIZES[size])}>
         {value}
       </div>
 
-      {hint && <div className="text-xs text-text-dim mt-1.5">{hint}</div>}
+      {hint && <div className="text-[11.5px] text-text-dim mt-1">{hint}</div>}
 
       {trend !== null && (
-        <div className={cn("font-mono text-[11px] mt-1", good ? "text-green-fg" : "text-red-fg")}>
+        <div className={cn("font-mono text-[10.5px] mt-0.5", good ? "text-green-fg" : "text-red-fg")}>
           {rising ? "▲" : "▼"} {Math.abs(trend)}%
         </div>
       )}

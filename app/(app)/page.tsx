@@ -14,7 +14,7 @@ import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { useLocale, useT } from "@/lib/i18n-react";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { dayKey, monthKey, resolvePeriod, type Period, type PeriodKind } from "@/services/period";
-import { formatMXN, formatMonth, cn } from "@/lib/utils";
+import { formatMXN, cn } from "@/lib/utils";
 import { useCountUp } from "@/lib/useCountUp";
 import type { DashboardData, PaginatedTransactions, YearlyDashboardData } from "@/types";
 
@@ -99,35 +99,9 @@ export default function Home() {
   return (
     <div className="max-w-6xl mx-auto md:px-8">
 
-      {/* Period nav */}
-      <div className="px-4 md:px-0 pt-4 pb-3 space-y-2.5">
-        <div className="flex items-center justify-between">
-          <span className="text-[15px] font-semibold text-text">{t.home.title}</span>
-          <div className="flex items-center gap-0.5 -my-2 -mr-2">
-            <MonthNavButton
-              label={t.home.prevPeriod}
-              onClick={() => navigate(-1)}
-              disabled={kind === "all"}
-            >
-              ‹
-            </MonthNavButton>
-            <button
-              onClick={openPicker}
-              disabled={kind !== "month"}
-              className="press font-mono text-[11px] text-text-muted min-w-[120px] text-center uppercase tracking-wide hover:text-text transition-colors duration-150 ease-out disabled:hover:text-text-muted"
-            >
-              {periodLabel(period, locale, t.home.allTime)}
-            </button>
-            <MonthNavButton
-              label={t.home.nextPeriod}
-              onClick={() => navigate(1)}
-              disabled={atLatest}
-            >
-              ›
-            </MonthNavButton>
-          </div>
-        </div>
-
+      {/* Period nav. No page title: the tab bar already names this screen,
+          and repeating it costs a row before any figure appears. */}
+      <div className="flex items-center gap-2 px-4 md:px-0 pt-3 pb-2.5">
         <SegmentedControl
           options={[
             { value: "week", label: t.home.periodWeek },
@@ -138,7 +112,33 @@ export default function Home() {
           value={kind}
           onChange={pickPeriod}
           label={t.home.title}
+          size="sm"
+          className="flex-1 min-w-0"
         />
+
+        {/* All-time has no span to step through, so the stepper goes away
+            and the segments take the width back. */}
+        {kind !== "all" && (
+          <div className="flex items-center shrink-0 -my-2">
+            <MonthNavButton label={t.home.prevPeriod} onClick={() => navigate(-1)}>
+              ‹
+            </MonthNavButton>
+            <button
+              onClick={openPicker}
+              disabled={kind !== "month"}
+              className="press font-mono text-[10px] text-text-muted min-w-[70px] text-center uppercase tracking-wide hover:text-text transition-colors duration-150 ease-out disabled:hover:text-text-muted"
+            >
+              {periodLabel(period, locale)}
+            </button>
+            <MonthNavButton
+              label={t.home.nextPeriod}
+              onClick={() => navigate(1)}
+              disabled={atLatest}
+            >
+              ›
+            </MonthNavButton>
+          </div>
+        )}
       </div>
 
       <div className="md:grid md:grid-cols-[1fr_360px] md:gap-8 md:items-start">
@@ -151,7 +151,7 @@ export default function Home() {
               value={totalAvailableDisplay}
               size="lg"
               hint={t.home.debitAccounts((dashboard?.accountBalances ?? []).filter((a) => !a.isCredit).length)}
-              className="px-4 pt-4 pb-4"
+              className="px-4 pt-3.5 pb-3.5"
             />
 
             <div className="grid grid-cols-2 border-t border-divider">
@@ -159,19 +159,19 @@ export default function Home() {
                 label={t.home.income}
                 value={incomeDisplay}
                 trend={incomeTrend}
-                className="px-4 py-3.5 border-r border-divider"
+                className="px-4 py-3 border-r border-divider"
               />
               <MetricTile
                 label={t.home.expenses}
                 value={expensesDisplay}
                 trend={expensesTrend}
                 trendPolarity="down-good"
-                className="px-4 py-3.5"
+                className="px-4 py-3"
               />
             </div>
 
-            <div className="px-4 py-3.5 border-t border-divider">
-              <div className="flex items-center justify-between mb-2">
+            <div className="px-4 py-3 border-t border-divider">
+              <div className="flex items-center justify-between mb-1.5">
                 <span className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em]">{kind === "month" ? t.home.monthlySavings : t.home.savings}</span>
                 <span className={cn("text-[13px] font-semibold tabular-nums", net >= 0 ? "text-green-fg" : "text-red-fg")}>
                   {netDisplay}
@@ -254,22 +254,25 @@ export default function Home() {
  * What the arrows are sitting on. A week names its two ends, since "week of
  * the 8th" means nothing at a glance; the longer spans name themselves.
  */
-function periodLabel(period: Period, locale: string, allLabel: string): string {
+function periodLabel(period: Period, locale: string): string {
   const { kind, range } = period;
-  if (kind === "all") return allLabel;
   if (kind === "year") return String(range.from.getUTCFullYear());
-  if (kind === "month") return formatMonth(monthKey(range.from));
+  if (kind === "month") {
+    return new Intl.DateTimeFormat(locale, {
+      month: "short", year: "numeric", timeZone: "UTC",
+    }).format(range.from);
+  }
 
   // The range is half-open, so the last day it covers is the instant before it ends.
   const last = new Date(range.to.getTime() - 1);
-  const day = new Intl.DateTimeFormat(locale, { day: "numeric", timeZone: "UTC" });
-  const dayMonth = new Intl.DateTimeFormat(locale, {
+  // formatRange puts the month where the language wants it and drops the
+  // repeat when both ends share one — "14–20 sept" but "Sep 14 – 20".
+  return new Intl.DateTimeFormat(locale, {
     day: "numeric", month: "short", timeZone: "UTC",
-  });
-  return `${day.format(range.from)} – ${dayMonth.format(last)}`;
+  }).formatRange(range.from, last);
 }
 
-/** 44px hit area around a 22px glyph box — the target grows, the chrome doesn't. */
+/** 36px hit area around a 22px glyph box — the target grows, the chrome doesn't. */
 function MonthNavButton({
   label, onClick, disabled, children,
 }: {
@@ -283,9 +286,9 @@ function MonthNavButton({
       onClick={onClick}
       aria-label={label}
       disabled={disabled}
-      className="press w-11 h-11 flex items-center justify-center group disabled:opacity-30 disabled:cursor-not-allowed disabled:active:scale-100"
+      className="press w-9 h-9 flex items-center justify-center group disabled:opacity-30 disabled:cursor-not-allowed disabled:active:scale-100"
     >
-      <span className="w-[26px] h-[26px] rounded-full flex items-center justify-center bg-surface-2 text-text-muted text-xs transition-colors duration-150 ease-out group-hover:bg-surface-3 group-hover:text-text">
+      <span className="w-[22px] h-[22px] rounded-full flex items-center justify-center bg-surface-2 text-text-muted text-[11px] transition-colors duration-150 ease-out group-hover:bg-surface-3 group-hover:text-text">
         {children}
       </span>
     </button>
