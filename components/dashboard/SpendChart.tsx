@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { StackedBarChart } from "@/components/ui/StackedBarChart";
+import { LineChart } from "@/components/ui/LineChart";
 import { formatMXN } from "@/lib/utils";
 import { useLocale, useT } from "@/lib/i18n-react";
 import type { BucketBreakdown } from "@/types";
@@ -54,64 +54,81 @@ function readoutLabel(key: string, granularity: "day" | "month", locale: string)
   ).format(bucketDate(key));
 }
 
+/** Rounded at every step, so the line's figures match the ones beside it. */
+function runningTotal(values: number[]): number[] {
+  let sum = 0;
+  return values.map((value) => {
+    sum = Math.round((sum + value) * 100) / 100;
+    return sum;
+  });
+}
+
 export function SpendChart({
   buckets,
+  previousExpenses,
   granularity,
 }: {
   buckets: BucketBreakdown[];
+  previousExpenses: number[];
   granularity: "day" | "month";
 }) {
   const t = useT();
   const locale = useLocale();
   const [picked, setPicked] = useState<string | null>(null);
 
-  // One column is always lit, and until the reader picks one it's the
-  // heaviest — the slice worth explaining without being asked.
-  const heaviest = buckets.reduce<BucketBreakdown | null>(
-    (best, b) => (b.expenses > 0 && b.expenses > (best?.expenses ?? 0) ? b : best),
-    null
-  );
-  const active = buckets.find((b) => b.key === (picked ?? heaviest?.key)) ?? null;
+  // Running totals, not each slice's own figure: what a period costs is a
+  // line that only climbs, and laying the last one under it turns "I spent
+  // this" into "I'm ahead of where I was" — the question worth asking
+  // halfway through a month.
+  const cumulative = runningTotal(buckets.map((b) => b.expenses));
+  const previous = runningTotal(previousExpenses);
 
-  // The average over the slices that actually saw spending — including the
-  // empty ones would drag the line down to something no bar ever reaches.
-  // With a single bar there's no average worth drawing: the line would just
-  // trace the top of that one bar.
-  const spending = buckets.filter((b) => b.expenses > 0);
-  const average =
-    spending.length > 1
-      ? spending.reduce((sum, b) => sum + b.expenses, 0) / spending.length
-      : 0;
+  // Called out by default: the last slice that actually saw spending. Its
+  // running total is the period's total, and it has categories to list —
+  // the true last day of a month usually has neither.
+  const lastSpending = buckets.reduce(
+    (found, b, i) => (b.expenses > 0 ? i : found),
+    -1
+  );
+  const activeKey = picked ?? buckets[lastSpending]?.key ?? null;
+  const activeIndex = buckets.findIndex((b) => b.key === activeKey);
+  const active = activeIndex >= 0 ? buckets[activeIndex] : null;
 
   return (
     <section className="panel px-4 py-3.5 mt-3">
-      <div className="flex items-baseline justify-between gap-3 mb-3">
+      <div className="flex items-baseline justify-between gap-3 mb-1">
         <p className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em]">
-          {granularity === "day" ? t.analytics.spendPerDay : t.analytics.spendPerMonth}
+          {t.analytics.cumulativeSpend}
         </p>
-        {active && (
-          <p className="font-mono text-[10.5px] text-text-muted uppercase tracking-wide">
-            {readoutLabel(active.key, granularity, locale)}{" "}
-            <span className="text-text font-semibold">{formatMXN(active.expenses)}</span>
-          </p>
+        {previous.length > 1 && (
+          <span className="flex items-center gap-1.5 font-mono text-[9.5px] text-text-faint uppercase tracking-wide">
+            <span className="w-4 border-t border-dashed border-text-faint" />
+            {t.analytics.previousPeriod}
+          </span>
         )}
       </div>
 
-      <StackedBarChart
-        bars={buckets.map((bucket, i) => ({
+      <LineChart
+        points={buckets.map((bucket, i) => ({
           key: bucket.key,
           label: axisLabel(bucket.key, granularity, i, buckets.length, locale),
-          total: bucket.expenses,
-          segments: bucket.slices.map((s) => ({ value: s.amount, color: s.color })),
+          value: cumulative[i],
         }))}
-        reference={{ value: average, label: t.analytics.average }}
-        highlightKey={active?.key ?? null}
+        comparison={previous.length > 1 ? previous : null}
+        color="var(--color-accent)"
+        selectedKey={activeKey}
         onSelect={setPicked}
+        format={formatMXN}
       />
 
-      {active && active.slices.length > 0 && (
-        <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-3 pt-3 border-t border-divider">
-          {active.slices.slice(0, 4).map((slice) => (
+      {active && (
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-3 pt-3 border-t border-divider">
+          <span className="font-mono text-[10.5px] text-text-muted uppercase tracking-wide">
+            {readoutLabel(active.key, granularity, locale)}{" "}
+            <span className="text-text font-semibold">{formatMXN(active.expenses)}</span>{" "}
+            <span className="text-text-faint normal-case">{t.analytics.thatDay}</span>
+          </span>
+          {active.slices.slice(0, 3).map((slice) => (
             <span key={slice.category} className="flex items-center gap-1.5 min-w-0">
               <span
                 className="w-[6px] h-[6px] rounded-full shrink-0"

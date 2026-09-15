@@ -23,10 +23,12 @@ interface Props {
   emptyHint?: string;
 }
 
-const dotColors: Record<TransactionType, string> = {
-  Gasto: "bg-red-fg",
-  Ingreso: "bg-green-fg",
-  Transferencia: "bg-amber-fg",
+/** As a value rather than a class: the row's marker mixes it down for its
+ *  ring, and `color-mix` needs the colour itself to do that. */
+const typeColors: Record<TransactionType, string> = {
+  Gasto: "var(--color-red-fg)",
+  Ingreso: "var(--color-green-fg)",
+  Transferencia: "var(--color-amber-fg)",
 };
 
 const amountColors: Record<TransactionType, string> = {
@@ -169,6 +171,7 @@ function Row({
   const type = tx.type as TransactionType;
   const reduceMotion = useReducedMotion();
   const x = useMotionValue(0);
+  const [dragging, setDragging] = useState(false);
 
   // Snap fully open or fully closed whenever `isOpen` changes — from this
   // row's own drag release, or from another row opening and this one
@@ -192,7 +195,19 @@ function Row({
   return (
     <div className="relative overflow-hidden border-t border-divider">
       {!reduceMotion && (
-        <div className="absolute inset-y-0 right-0 flex" style={{ width: ACTION_WIDTH }}>
+        // Hidden outright while the row sits closed. Left mounted and merely
+        // covered, this layer bleeds a hairline of itself around its own box
+        // — the row above it is composited and its edges land on fractional
+        // pixels — which drew a faint rectangle on every row in the list.
+        // The delay keeps it painted through the close animation; there is
+        // none on the way in, so a drag reveals it at once.
+        <div
+          className={cn(
+            "absolute inset-y-0 right-0 flex transition-[visibility] duration-0",
+            !isOpen && !dragging && "invisible delay-300"
+          )}
+          style={{ width: ACTION_WIDTH }}
+        >
           <ActionButton label={t.actions.edit} tone="neutral" onClick={onEdit}>
             <PencilIcon className="w-[18px] h-[18px]" />
           </ActionButton>
@@ -208,7 +223,11 @@ function Row({
         dragConstraints={{ left: -ACTION_WIDTH, right: 0 }}
         dragElastic={{ left: 0.12, right: 0 }}
         dragMomentum={false}
-        onDragEnd={handleDragEnd}
+        onDragStart={() => setDragging(true)}
+        onDragEnd={(event, info) => {
+          setDragging(false);
+          handleDragEnd(event, info);
+        }}
         // whileTap, not the .press CSS class: framer already owns this
         // element's transform for the drag offset, and a stylesheet
         // transform on :active would just lose that fight. No entrance
@@ -218,18 +237,28 @@ function Row({
         // layer sitting behind them, which read as the row "resetting".
         whileTap={{ scale: 0.98 }}
         onClick={() => (isOpen ? onOpenChange(false) : onEdit())}
-        className="relative bg-surface w-full text-left flex items-center justify-between py-[11px] cursor-pointer"
+        className="relative bg-surface w-full text-left flex items-center justify-between py-[13px] cursor-pointer"
       >
-        <div className="flex items-center gap-2.5 min-w-0">
-          <div className={cn("w-[5px] h-[5px] rounded-full shrink-0", dotColors[type])} />
+        <div className="flex items-center gap-3 min-w-0">
+          {/* A dot inside a ring, not a bare dot: at this size the ring is
+              what gives the row a left edge to hang off. */}
+          <span
+            className="w-[22px] h-[22px] rounded-full grid place-items-center shrink-0"
+            style={{ border: `1px solid color-mix(in srgb, ${typeColors[type]} 32%, transparent)` }}
+          >
+            <span
+              className="w-[7px] h-[7px] rounded-full"
+              style={{ background: typeColors[type] }}
+            />
+          </span>
           <div className="min-w-0">
-            <p className="text-[13px] text-text truncate">
+            <p className="text-[13.5px] text-text truncate">
               {tx.description ?? tx.category ?? t.movements.fallbackName}
             </p>
-            <p className="font-mono text-[10.5px] text-text-dim mt-0.5">{tx.category ?? tx.type} · {tx.account}</p>
+            <p className="text-[11.5px] text-text-dim mt-0.5 truncate">{tx.category ?? tx.type} · {tx.account}</p>
           </div>
         </div>
-        <span className={cn("font-mono text-[13px] font-semibold ml-2.5 shrink-0", amountColors[type])}>
+        <span className={cn("font-mono text-[13.5px] font-semibold ml-2.5 shrink-0", amountColors[type])}>
           {type === "Gasto" ? "−" : type === "Ingreso" ? "+" : ""}
           {formatMXN(tx.amount)}
         </span>

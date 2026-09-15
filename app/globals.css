@@ -83,7 +83,8 @@
   /* Tinted panels — how far a hue bleeds into the surface, and how bright the
      top edge catches. A tint reads much stronger over a light ground than a
      dark one, so both drop in the light theme. */
-  --tint-strength:         34%;
+  --tint-ground:           #000000;
+  --tint-strength:         40%;
   --tint-edge:             24%;
   --tint-sheen:            0.055;
 }
@@ -131,6 +132,7 @@
   --shadow-sheet:  0 -12px 48px -12px rgba(60, 50, 30, 0.18);
   --shadow-glass:  inset 0 1px 0 rgba(255,255,255,0.7), inset 0 0 0 1px rgba(60,50,30,0.06), 0 8px 24px -8px rgba(60,50,30,0.16), 0 1px 2px rgba(60,50,30,0.06);
 
+  --tint-ground:           #ffffff;
   --tint-strength:         16%;
   --tint-edge:             20%;
   --tint-sheen:            0.5;
@@ -247,17 +249,19 @@
     overflow: hidden;
   }
 
-  /* A panel carrying a hue: the color pools in the top-left corner and drains
-     into the plain surface by the opposite one, so a row of them reads as one
-     family of cards rather than four solid blocks of paint. One rule, one
-     variable — `.tint.tint-green` and so on pick the hue, and both themes are
-     handled by the tokens the mix is built from. */
+  /* A panel carrying a hue: dead black through the middle, the colour rising
+     only as it reaches the edges — a light behind the card rather than paint
+     on it. The centre is the page's own ground, so the figure printed on it
+     sits on the same black the app is built from. One rule, one variable —
+     `.tint.tint-green` and so on pick the hue, and the light theme swaps the
+     ground for paper and softens the mix through its own tokens. */
   .tint {
-    background-image: linear-gradient(
-      152deg,
-      color-mix(in srgb, var(--tint-hue) var(--tint-strength), var(--color-surface)) 0%,
-      color-mix(in srgb, var(--tint-hue) calc(var(--tint-strength) / 2.6), var(--color-surface)) 52%,
-      var(--color-surface) 100%
+    background-color: var(--tint-ground);
+    background-image: radial-gradient(
+      125% 108% at 50% 50%,
+      transparent 24%,
+      color-mix(in srgb, var(--tint-hue) calc(var(--tint-strength) / 2.6), transparent) 66%,
+      color-mix(in srgb, var(--tint-hue) var(--tint-strength), transparent) 100%
     );
     border: 1px solid color-mix(in srgb, var(--tint-hue) var(--tint-edge), transparent);
     border-radius: var(--radius-lg);

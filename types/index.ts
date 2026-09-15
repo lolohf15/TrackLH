@@ -135,6 +135,12 @@ export interface AnalyticsData {
   /** How wide each bar is — days for a week or month, months beyond that. */
   granularity: "day" | "month";
   buckets: BucketBreakdown[];
+  /**
+   * The same slices one period earlier, aligned by index, so a chart can lay
+   * last month over this one. Empty for all-time, which has no period before
+   * it, and shorter than `buckets` when the earlier span had fewer days.
+   */
+  previousExpenses: number[];
   categories: CategorySummary[];
   expenses: number;
   income: number;

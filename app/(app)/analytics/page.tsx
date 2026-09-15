@@ -8,7 +8,6 @@ import { PeriodNav } from "@/components/dashboard/PeriodNav";
 import { SpendChart } from "@/components/dashboard/SpendChart";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { MetricTile } from "@/components/ui/MetricTile";
-import { ProgressBar } from "@/components/ui/ProgressBar";
 import { Ring } from "@/components/ui/Ring";
 import { ChartSkeleton } from "@/components/ui/Skeleton";
 import { formatMXN, cn } from "@/lib/utils";
@@ -50,7 +49,6 @@ export default function Analytics() {
   const selected = picked ?? categories[0]?.category ?? null;
   const selectedTrend = trendData?.trends.find((x) => x.category === selected) ?? null;
 
-  const max = Math.max(...categories.map((c) => c.amount), 1);
   // Named after the span the figures came from, not the one being asked for:
   // while a new period loads, the old one is still what's on screen.
   const periodLabel = data
@@ -131,10 +129,14 @@ export default function Analytics() {
               </div>
             </section>
 
-            <SpendChart buckets={data.buckets} granularity={data.granularity} />
+            <SpendChart
+              buckets={data.buckets}
+              previousExpenses={data.previousExpenses}
+              granularity={data.granularity}
+            />
 
             {categories.length > 0 && (
-              <section className="panel mt-3">
+              <section className="tint tint-red mt-3">
                 <div className="flex items-center gap-4 px-4 py-4">
                   <Ring
                     segments={categories.map((c) => ({ value: c.amount, color: c.color }))}
@@ -163,12 +165,11 @@ export default function Analytics() {
                   </div>
                 </div>
 
-                <div className="px-4 pb-1">
+                <div className="px-4 pb-2">
                   {categories.map((c) => (
                     <CategoryRow
                       key={c.category}
                       category={c}
-                      max={max}
                       active={c.category === selected}
                       onSelect={() => setPicked(c.category)}
                     />
@@ -205,53 +206,57 @@ function Figure({ label, value, tone }: { label: string; value: string; tone?: s
 }
 
 function CategoryRow({
-  category, max, active, onSelect,
+  category, active, onSelect,
 }: {
   category: CategorySummary;
-  max: number;
   active: boolean;
   onSelect: () => void;
 }) {
-  const barPct = Math.round((category.amount / max) * 100);
+  const t = useT();
+
+  const content = (
+    <>
+      <span className="flex items-center gap-3 min-w-0">
+        {/* The ringed marker the reference cards use — at this size a bare
+            dot has nothing to sit in. */}
+        <span
+          className="w-[22px] h-[22px] rounded-full grid place-items-center shrink-0"
+          style={{ border: `1px solid color-mix(in srgb, ${category.color} 32%, transparent)` }}
+        >
+          <span
+            className="w-[7px] h-[7px] rounded-full"
+            style={{ backgroundColor: category.color }}
+          />
+        </span>
+        <span className="min-w-0">
+          <span className="block text-[13.5px] text-text truncate">{category.category}</span>
+          <span className="block text-[11.5px] text-text-dim mt-0.5">
+            {Math.round(category.percentage)}% {t.analytics.ofSpends}
+          </span>
+        </span>
+      </span>
+      <span className="font-mono text-[13.5px] font-semibold text-text whitespace-nowrap shrink-0 ml-2.5">
+        {formatMXN(category.amount)}
+      </span>
+    </>
+  );
+
+  const shape = "w-full flex items-center justify-between py-2.5 border-t border-divider text-left transition-colors duration-150 ease-out";
 
   return (
     <>
       {/* Desktop: select in place */}
-      <button
-        onClick={onSelect}
-        className={cn(
-          "hidden md:block w-full text-left py-[11px] border-t border-divider transition-colors duration-150 ease-out",
-          active && "bg-surface-2/40"
-        )}
-      >
-        <RowContent category={category} barPct={barPct} />
+      <button onClick={onSelect} className={cn("hidden md:flex", shape, active && "bg-surface-2/40")}>
+        {content}
       </button>
 
       {/* Mobile: push to detail route */}
       <Link
         href={`/analytics/${encodeURIComponent(category.category)}`}
-        className="md:hidden block py-[11px] border-t border-divider active:bg-surface-2/40 transition-colors duration-150 ease-out"
+        className={cn("md:hidden flex", shape, "active:bg-surface-2/40")}
       >
-        <RowContent category={category} barPct={barPct} />
+        {content}
       </Link>
-    </>
-  );
-}
-
-function RowContent({ category, barPct }: { category: CategorySummary; barPct: number }) {
-  return (
-    <>
-      <div className="flex items-baseline justify-between mb-1.5">
-        <span className="flex items-center gap-2 text-[13.5px] text-text min-w-0">
-          <span className="w-[7px] h-[7px] rounded-full shrink-0" style={{ backgroundColor: category.color }} />
-          <span className="truncate">{category.category}</span>
-        </span>
-        <span className="font-mono text-[13px] font-semibold text-text whitespace-nowrap shrink-0 ml-2.5">
-          {formatMXN(category.amount)}
-          <span className="text-text-faint font-normal"> · {Math.round(category.percentage)}%</span>
-        </span>
-      </div>
-      <ProgressBar segments={[{ percent: barPct, color: category.color }]} height={4} />
     </>
   );
 }

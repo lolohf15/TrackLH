@@ -40,6 +40,11 @@ export async function GET(req: NextRequest) {
         : null;
 
     const buckets = bucketsFor(period, earliest?.date);
+    // The span before, sliced the same way, for the comparison line. Built
+    // from the same shape so `bucketsFor` needs no second code path.
+    const previousBuckets = period.previous
+      ? bucketsFor({ ...period, range: period.previous, previous: null })
+      : [];
 
     // One window covering the bars and the span before them, which only the
     // trend arrows need.
@@ -70,6 +75,9 @@ export async function GET(req: NextRequest) {
       to: period.range.to.toISOString(),
       granularity: period.bucket,
       buckets: computeBucketBreakdowns(transactions, buckets, period.bucket, colors),
+      previousExpenses: computeBucketBreakdowns(
+        transactions, previousBuckets, period.bucket, colors
+      ).map((b) => b.expenses),
       categories: computeCategoryExpenses(transactions, period.range, colors),
       expenses,
       income,
