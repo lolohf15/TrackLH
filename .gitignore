@@ -36,6 +36,12 @@ yarn-error.log*
 # claude code local settings (personal permission grants)
 .claude/settings.local.json
 
+# agent rules next writes on every `npm run dev` (next.config `agentRules`).
+# Generated from the installed next version, so they are a build artifact
+# rather than something to review in a diff.
+AGENTS.md
+CLAUDE.md
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
