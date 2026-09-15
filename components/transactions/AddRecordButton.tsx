@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { TransactionSheet } from "./TransactionSheet";
 import { PlusIcon } from "@/components/shell/icons";
+import { useT } from "@/lib/i18n-react";
 
 /**
  * Always-available way to log a movement, mirroring what the iOS shortcut asks
@@ -15,6 +16,7 @@ import { PlusIcon } from "@/components/shell/icons";
  * with it, snapping the button sideways on every tap.
  */
 export function AddRecordButton() {
+  const t = useT();
   const [open, setOpen] = useState(false);
   // Bumped on every open so the sheet remounts with an empty form — a reset
   // driven by the tap rather than by an effect watching `open`.
@@ -28,7 +30,7 @@ export function AddRecordButton() {
           setSession((s) => s + 1);
           setOpen(true);
         }}
-        aria-label="Agregar movimiento"
+        aria-label={t.addRecord}
         className="glass-accent press fixed z-40 w-14 h-14 rounded-full flex items-center justify-center
                    text-accent-ink
                    left-[calc(50%-1.75rem)] bottom-[calc(env(safe-area-inset-bottom)+2.5rem)]

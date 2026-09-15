@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n-react";
 
 /** The palette everything in the app is coloured from. */
 export const PALETTE = [
@@ -15,8 +16,10 @@ export function ColorPicker({
   value: string;
   onChange: (color: string) => void;
 }) {
+  const t = useT();
+
   return (
-    <div className="flex flex-wrap gap-2.5" role="radiogroup" aria-label="Color">
+    <div className="flex flex-wrap gap-2.5" role="radiogroup" aria-label={t.common.color}>
       {PALETTE.map((color) => {
         const active = value.toLowerCase() === color.toLowerCase();
         return (

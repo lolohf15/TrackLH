@@ -6,11 +6,8 @@ import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Button } from "@/components/ui/Button";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { ColorPicker, PALETTE } from "./ColorPicker";
+import { useT } from "@/lib/i18n-react";
 
-const ACCOUNT_KINDS = [
-  { value: "debit" as const, label: "Débito" },
-  { value: "credit" as const, label: "Crédito" },
-];
 
 export interface EditableAccount {
   id: number;
@@ -28,7 +25,12 @@ interface Props {
 }
 
 export function AccountEditSheet({ account, open, onClose }: Props) {
+  const t = useT();
   const isNew = account === null;
+  const kinds = [
+    { value: "debit" as const, label: t.wallet.debit },
+    { value: "credit" as const, label: t.wallet.credit },
+  ];
 
   const [name, setName] = useState(account?.account ?? "");
   const [isCredit, setIsCredit] = useState(account?.isCredit ?? false);
@@ -54,14 +56,14 @@ export function AccountEditSheet({ account, open, onClose }: Props) {
       });
       const payload = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(payload?.error ?? "No se pudo guardar");
+        setError(payload?.error ?? t.common.saveFailed);
         setBusy(false);
         return;
       }
       mutate((key) => typeof key === "string" && key.startsWith("/api/"));
       onClose();
     } catch {
-      setError("Sin conexión. Revisa tu red e inténtalo de nuevo.");
+      setError(t.common.offline);
       setBusy(false);
     }
   }
@@ -74,7 +76,7 @@ export function AccountEditSheet({ account, open, onClose }: Props) {
       const res = await fetch(`/api/accounts/${account.id}`, { method: "DELETE" });
       const payload = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(payload?.error ?? "No se pudo eliminar");
+        setError(payload?.error ?? t.common.deleteFailed);
         setBusy(false);
         setConfirmingDelete(false);
         return;
@@ -82,36 +84,36 @@ export function AccountEditSheet({ account, open, onClose }: Props) {
       mutate((key) => typeof key === "string" && key.startsWith("/api/"));
       onClose();
     } catch {
-      setError("Sin conexión. Revisa tu red e inténtalo de nuevo.");
+      setError(t.common.offline);
       setBusy(false);
     }
   }
 
   return (
-    <BottomSheet open={open} onClose={onClose} title={isNew ? "Nueva cuenta" : "Editar cuenta"}>
+    <BottomSheet open={open} onClose={onClose} title={isNew ? t.accountSheet.newTitle : t.accountSheet.editTitle}>
       <div className="pb-6 space-y-5">
-        <Field label="Nombre">
+        <Field label={t.common.name}>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Ej. BBVA Débito"
-            aria-label="Nombre de la cuenta"
+            placeholder={t.accountSheet.namePlaceholder}
+            aria-label={t.accountSheet.nameLabel}
             autoFocus={isNew}
             className="w-full rounded-md bg-surface-2 border border-border px-3.5 py-3 min-h-[48px] text-[15px] text-text outline-none placeholder:text-text-faint focus:border-accent/60 transition-colors duration-150"
           />
         </Field>
 
-        <Field label="Tipo">
+        <Field label={t.common.kind}>
           <SegmentedControl
-            options={ACCOUNT_KINDS}
+            options={kinds}
             value={isCredit ? "credit" : "debit"}
             onChange={(v) => setIsCredit(v === "credit")}
-            label="Tipo de cuenta"
+            label={t.accountSheet.kindLabel}
           />
         </Field>
 
         {isCredit && (
-          <Field label="Límite de crédito (opcional)">
+          <Field label={t.accountSheet.creditLimit}>
             <div className="flex items-baseline gap-2 rounded-md border border-border bg-surface-2 px-3.5 py-2.5 focus-within:border-accent/60 transition-colors duration-150">
               <span className="font-mono text-lg text-text-dim">$</span>
               <input
@@ -119,24 +121,23 @@ export function AccountEditSheet({ account, open, onClose }: Props) {
                 onChange={(e) => setCreditLimit(e.target.value.replace(/[^\d.]/g, ""))}
                 inputMode="decimal"
                 placeholder="0"
-                aria-label="Límite de crédito"
+                aria-label={t.accountSheet.creditLimit}
                 className="flex-1 min-w-0 bg-transparent font-mono text-[19px] font-semibold text-text tabular-nums outline-none placeholder:text-text-faint"
               />
             </div>
             <span className="block text-[11.5px] text-text-dim leading-relaxed pt-0.5">
-              Con un límite, la cuenta muestra cuánto te queda disponible. Déjalo vacío
-              y solo verás el saldo.
+              {t.accountSheet.creditLimitHint}
             </span>
           </Field>
         )}
 
-        <Field label="Color">
+        <Field label={t.common.color}>
           <ColorPicker value={color} onChange={setColor} />
         </Field>
 
         {renamed && (
           <p className="rounded-sm bg-amber-bg border border-amber-border text-amber-fg text-xs px-3.5 py-2.5 leading-relaxed">
-            Al renombrarla, tus movimientos anteriores pasan a decir «{name.trim()}».
+            {t.accountSheet.renameWarning(name.trim())}
           </p>
         )}
 
@@ -153,7 +154,7 @@ export function AccountEditSheet({ account, open, onClose }: Props) {
           size="lg"
           className="w-full py-3.5"
         >
-          {isNew ? "Agregar cuenta" : "Guardar cambios"}
+          {isNew ? t.wallet.addAccount : t.common.saveChanges}
         </Button>
 
         {!isNew &&
@@ -161,11 +162,11 @@ export function AccountEditSheet({ account, open, onClose }: Props) {
             <div className="flex gap-2.5">
               <Button variant="secondary" size="lg" className="flex-1 py-3.5"
                 onClick={() => setConfirmingDelete(false)}>
-                Cancelar
+                {t.common.cancel}
               </Button>
               <Button variant="danger" size="lg" className="flex-1 py-3.5" loading={busy}
                 onClick={remove}>
-                Sí, eliminar
+                {t.accountSheet.confirmDelete}
               </Button>
             </div>
           ) : (
@@ -174,7 +175,7 @@ export function AccountEditSheet({ account, open, onClose }: Props) {
               onClick={() => setConfirmingDelete(true)}
               className="press w-full font-mono text-[10.5px] text-red-fg uppercase tracking-wide py-2.5"
             >
-              Eliminar cuenta
+              {t.accountSheet.deleteAccount}
             </button>
           ))}
       </div>

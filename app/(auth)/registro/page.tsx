@@ -6,10 +6,12 @@ import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/Button";
 import { AuthShell, AuthField, AuthError } from "@/components/auth/AuthForm";
+import { useT } from "@/lib/i18n-react";
 
 const MIN_PASSWORD = 8;
 
 export default function RegistroPage() {
+  const t = useT();
   const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -34,7 +36,7 @@ export default function RegistroPage() {
       const payload = await res.json().catch(() => ({}));
 
       if (!res.ok) {
-        setError(payload?.error ?? "No se pudo crear la cuenta");
+        setError(payload?.error ?? t.auth.signUpFailed);
         setBusy(false);
         return;
       }
@@ -45,15 +47,15 @@ export default function RegistroPage() {
       router.push("/bienvenida");
       router.refresh();
     } catch {
-      setError("Sin conexión. Revisa tu red e inténtalo de nuevo.");
+      setError(t.common.offline);
       setBusy(false);
     }
   }
 
   return (
     <AuthShell
-      title="Crea tu cuenta"
-      subtitle="Lleva el control de tus gastos en un par de minutos."
+      title={t.auth.signUpTitle}
+      subtitle={t.auth.signUpSubtitle}
       footer={
         <>
           ¿Ya tienes cuenta?{" "}
@@ -65,28 +67,28 @@ export default function RegistroPage() {
     >
       <form onSubmit={onSubmit} className="space-y-4">
         <AuthField
-          label="Nombre"
+          label={t.common.name}
           autoComplete="given-name"
-          placeholder="Cómo te llamas"
+          placeholder={t.auth.yourName}
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
         <AuthField
-          label="Correo"
+          label={t.auth.email}
           type="email"
           autoComplete="email"
           inputMode="email"
-          placeholder="tu@correo.com"
+          placeholder={t.auth.emailPlaceholder}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
         />
         <div className="space-y-1.5">
           <AuthField
-            label="Contraseña"
+            label={t.auth.password}
             type="password"
             autoComplete="new-password"
-            placeholder="Mínimo 8 caracteres"
+            placeholder={t.auth.passwordHint}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required

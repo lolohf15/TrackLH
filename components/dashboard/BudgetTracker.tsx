@@ -7,6 +7,7 @@ import { formatMXN } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { useCountUp } from "@/lib/useCountUp";
 import type { BudgetItem } from "@/types";
+import { useT } from "@/lib/i18n-react";
 
 /** Over budget shouts red, near budget shouts amber, otherwise the category
  *  keeps its own colour — which now travels on the item from the database. */
@@ -17,6 +18,7 @@ function rowColor(item: BudgetItem): string {
 }
 
 export function BudgetTracker({ data, bare = false }: { data: BudgetItem[]; bare?: boolean }) {
+  const t = useT();
   const totalSpent  = data.reduce((s, b) => s + b.spent, 0);
   const totalBudget = data.reduce((s, b) => s + b.budget, 0);
   const totalPct    = totalBudget > 0 ? Math.min(Math.round((totalSpent / totalBudget) * 100), 100) : 0;
@@ -27,8 +29,8 @@ export function BudgetTracker({ data, bare = false }: { data: BudgetItem[]; bare
 
   const body = data.length === 0 ? (
     <EmptyState
-      title="Sin presupuestos"
-      description="Los presupuestos se cargan automáticamente"
+      title={t.analytics.noBudgets}
+      description={t.analytics.noBudgetsHint}
     />
   ) : (
     <>
@@ -37,7 +39,7 @@ export function BudgetTracker({ data, bare = false }: { data: BudgetItem[]; bare
       </div>
 
       <div className="mt-4 pt-3 border-t border-divider flex items-baseline justify-between">
-        <span className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em]">Total</span>
+        <span className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em]">{t.common.total}</span>
         <span className="font-mono text-[13px] tabular-nums">
           <span className={cn("font-semibold", totalColor)}>{totalSpentDisplay}</span>
           <span className="text-text-faint"> / {formatMXN(totalBudget)}</span>
@@ -51,7 +53,7 @@ export function BudgetTracker({ data, bare = false }: { data: BudgetItem[]; bare
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between pb-3.5">
-        <CardTitle>Presupuesto mensual</CardTitle>
+        <CardTitle>{t.analytics.monthlyBudget}</CardTitle>
         {data.length > 0 && (
           <span className={cn("font-mono text-[11px] font-semibold", totalColor)}>
             {totalPct}%

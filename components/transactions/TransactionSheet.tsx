@@ -50,12 +50,12 @@ export function TransactionSheet({
   initialConfirmingDelete = false,
 }: Props) {
   const isEdit = transaction !== null;
-  const tr = useT();
+  const t = useT();
   // The value stays the stored Spanish one the rules compare against; only
   // what the button says changes with the language.
   const typeOptions = VALID_TRANSACTION_TYPES.map((type) => ({
     value: type,
-    label: tr.txType[type],
+    label: t.txType[type],
   }));
   // The options come from the same rows the server validates against, so the
   // form can never offer something the POST would reject.
@@ -126,7 +126,7 @@ export function TransactionSheet({
 
       const payload = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(payload?.error ?? "No se pudo guardar el movimiento");
+        setError(payload?.error ?? t.txSheet.saveFailed);
         return;
       }
 
@@ -136,7 +136,7 @@ export function TransactionSheet({
       mutate((key) => typeof key === "string" && key.startsWith("/api/"));
       closeTimer.current = setTimeout(onClose, 700);
     } catch {
-      setError("Sin conexión. Revisa tu red e inténtalo de nuevo.");
+      setError(t.common.offline);
     } finally {
       setSaving(false);
     }
@@ -152,7 +152,7 @@ export function TransactionSheet({
       });
       const payload = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(payload?.error ?? "No se pudo eliminar el movimiento");
+        setError(payload?.error ?? t.txSheet.deleteFailed);
         setSaving(false);
         setConfirmingDelete(false);
         return;
@@ -160,7 +160,7 @@ export function TransactionSheet({
       mutate((key) => typeof key === "string" && key.startsWith("/api/"));
       onClose();
     } catch {
-      setError("Sin conexión. Revisa tu red e inténtalo de nuevo.");
+      setError(t.common.offline);
       setSaving(false);
     }
   }
@@ -169,18 +169,18 @@ export function TransactionSheet({
   // at the fix instead of showing empty dropdowns.
   if (catalog && accounts.length === 0) {
     return (
-      <BottomSheet open={open} onClose={onClose} title="Nuevo movimiento">
+      <BottomSheet open={open} onClose={onClose} title={t.txSheet.newTitle}>
         <div className="pb-8 pt-2 text-center space-y-4">
-          <p className="text-[15px] text-text">Todavía no tienes cuentas</p>
+          <p className="text-[15px] text-text">{t.txSheet.noAccountsTitle}</p>
           <p className="text-[13px] text-text-dim leading-relaxed max-w-xs mx-auto">
-            Agrega al menos una cuenta para poder registrar movimientos.
+            {t.txSheet.noAccountsHint}
           </p>
           <Link
             href="/bienvenida"
             onClick={onClose}
             className="press inline-flex items-center justify-center rounded-md bg-accent text-accent-ink text-sm font-medium px-5 py-3 min-h-[48px]"
           >
-            Configurar mis cuentas
+            {t.txSheet.setUpAccounts}
           </Link>
         </div>
       </BottomSheet>
@@ -188,20 +188,20 @@ export function TransactionSheet({
   }
 
   return (
-    <BottomSheet open={open} onClose={onClose} title={isEdit ? "Editar movimiento" : "Nuevo movimiento"}>
+    <BottomSheet open={open} onClose={onClose} title={isEdit ? t.txSheet.editTitle : t.txSheet.newTitle}>
       <div className="pb-6 space-y-5">
         <SegmentedControl
           options={typeOptions}
           value={type}
-          onChange={(t) => {
-            setType(t);
+          onChange={(next) => {
+            setType(next);
             setCategory("");
           }}
-          label="Tipo de movimiento"
+          label={t.txSheet.type}
         />
 
         {/* Monto — the one field that always matters, so it leads */}
-        <Field label="Monto">
+        <Field label={t.common.amount}>
           <div className="flex items-baseline gap-2 rounded-md border border-border bg-surface-2 px-3.5 py-2.5 focus-within:border-accent/60 transition-colors duration-150">
             <span className="font-mono text-2xl text-text-dim">$</span>
             <input
@@ -209,14 +209,14 @@ export function TransactionSheet({
               onChange={(e) => setAmount(e.target.value.replace(/[^\d.]/g, ""))}
               inputMode="decimal"
               placeholder="0"
-              aria-label="Monto"
+              aria-label={t.common.amount}
               className="flex-1 min-w-0 bg-transparent font-mono text-[30px] font-semibold text-text tabular-nums outline-none placeholder:text-text-faint"
             />
           </div>
         </Field>
 
-        <Field label={isTransfer ? "Cuenta origen" : "Cuenta"}>
-          <Select value={selectedAccount} onChange={setAccount} block aria-label="Cuenta">
+        <Field label={isTransfer ? t.txSheet.fromAccount : t.common.account}>
+          <Select value={selectedAccount} onChange={setAccount} block aria-label={t.common.account}>
             {accounts.map((a) => (
               <option key={a.account} value={a.account}>{a.account}</option>
             ))}
@@ -224,13 +224,13 @@ export function TransactionSheet({
         </Field>
 
         {isTransfer ? (
-          <Field label="Cuenta destino">
+          <Field label={t.txSheet.toAccount}>
             <Select
               value={toAccount}
               onChange={setToAccount}
-              placeholder="Selecciona una cuenta"
+              placeholder={t.txSheet.pickAccount}
               block
-              aria-label="Cuenta destino"
+              aria-label={t.txSheet.toAccount}
             >
               {accounts.filter((a) => a.account !== selectedAccount).map((a) => (
                 <option key={a.account} value={a.account}>{a.account}</option>
@@ -238,13 +238,13 @@ export function TransactionSheet({
             </Select>
           </Field>
         ) : (
-          <Field label="Categoría">
+          <Field label={t.common.category}>
             <Select
               value={category}
               onChange={setCategory}
-              placeholder="Selecciona una categoría"
+              placeholder={t.txSheet.pickCategory}
               block
-              aria-label="Categoría"
+              aria-label={t.common.category}
             >
               {categories.map((c) => (
                 <option key={c.id} value={c.name}>{c.name}</option>
@@ -253,23 +253,23 @@ export function TransactionSheet({
           </Field>
         )}
 
-        <Field label="Nota (opcional)">
+        <Field label={t.txSheet.note}>
           <input
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Ej. Oxxo"
-            aria-label="Nota"
+            placeholder={t.txSheet.notePlaceholder}
+            aria-label={t.txSheet.note}
             className="w-full rounded-md bg-surface-2 border border-border px-3.5 py-3 min-h-[48px] text-[15px] text-text outline-none placeholder:text-text-faint focus:border-accent/60 transition-colors duration-150"
           />
         </Field>
 
-        <Field label="Fecha">
+        <Field label={t.common.date}>
           <input
             type="date"
             value={day}
             max={getToday()}
             onChange={(e) => setDay(e.target.value)}
-            aria-label="Fecha"
+            aria-label={t.common.date}
             className="w-full rounded-md bg-surface-2 border border-border px-3.5 py-3 min-h-[48px] font-mono text-[15px] text-text outline-none focus:border-accent/60 transition-colors duration-150"
           />
         </Field>
@@ -290,12 +290,12 @@ export function TransactionSheet({
           {saved ? (
             <>
               <CheckIcon className="w-4 h-4" />
-              Guardado
+              {t.txSheet.saved}
             </>
           ) : isEdit ? (
-            "Guardar cambios"
+            t.common.saveChanges
           ) : (
-            "Guardar movimiento"
+            t.txSheet.save
           )}
         </Button>
 
@@ -304,11 +304,11 @@ export function TransactionSheet({
             <div className="flex gap-2.5">
               <Button variant="secondary" size="lg" className="flex-1 py-3.5"
                 onClick={() => setConfirmingDelete(false)}>
-                Cancelar
+                {t.common.cancel}
               </Button>
               <Button variant="danger" size="lg" className="flex-1 py-3.5" loading={saving}
                 onClick={remove}>
-                Sí, eliminar
+                {t.txSheet.confirmDelete}
               </Button>
             </div>
           ) : (
@@ -317,7 +317,7 @@ export function TransactionSheet({
               onClick={() => setConfirmingDelete(true)}
               className="press w-full font-mono text-[10.5px] text-red-fg uppercase tracking-wide py-2.5"
             >
-              Eliminar movimiento
+              {t.txSheet.deleteMovement}
             </button>
           ))}
       </div>

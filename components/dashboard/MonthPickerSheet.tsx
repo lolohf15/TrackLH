@@ -2,6 +2,7 @@
 
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { formatMXN, formatMonth, getCurrentMonth, cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n-react";
 import type { YearlyDashboardData } from "@/types";
 
 interface Props {
@@ -23,6 +24,7 @@ function monthAbbrev(month: string): string {
 export function MonthPickerSheet({
   open, onClose, year, onYearChange, data, loading, selectedMonth, onSelect,
 }: Props) {
+  const t = useT();
   const currentMonth = getCurrentMonth();
   const currentYear = Number(currentMonth.split("-")[0]);
   const nextYearDisabled = year >= currentYear;
@@ -31,14 +33,14 @@ export function MonthPickerSheet({
     <BottomSheet open={open} onClose={onClose}>
       <div className="flex items-center justify-between pt-1 pb-4">
         <span className="font-mono text-xs font-semibold text-text uppercase tracking-wide">
-          Elige un mes
+          {t.home.pickMonth}
         </span>
         <div className="flex items-center gap-0.5 -my-2 -mr-2">
-          <YearNavButton label="Año anterior" onClick={() => onYearChange(year - 1)}>‹</YearNavButton>
+          <YearNavButton label={t.home.prevYear} onClick={() => onYearChange(year - 1)}>‹</YearNavButton>
           <span className="font-mono text-[13px] font-semibold text-text min-w-[52px] text-center tabular-nums">
             {year}
           </span>
-          <YearNavButton label="Año siguiente" onClick={() => onYearChange(year + 1)} disabled={nextYearDisabled}>›</YearNavButton>
+          <YearNavButton label={t.home.nextYear} onClick={() => onYearChange(year + 1)} disabled={nextYearDisabled}>›</YearNavButton>
         </div>
       </div>
 

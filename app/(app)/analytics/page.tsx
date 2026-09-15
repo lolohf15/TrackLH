@@ -10,10 +10,12 @@ import { PlusIcon } from "@/components/shell/icons";
 import { CategoryEditSheet, type EditableCategory } from "@/components/settings/CategoryEditSheet";
 import { formatMXN, formatMonth, getCurrentMonth, cn } from "@/lib/utils";
 import type { CategoryTrend } from "@/types";
+import { useT } from "@/lib/i18n-react";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 export default function Categorias() {
+  const t = useT();
   const { data, isLoading } =
     useSWR<{ months: string[]; trends: CategoryTrend[] }>("/api/categories/trend?months=6", fetcher);
 
@@ -36,13 +38,13 @@ export default function Categorias() {
   return (
     <div className="max-w-6xl mx-auto px-4 md:px-8 pt-4 pb-6">
       <div className="flex items-baseline justify-between mb-4">
-        <h1 className="text-[15px] font-semibold text-text">Categorías</h1>
+        <h1 className="text-[15px] font-semibold text-text">{t.analytics.title}</h1>
         <button
           type="button"
           onClick={() => setEditMode((v) => !v)}
           className="press -my-2 -mr-2 px-2 py-2 font-mono text-[10.5px] uppercase tracking-wide text-accent"
         >
-          {editMode ? "Listo" : "Editar"}
+          {editMode ? t.common.done : t.common.edit}
         </button>
       </div>
 
@@ -57,15 +59,15 @@ export default function Categorias() {
       ) : trends.length === 0 ? (
         <div className="panel">
           <EmptyState
-            title="Aún no hay gastos"
-            description="Registra un movimiento y aquí verás en qué se te va el dinero"
+            title={t.analytics.emptyTitle}
+            description={t.analytics.emptyHint}
           />
         </div>
       ) : (
         <div className="md:grid md:grid-cols-[1fr_360px] md:gap-10 md:items-start">
           <div>
             <p className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em] px-1 pb-2">
-              {formatMonth(getCurrentMonth())} · {formatMXN(total)} en {trends.length} categorías
+              {t.analytics.summary(formatMonth(getCurrentMonth()), formatMXN(total), trends.length)}
             </p>
             <div className="panel px-4 pb-1">
               {trends.map((t) => (
@@ -108,6 +110,7 @@ function ManageList({
   onEdit: (c: EditableCategory) => void;
   onAdd: () => void;
 }) {
+  const t = useT();
   const expense = categories.filter((c) => c.kind === "expense");
   const income = categories.filter((c) => c.kind === "income");
 
@@ -125,7 +128,7 @@ function ManageList({
             className="press w-full flex items-center gap-2.5 py-3 border-t border-divider text-left text-accent"
           >
             <PlusIcon className="w-3.5 h-3.5 shrink-0" />
-            <span className="text-[13.5px]">Agregar categoría</span>
+            <span className="text-[13.5px]">{t.analytics.addCategory}</span>
           </button>
         </div>
       </section>

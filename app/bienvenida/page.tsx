@@ -14,13 +14,15 @@ import {
   SUGGESTED_INCOME_CATEGORIES,
   CUSTOM_COLOR_CYCLE,
 } from "@/services/presets";
+import { useT } from "@/lib/i18n-react";
 
 type Step = 0 | 1 | 2;
-const STEPS = ["Cuentas", "Categorías", "Presupuesto"] as const;
 
 interface CustomAccount { account: string; isCredit: boolean }
 
 export default function BienvenidaPage() {
+  const t = useT();
+  const STEPS = [t.onboarding.stepAccounts, t.onboarding.stepCategories, t.onboarding.stepBudget];
   const router = useRouter();
   const [step, setStep] = useState<Step>(0);
 
@@ -111,7 +113,7 @@ export default function BienvenidaPage() {
       });
       const payload = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(payload?.error ?? "No se pudo guardar tu configuración");
+        setError(payload?.error ?? t.onboarding.saveFailed);
         setSaving(false);
         return;
       }
@@ -119,7 +121,7 @@ export default function BienvenidaPage() {
       router.push("/");
       router.refresh();
     } catch {
-      setError("Sin conexión. Revisa tu red e inténtalo de nuevo.");
+      setError(t.common.offline);
       setSaving(false);
     }
   }
@@ -162,8 +164,8 @@ export default function BienvenidaPage() {
         <div className="max-w-[440px] mx-auto">
           {step === 0 && (
             <Section
-              title="¿Qué cuentas usas?"
-              hint="Elige las que tengas. Podrás agregar o quitar después."
+              title={t.onboarding.accountsTitle}
+              hint={t.onboarding.accountsSubtitle}
             >
               <ChipGrid>
                 {ACCOUNT_PRESETS.map((p) => (
@@ -200,8 +202,8 @@ export default function BienvenidaPage() {
                         addAccount();
                       }
                     }}
-                    placeholder="Otra cuenta"
-                    aria-label="Nombre de la cuenta"
+                    placeholder={t.onboarding.otherAccount}
+                    aria-label={t.accountSheet.nameLabel}
                     className="flex-1 min-w-0 rounded-md bg-surface-2 border border-border px-3.5 py-2.5 min-h-[44px] text-[15px] text-text outline-none placeholder:text-text-faint focus:border-accent/60 transition-colors duration-150"
                   />
                   <button
@@ -226,7 +228,7 @@ export default function BienvenidaPage() {
           )}
 
           {step === 1 && (
-            <Section title="¿En qué gastas?" hint="Estas serán tus categorías de gasto.">
+            <Section title={t.onboarding.categoriesTitle} hint={t.onboarding.categoriesSubtitle}>
               <ChipGrid>
                 {EXPENSE_CATEGORY_PRESETS.map((p) => (
                   <Chip
@@ -259,8 +261,8 @@ export default function BienvenidaPage() {
                       addCategory();
                     }
                   }}
-                  placeholder="Otra categoría"
-                  aria-label="Nombre de la categoría"
+                  placeholder={t.onboarding.otherCategory}
+                  aria-label={t.categorySheet.nameLabel}
                   className="flex-1 min-w-0 rounded-md bg-surface-2 border border-border px-3.5 py-2.5 min-h-[44px] text-[15px] text-text outline-none placeholder:text-text-faint focus:border-accent/60 transition-colors duration-150"
                 />
                 <button
@@ -292,8 +294,8 @@ export default function BienvenidaPage() {
 
           {step === 2 && (
             <Section
-              title="¿Cuánto quieres gastar al mes?"
-              hint="Puedes dejarlo en blanco y definirlo más adelante."
+              title={t.onboarding.budgetTitle}
+              hint={t.onboarding.budgetSubtitle}
             >
               <div className="panel divide-y divide-divider">
                 {allExpenseNames.map((name) => {
@@ -345,7 +347,7 @@ export default function BienvenidaPage() {
                 className="py-3.5 px-6"
                 onClick={() => setStep((s) => (s - 1) as Step)}
               >
-                Atrás
+                {t.onboarding.back}
               </Button>
             )}
             {step < 2 ? (
@@ -355,11 +357,11 @@ export default function BienvenidaPage() {
                 disabled={!canContinue}
                 onClick={() => setStep((s) => (s + 1) as Step)}
               >
-                Continuar
+                {t.onboarding.continue}
               </Button>
             ) : (
               <Button size="lg" className="flex-1 py-3.5" loading={saving} onClick={finish}>
-                Empezar
+                {t.onboarding.start}
               </Button>
             )}
           </div>
@@ -371,7 +373,7 @@ export default function BienvenidaPage() {
               disabled={saving}
               className="press w-full font-mono text-[10.5px] text-text-dim uppercase tracking-wide py-2 disabled:opacity-40"
             >
-              Usar sugerencias y empezar
+              {t.onboarding.useSuggestions}
             </button>
           )}
         </div>

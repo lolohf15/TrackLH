@@ -64,8 +64,8 @@ function dayLabel(dateStr: string, t: Dictionary): string {
 
 export function TransactionList({
   data, loading, page, onPageChange,
-  emptyTitle = "Sin transacciones",
-  emptyHint = "Ajusta los filtros para ver otros movimientos",
+  emptyTitle,
+  emptyHint,
 }: Props) {
   const t = useT();
   const [editing, setEditing] = useState<Transaction | null>(null);
@@ -82,7 +82,13 @@ export function TransactionList({
   }
 
   if (!data || data.data.length === 0) {
-    return <EmptyState icon="—" title={emptyTitle} description={emptyHint} />;
+    return (
+      <EmptyState
+        icon="—"
+        title={emptyTitle ?? t.movements.emptyTitle}
+        description={emptyHint ?? t.movements.emptyHint}
+      />
+    );
   }
 
   function openEdit(tx: Transaction) {
@@ -138,11 +144,11 @@ export function TransactionList({
       {data.totalPages > 1 && (
         <div className="flex items-center justify-between pt-3">
           <span className="font-mono text-[10.5px] text-text-dim">
-            Página {page} de {data.totalPages}
+            {t.common.page} {page} {t.common.of} {data.totalPages}
           </span>
           <div className="flex items-center gap-2">
-            <PagBtn onClick={() => onPageChange(page - 1)} disabled={page <= 1}>‹ Anterior</PagBtn>
-            <PagBtn onClick={() => onPageChange(page + 1)} disabled={page >= data.totalPages}>Siguiente ›</PagBtn>
+            <PagBtn onClick={() => onPageChange(page - 1)} disabled={page <= 1}>‹ {t.common.previous}</PagBtn>
+            <PagBtn onClick={() => onPageChange(page + 1)} disabled={page >= data.totalPages}>{t.common.next} ›</PagBtn>
           </div>
         </div>
       )}
@@ -218,7 +224,7 @@ function Row({
           <div className={cn("w-[5px] h-[5px] rounded-full shrink-0", dotColors[type])} />
           <div className="min-w-0">
             <p className="text-[13px] text-text truncate">
-              {tx.description ?? tx.category ?? "Transacción"}
+              {tx.description ?? tx.category ?? t.movements.fallbackName}
             </p>
             <p className="font-mono text-[10.5px] text-text-dim mt-0.5">{tx.category ?? tx.type} · {tx.account}</p>
           </div>

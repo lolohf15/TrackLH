@@ -9,6 +9,7 @@ import { TransactionFiltersPanel } from "@/components/transactions/TransactionFi
 import { ChartSkeleton } from "@/components/ui/Skeleton";
 import { getCurrentMonth } from "@/lib/utils";
 import type { PaginatedTransactions, TransactionFilters } from "@/types";
+import { useT } from "@/lib/i18n-react";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -33,6 +34,7 @@ function MovimientosContent() {
 }
 
 function MovimientosFilters({ categoryParam }: { categoryParam: string }) {
+  const t = useT();
   const [filters, setFilters] = useState<TransactionFilters>({
     month: categoryParam ? "" : getCurrentMonth(),
     category: categoryParam, account: "", type: "", page: 1, limit: 50,
@@ -47,7 +49,7 @@ function MovimientosFilters({ categoryParam }: { categoryParam: string }) {
   return (
     <div className="max-w-6xl mx-auto px-4 md:px-8 pt-4 pb-6">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-4">
-        <h1 className="text-[15px] font-semibold text-text">Movimientos</h1>
+        <h1 className="text-[15px] font-semibold text-text">{t.movements.title}</h1>
         <TransactionFiltersPanel
           filters={filters}
           categories={filterOptions?.categories ?? []}

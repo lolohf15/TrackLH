@@ -7,6 +7,7 @@ import { mutate } from "swr";
 import { InitialBalances } from "@/components/dashboard/InitialBalances";
 import { ChartSkeleton } from "@/components/ui/Skeleton";
 import { ProgressBar } from "@/components/ui/ProgressBar";
+import { useT } from "@/lib/i18n-react";
 import { ChevronDownIcon, PlusIcon } from "@/components/shell/icons";
 import { AccountEditSheet, type EditableAccount } from "@/components/settings/AccountEditSheet";
 import { formatMXN, getCurrentMonth, cn } from "@/lib/utils";
@@ -15,6 +16,7 @@ import type { DashboardData, AccountBalance } from "@/types";
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 export default function Wallet() {
+  const t = useT();
   const { data: dashboard, isLoading } =
     useSWR<DashboardData>(`/api/dashboard?month=${getCurrentMonth()}`, fetcher);
   // The dashboard reports balances by name; the config carries the id an edit
@@ -43,20 +45,20 @@ export default function Wallet() {
   return (
     <div className="max-w-6xl mx-auto px-4 md:px-8 pt-4 pb-6">
       <div className="flex items-baseline justify-between mb-4">
-        <h1 className="text-[15px] font-semibold text-text">Wallet</h1>
+        <h1 className="text-[15px] font-semibold text-text">{t.wallet.title}</h1>
         {/* Movements live on their own route until F6 folds them in here. */}
         <Link
           href="/movimientos"
           className="font-mono text-[10px] font-medium text-accent hover:brightness-125 tracking-wide"
         >
-          VER MOVIMIENTOS →
+          {t.wallet.seeMovements} →
         </Link>
       </div>
 
       <div className="md:grid md:grid-cols-2 md:gap-10 md:items-start">
         <div className="space-y-3">
           <section>
-            <GroupLabel>Débito</GroupLabel>
+            <GroupLabel>{t.wallet.debit}</GroupLabel>
             <div className="panel px-4">
               {debit.map((a) => (
                 <AccountRow
@@ -65,13 +67,13 @@ export default function Wallet() {
                   onEdit={configById.get(a.account) ? () => setEditing(configById.get(a.account)!) : undefined}
                 />
               ))}
-              <AddRow label="Agregar cuenta" onClick={() => setEditing("new")} />
+              <AddRow label={t.wallet.addAccount} onClick={() => setEditing("new")} />
             </div>
           </section>
 
           {credit.length > 0 && (
             <section>
-              <GroupLabel>Crédito</GroupLabel>
+              <GroupLabel>{t.wallet.credit}</GroupLabel>
               <div className="panel px-4">
                 {credit.map((a) => (
                   <AccountRow
@@ -86,7 +88,7 @@ export default function Wallet() {
           )}
 
           <div className="panel px-4 py-3.5 flex items-baseline justify-between">
-            <span className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em]">Total disponible</span>
+            <span className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em]">{t.wallet.totalAvailable}</span>
             <span className="font-mono text-base font-semibold text-text">{formatMXN(totalAvailable)}</span>
           </div>
         </div>
@@ -99,7 +101,7 @@ export default function Wallet() {
             className="press panel w-full flex items-center justify-between gap-3 text-left px-4 py-3.5 mb-3"
           >
             <span className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em]">
-              Ajuste de saldos actuales
+              {t.wallet.adjustBalances}
             </span>
             <ChevronDownIcon
               className={cn(
@@ -141,6 +143,7 @@ function GroupLabel({ children }: { children: React.ReactNode }) {
 function AccountRow({
   account, credit, onEdit,
 }: { account: AccountBalance; credit?: boolean; onEdit?: () => void }) {
+  const t = useT();
   // Without a line on file there's nothing to be available against, so the
   // card falls back to reading as a plain debt — the way it always has.
   const hasLine = credit && account.availableCredit !== null;
@@ -160,7 +163,7 @@ function AccountRow({
           )}>
             {formatMXN(hasLine ? (account.availableCredit as number) : account.currentBalance)}
           </span>
-          {hasLine && <span className="text-[10.5px] text-text-dim ml-1.5">disponible</span>}
+          {hasLine && <span className="text-[10.5px] text-text-dim ml-1.5">{t.wallet.available}</span>}
         </span>
       </div>
 
@@ -191,6 +194,7 @@ function AccountRow({
 
 /** How much of the approved line is spoken for, as a bar plus its two numbers. */
 function CreditLine({ account }: { account: AccountBalance }) {
+  const t = useT();
   const pct = account.utilizationPercent ?? 0;
   // The same bands a credit score reads: comfortable, watch it, too much.
   const tone =
@@ -201,7 +205,7 @@ function CreditLine({ account }: { account: AccountBalance }) {
       <ProgressBar segments={[{ percent: pct, color: tone }]} height={4} />
       <div className="flex items-baseline justify-between gap-2 font-mono text-[10.5px] text-text-dim">
         <span className="truncate">
-          {formatMXN(account.debt ?? 0)} de {formatMXN(account.creditLimit ?? 0)}
+          {formatMXN(account.debt ?? 0)} {t.common.of} {formatMXN(account.creditLimit ?? 0)}
         </span>
         <span className="shrink-0" style={{ color: tone }}>
           {Math.round(pct)}%

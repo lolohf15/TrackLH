@@ -6,12 +6,9 @@ import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Button } from "@/components/ui/Button";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { ColorPicker, PALETTE } from "./ColorPicker";
+import { useT } from "@/lib/i18n-react";
 import type { CategoryKind } from "@/types";
 
-const CATEGORY_KINDS = [
-  { value: "expense" as const, label: "Gasto" },
-  { value: "income" as const, label: "Ingreso" },
-];
 
 export interface EditableCategory {
   id: string;
@@ -29,7 +26,12 @@ interface Props {
 }
 
 export function CategoryEditSheet({ category, open, onClose }: Props) {
+  const t = useT();
   const isNew = category === null;
+  const kinds = [
+    { value: "expense" as const, label: t.categorySheet.expense },
+    { value: "income" as const, label: t.categorySheet.income },
+  ];
 
   const [name, setName] = useState(category?.name ?? "");
   const [kind, setKind] = useState<CategoryKind>(category?.kind ?? "expense");
@@ -60,14 +62,14 @@ export function CategoryEditSheet({ category, open, onClose }: Props) {
       });
       const payload = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(payload?.error ?? "No se pudo guardar");
+        setError(payload?.error ?? t.common.saveFailed);
         setBusy(false);
         return;
       }
       mutate((key) => typeof key === "string" && key.startsWith("/api/"));
       onClose();
     } catch {
-      setError("Sin conexión. Revisa tu red e inténtalo de nuevo.");
+      setError(t.common.offline);
       setBusy(false);
     }
   }
@@ -80,7 +82,7 @@ export function CategoryEditSheet({ category, open, onClose }: Props) {
       const res = await fetch(`/api/categories/${category.id}`, { method: "DELETE" });
       const payload = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(payload?.error ?? "No se pudo eliminar");
+        setError(payload?.error ?? t.common.deleteFailed);
         setBusy(false);
         setConfirmingDelete(false);
         return;
@@ -88,7 +90,7 @@ export function CategoryEditSheet({ category, open, onClose }: Props) {
       mutate((key) => typeof key === "string" && key.startsWith("/api/"));
       onClose();
     } catch {
-      setError("Sin conexión. Revisa tu red e inténtalo de nuevo.");
+      setError(t.common.offline);
       setBusy(false);
     }
   }
@@ -97,15 +99,15 @@ export function CategoryEditSheet({ category, open, onClose }: Props) {
     <BottomSheet
       open={open}
       onClose={onClose}
-      title={isNew ? "Nueva categoría" : "Editar categoría"}
+      title={isNew ? t.categorySheet.newTitle : t.categorySheet.editTitle}
     >
       <div className="pb-6 space-y-5">
-        <Field label="Nombre">
+        <Field label={t.common.name}>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Ej. Mascotas"
-            aria-label="Nombre de la categoría"
+            placeholder={t.categorySheet.namePlaceholder}
+            aria-label={t.categorySheet.nameLabel}
             autoFocus={isNew}
             className="w-full rounded-md bg-surface-2 border border-border px-3.5 py-3 min-h-[48px] text-[15px] text-text outline-none placeholder:text-text-faint focus:border-accent/60 transition-colors duration-150"
           />
@@ -114,22 +116,22 @@ export function CategoryEditSheet({ category, open, onClose }: Props) {
         {/* The kind decides whether a budget even applies, so it can't move
             once movements are already filed under it. */}
         {isNew && (
-          <Field label="Tipo">
+          <Field label={t.common.kind}>
             <SegmentedControl
-              options={CATEGORY_KINDS}
+              options={kinds}
               value={kind}
               onChange={setKind}
-              label="Tipo de categoría"
+              label={t.categorySheet.kindLabel}
             />
           </Field>
         )}
 
-        <Field label="Color">
+        <Field label={t.common.color}>
           <ColorPicker value={color} onChange={setColor} />
         </Field>
 
         {kind === "expense" && (
-          <Field label="Presupuesto mensual (opcional)">
+          <Field label={t.categorySheet.monthlyBudget}>
             <div className="flex items-baseline gap-2 rounded-md border border-border bg-surface-2 px-3.5 py-2.5">
               <span className="font-mono text-lg text-text-dim">$</span>
               <input
@@ -137,7 +139,7 @@ export function CategoryEditSheet({ category, open, onClose }: Props) {
                 onChange={(e) => setBudget(e.target.value.replace(/[^\d.]/g, ""))}
                 inputMode="decimal"
                 placeholder="0"
-                aria-label="Presupuesto mensual"
+                aria-label={t.categorySheet.monthlyBudget}
                 className="flex-1 min-w-0 bg-transparent font-mono text-[19px] font-semibold text-text tabular-nums outline-none placeholder:text-text-faint"
               />
             </div>
@@ -146,7 +148,7 @@ export function CategoryEditSheet({ category, open, onClose }: Props) {
 
         {renamed && (
           <p className="rounded-sm bg-amber-bg border border-amber-border text-amber-fg text-xs px-3.5 py-2.5 leading-relaxed">
-            Al renombrarla, tus movimientos anteriores pasan a decir «{name.trim()}».
+            {t.accountSheet.renameWarning(name.trim())}
           </p>
         )}
 
@@ -163,7 +165,7 @@ export function CategoryEditSheet({ category, open, onClose }: Props) {
           size="lg"
           className="w-full py-3.5"
         >
-          {isNew ? "Agregar categoría" : "Guardar cambios"}
+          {isNew ? t.categorySheet.addCategory : t.common.saveChanges}
         </Button>
 
         {!isNew &&
@@ -171,11 +173,11 @@ export function CategoryEditSheet({ category, open, onClose }: Props) {
             <div className="flex gap-2.5">
               <Button variant="secondary" size="lg" className="flex-1 py-3.5"
                 onClick={() => setConfirmingDelete(false)}>
-                Cancelar
+                {t.common.cancel}
               </Button>
               <Button variant="danger" size="lg" className="flex-1 py-3.5" loading={busy}
                 onClick={remove}>
-                Sí, eliminar
+                {t.categorySheet.confirmDelete}
               </Button>
             </div>
           ) : (
@@ -184,7 +186,7 @@ export function CategoryEditSheet({ category, open, onClose }: Props) {
               onClick={() => setConfirmingDelete(true)}
               className="press w-full font-mono text-[10.5px] text-red-fg uppercase tracking-wide py-2.5"
             >
-              Eliminar categoría
+              {t.categorySheet.deleteCategory}
             </button>
           ))}
       </div>

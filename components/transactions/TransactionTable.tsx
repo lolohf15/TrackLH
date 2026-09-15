@@ -18,6 +18,7 @@ interface Props {
 }
 
 export function TransactionTable({ data, loading, page, onPageChange }: Props) {
+  const t = useT();
   const [editing, setEditing] = useState<Transaction | null>(null);
 
   if (loading) {
@@ -25,7 +26,7 @@ export function TransactionTable({ data, loading, page, onPageChange }: Props) {
   }
 
   if (!data || data.data.length === 0) {
-    return <EmptyState icon="—" title="Sin transacciones" description="Ajusta los filtros para ver otros movimientos" />;
+    return <EmptyState icon="—" title={t.movements.emptyTitle} description={t.movements.emptyHint} />;
   }
 
   return (
@@ -41,12 +42,12 @@ export function TransactionTable({ data, loading, page, onPageChange }: Props) {
         <table className="w-full">
           <thead>
             <tr className="border-b border-border">
-              <Th>Fecha</Th>
-              <Th>Descripción</Th>
-              <Th>Categoría</Th>
-              <Th>Cuenta</Th>
-              <Th>Tipo</Th>
-              <Th right>Monto</Th>
+              <Th>{t.common.date}</Th>
+              <Th>{t.movements.description}</Th>
+              <Th>{t.common.category}</Th>
+              <Th>{t.common.account}</Th>
+              <Th>{t.common.kind}</Th>
+              <Th right>{t.common.amount}</Th>
             </tr>
           </thead>
           <tbody>
@@ -120,6 +121,7 @@ function DesktopRow({ tx, onEdit }: { tx: Transaction; onEdit: () => void }) {
 function Pagination({
   page, totalPages, total, limit, onPageChange,
 }: { page: number; totalPages: number; total: number; limit: number; onPageChange: (p: number) => void }) {
+  const t = useT();
   const start = (page - 1) * limit + 1;
   const end   = Math.min(page * limit, total);
   const pageCount = Math.min(totalPages, 5);
@@ -128,7 +130,7 @@ function Pagination({
   return (
     <div className="flex items-center justify-between px-4 py-3 border-t border-border">
       <span className="font-mono text-[10.5px] text-text-dim">
-        {start}–{end} de {total}
+        {start}–{end} {t.common.of} {total}
       </span>
       <div className="flex items-center gap-1">
         <PagBtn onClick={() => onPageChange(page - 1)} disabled={page <= 1}>‹</PagBtn>

@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { formatMXN, formatDate } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { UNKNOWN_COLOR } from "@/types";
+import { useT } from "@/lib/i18n-react";
 
 interface AccountConfig {
   id: number;
@@ -33,6 +34,7 @@ interface RowState {
 interface Props { onSaved: () => void }
 
 export function InitialBalances({ onSaved }: Props) {
+  const t = useT();
   const [accounts, setAccounts] = useState<AccountConfig[]>([]);
   const [rows, setRows] = useState<Record<string, RowState>>({});
   const [loading, setLoading] = useState(true);
@@ -63,13 +65,13 @@ export function InitialBalances({ onSaved }: Props) {
         return next;
       });
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Error desconocido";
+      const msg = err instanceof Error ? err.message : t.common.unknownError;
       setLoadError(msg);
       console.error("[InitialBalances] load error:", err);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t.common.unknownError]);
 
   // Plain fetch-on-mount: the panel needs the write-back response shape that
   // `save()` also consumes, which is why it isn't on SWR like the read-only
@@ -95,12 +97,12 @@ export function InitialBalances({ onSaved }: Props) {
 
     const trimmed = row.desiredBalance.trim();
     if (trimmed === "") {
-      updateRow(account, { error: "El saldo no puede estar vacío" });
+      updateRow(account, { error: t.balances.emptyBalance });
       return;
     }
     const parsed = Number(trimmed);
     if (!isFinite(parsed)) {
-      updateRow(account, { error: "Ingresa un número válido" });
+      updateRow(account, { error: t.balances.invalidNumber });
       return;
     }
 
@@ -116,7 +118,7 @@ export function InitialBalances({ onSaved }: Props) {
       const body = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
 
       if (!res.ok) {
-        updateRow(account, { saving: false, error: body?.error ?? "Error al guardar" });
+        updateRow(account, { saving: false, error: body?.error ?? t.balances.saveError });
         return;
       }
 
@@ -131,7 +133,7 @@ export function InitialBalances({ onSaved }: Props) {
       });
       onSaved();
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Error de red";
+      const msg = err instanceof Error ? err.message : t.balances.networkError;
       updateRow(account, { saving: false, error: msg });
       console.error("[InitialBalances] save error:", err);
     }
@@ -147,8 +149,8 @@ export function InitialBalances({ onSaved }: Props) {
           <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
         <p className="text-xs text-amber-fg leading-relaxed">
-          Escribe el saldo real actual de cada cuenta. La app calculará un ajuste local para que el saldo mostrado coincida.{" "}
-          <span className="font-semibold">No se modifican tus movimientos.</span>
+          {t.balances.intro}{" "}
+          <span className="font-semibold">{t.balances.movementsUnchanged}</span>
         </p>
       </div>
 
@@ -159,7 +161,7 @@ export function InitialBalances({ onSaved }: Props) {
             onClick={refresh}
             className="text-xs text-accent hover:brightness-125 underline underline-offset-2 transition-colors ml-4 shrink-0"
           >
-            Reintentar
+            {t.balances.retry}
           </button>
         </div>
       )}
@@ -175,10 +177,10 @@ export function InitialBalances({ onSaved }: Props) {
       {!loading && !loadError && (
         <>
           {debit.length > 0 && (
-            <AccountGroup title="Débito" accounts={debit} rows={rows} onUpdate={updateRow} onSave={save} />
+            <AccountGroup title={t.wallet.debit} accounts={debit} rows={rows} onUpdate={updateRow} onSave={save} />
           )}
           {credit.length > 0 && (
-            <AccountGroup title="Crédito" accounts={credit} rows={rows} onUpdate={updateRow} onSave={save} />
+            <AccountGroup title={t.wallet.credit} accounts={credit} rows={rows} onUpdate={updateRow} onSave={save} />
           )}
         </>
       )}
@@ -223,6 +225,7 @@ function AccountRow({
   onUpdate: (patch: Partial<RowState>) => void;
   onSave: () => void;
 }) {
+  const t = useT();
   if (!row) return null;
   const color = account.color ?? UNKNOWN_COLOR;
 
@@ -243,7 +246,7 @@ function AccountRow({
             ? "bg-red-bg text-red-fg border-red-border"
             : "bg-surface-2 text-text-dim border-border-strong"
         )}>
-          {account.isCredit ? "Crédito" : "Débito"}
+          {account.isCredit ? t.wallet.credit : t.wallet.debit}
         </span>
       </div>
 
@@ -271,7 +274,7 @@ function AccountRow({
 
       <div className="flex flex-wrap items-end gap-2.5">
         <div className="flex flex-col gap-1.5">
-          <label className="text-xs text-text-dim">Saldo actual real (MXN)</label>
+          <label className="text-xs text-text-dim">{t.balances.currentBalance}</label>
           <div className="relative">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-text-faint pointer-events-none">
               $
@@ -304,7 +307,7 @@ function AccountRow({
           size="sm"
           className="mb-0.5"
         >
-          Guardar
+          {t.common.save}
         </Button>
       </div>
 

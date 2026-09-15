@@ -3,24 +3,26 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { formatMXN } from "@/lib/utils";
 import type { CategorySummary } from "@/types";
+import { useT } from "@/lib/i18n-react";
 
 interface Props { data: CategorySummary[]; limit?: number }
 
 /** Ranked ledger table: rank + name + inline bar + amount. No charting library. */
 export function CategoryRanking({ data, limit = 10 }: Props) {
+  const t = useT();
   const top = data.slice(0, limit);
   const max = Math.max(...top.map((c) => c.amount), 1);
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Gasto por categoría</CardTitle>
+        <CardTitle>{t.analytics.spendByCategory}</CardTitle>
       </CardHeader>
       <CardContent className="pt-0">
         {top.length === 0 ? (
           <EmptyState
-            title="Sin gastos este mes"
-            description="Sincroniza tus transacciones para ver el análisis por categoría"
+            title={t.analytics.noSpendTitle}
+            description={t.analytics.noSpendHint}
           />
         ) : (
           <div className="flex flex-col">

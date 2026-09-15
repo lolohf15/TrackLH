@@ -6,8 +6,10 @@ import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/Button";
 import { AuthShell, AuthField, AuthError } from "@/components/auth/AuthForm";
+import { useT } from "@/lib/i18n-react";
 
 export default function LoginPage() {
+  const t = useT();
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -29,7 +31,7 @@ export default function LoginPage() {
     if (res?.error) {
       // Deliberately vague: saying which half was wrong tells an attacker
       // whether an email is registered.
-      setError("Correo o contraseña incorrectos");
+      setError(t.auth.badCredentials);
       setBusy(false);
       return;
     }
@@ -40,8 +42,8 @@ export default function LoginPage() {
 
   return (
     <AuthShell
-      title="Bienvenido de vuelta"
-      subtitle="Entra para ver tus cuentas y movimientos."
+      title={t.auth.signInTitle}
+      subtitle={t.auth.signInSubtitle}
       footer={
         <>
           ¿No tienes cuenta?{" "}
@@ -53,20 +55,20 @@ export default function LoginPage() {
     >
       <form onSubmit={onSubmit} className="space-y-4">
         <AuthField
-          label="Correo"
+          label={t.auth.email}
           type="email"
           autoComplete="email"
           inputMode="email"
-          placeholder="tu@correo.com"
+          placeholder={t.auth.emailPlaceholder}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
         />
         <AuthField
-          label="Contraseña"
+          label={t.auth.password}
           type="password"
           autoComplete="current-password"
-          placeholder="••••••••"
+          placeholder={t.auth.passwordPlaceholder}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
