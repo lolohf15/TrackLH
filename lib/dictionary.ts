@@ -226,6 +226,12 @@ export const es = {
     accountsHint: "Saldos, límites y ajustes",
     categories: "Categorías",
     categoriesHint: "Nombres, colores y presupuestos",
+    data: "Tus datos",
+    dataHint: "Todo tu historial, en un archivo de Excel",
+    exportExcel: "Exportar a Excel",
+    exporting: "Preparando el archivo…",
+    exportFailed: "No se pudo generar el archivo",
+    exportNote: "Incluye movimientos, cuentas, categorías, presupuestos y resúmenes por mes y por categoría.",
     session: "Sesión",
     signOut: "Cerrar sesión",
     signingOut: "Saliendo…",
@@ -293,6 +299,90 @@ export const es = {
   },
 
   addRecord: "Agregar movimiento",
+
+  /**
+   * Column headers and sheet names for the Excel export. They are not read on
+   * screen, so nothing here has to match a label elsewhere — but they are the
+   * only text in a file the user keeps, so both languages carry the full set.
+   * See `services/export-workbook.ts`.
+   */
+  xlsx: {
+    fileStem: "TrackLH",
+    title: "TrackLH · Exportación de datos",
+    generatedAt: "Generado",
+    user: "Usuario",
+    coverage: "Periodo cubierto",
+    contents: "Qué trae cada hoja",
+    empty: "Sin movimientos todavía",
+
+    sheets: {
+      summary: "Resumen",
+      transactions: "Movimientos",
+      accounts: "Cuentas",
+      categories: "Categorías",
+      monthly: "Mes a mes",
+      byCategory: "Gasto por categoría",
+    },
+
+    sheetHints: {
+      transactions: "Cada movimiento registrado, uno por fila, con filtros listos.",
+      accounts: "Saldo de cada cuenta y estado de las tarjetas de crédito.",
+      categories: "Categorías con su presupuesto y lo que llevas gastado.",
+      monthly: "Ingresos, gastos y ahorro mes por mes.",
+      byCategory: "Tabla cruzada: categorías contra meses.",
+    },
+
+    blocks: {
+      networth: "Patrimonio",
+      history: "Histórico",
+      counts: "Tamaño del archivo",
+    },
+
+    fields: {
+      totalAvailable: "Total disponible",
+      cardDebt: "Deuda en tarjetas",
+      netWorth: "Patrimonio neto",
+      totalIncome: "Ingresos totales",
+      totalExpenses: "Gastos totales",
+      net: "Neto",
+      movementCount: "Movimientos",
+      accountCount: "Cuentas",
+      categoryCount: "Categorías",
+    },
+
+    headers: {
+      date: "Fecha",
+      month: "Mes",
+      type: "Tipo",
+      account: "Cuenta",
+      toAccount: "Cuenta destino",
+      category: "Categoría",
+      description: "Descripción",
+      amount: "Monto",
+      income: "Ingresos",
+      expense: "Gastos",
+      notes: "Notas",
+      id: "ID",
+      accountKind: "Tipo de cuenta",
+      initialBalance: "Saldo inicial",
+      transfersIn: "Transferencias recibidas",
+      transfersOut: "Transferencias enviadas",
+      adjustment: "Ajuste",
+      currentBalance: "Saldo actual",
+      creditLimit: "Límite de crédito",
+      debt: "Deuda",
+      availableCredit: "Crédito disponible",
+      utilization: "Uso de la línea",
+      color: "Color",
+      budget: "Presupuesto mensual",
+      allTime: "Total acumulado",
+      count: "Movimientos",
+      monthlyAverage: "Promedio mensual",
+      net: "Neto",
+      savingsRate: "Tasa de ahorro",
+      total: "Total",
+    },
+  },
 
   /**
    * What the API answers with when a write is refused. Kept here beside the
@@ -553,6 +643,12 @@ export const en: typeof es = {
     accountsHint: "Balances, limits and adjustments",
     categories: "Categories",
     categoriesHint: "Names, colors and budgets",
+    data: "Your data",
+    dataHint: "Your whole history, in one Excel file",
+    exportExcel: "Export to Excel",
+    exporting: "Building the file…",
+    exportFailed: "Couldn't build the file",
+    exportNote: "Movements, accounts, categories, budgets and month-by-month and per-category summaries.",
     session: "Session",
     signOut: "Sign out",
     signingOut: "Signing out…",
@@ -615,6 +711,84 @@ export const en: typeof es = {
   },
 
   addRecord: "Add movement",
+
+  xlsx: {
+    fileStem: "TrackLH",
+    title: "TrackLH · Data export",
+    generatedAt: "Generated",
+    user: "User",
+    coverage: "Period covered",
+    contents: "What each sheet holds",
+    empty: "No movements yet",
+
+    sheets: {
+      summary: "Summary",
+      transactions: "Movements",
+      accounts: "Accounts",
+      categories: "Categories",
+      monthly: "Month by month",
+      byCategory: "Spending by category",
+    },
+
+    sheetHints: {
+      transactions: "Every movement you logged, one per row, filters ready.",
+      accounts: "Each account's balance and where your credit cards stand.",
+      categories: "Categories with their budget and what you've spent.",
+      monthly: "Income, spending and savings month by month.",
+      byCategory: "Cross tab: categories against months.",
+    },
+
+    blocks: {
+      networth: "Net worth",
+      history: "All time",
+      counts: "File size",
+    },
+
+    fields: {
+      totalAvailable: "Total available",
+      cardDebt: "Card debt",
+      netWorth: "Net worth",
+      totalIncome: "Total income",
+      totalExpenses: "Total spending",
+      net: "Net",
+      movementCount: "Movements",
+      accountCount: "Accounts",
+      categoryCount: "Categories",
+    },
+
+    headers: {
+      date: "Date",
+      month: "Month",
+      type: "Type",
+      account: "Account",
+      toAccount: "Destination account",
+      category: "Category",
+      description: "Description",
+      amount: "Amount",
+      income: "Income",
+      expense: "Spending",
+      notes: "Notes",
+      id: "ID",
+      accountKind: "Account type",
+      initialBalance: "Starting balance",
+      transfersIn: "Transfers in",
+      transfersOut: "Transfers out",
+      adjustment: "Adjustment",
+      currentBalance: "Current balance",
+      creditLimit: "Credit limit",
+      debt: "Debt",
+      availableCredit: "Available credit",
+      utilization: "Line in use",
+      color: "Color",
+      budget: "Monthly budget",
+      allTime: "All-time total",
+      count: "Movements",
+      monthlyAverage: "Monthly average",
+      net: "Net",
+      savingsRate: "Savings rate",
+      total: "Total",
+    },
+  },
 
   api: {
     unauthorized: "Not authorized",
