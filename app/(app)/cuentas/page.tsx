@@ -8,6 +8,7 @@ import { AccountPanel } from "@/components/auth/AccountPanel";
 import { ChartSkeleton } from "@/components/ui/Skeleton";
 import { ChevronDownIcon, PlusIcon } from "@/components/shell/icons";
 import { AccountEditSheet, type EditableAccount } from "@/components/settings/AccountEditSheet";
+import { ThemeToggle } from "@/components/settings/ThemeToggle";
 import { formatMXN, getCurrentMonth, cn } from "@/lib/utils";
 import type { DashboardData, AccountBalance } from "@/types";
 
@@ -105,6 +106,10 @@ export default function Cuentas() {
             )}
           >
             <InitialBalances onSaved={() => mutate(() => true)} />
+          </div>
+
+          <div className="mt-3">
+            <ThemeToggle />
           </div>
 
           <div className="mt-3">

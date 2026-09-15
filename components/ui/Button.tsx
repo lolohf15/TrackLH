@@ -7,12 +7,15 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variants = {
+  // Dark ink on the brass. White sat at about 2:1 against this gold and
+  // failed every contrast floor; `accent-ink` flips with the theme so it
+  // stays legible on both the light and the dark value of the accent.
   primary:
-    "bg-accent text-white hover:brightness-110 active:brightness-90",
+    "bg-accent text-accent-ink hover:brightness-110 active:brightness-90",
   secondary:
     "bg-surface-2 text-text-muted border border-border hover:border-border-strong hover:text-text active:bg-surface-3",
   ghost:
-    "text-text-dim hover:bg-white/5 hover:text-text active:bg-white/10",
+    "text-text-dim hover:bg-surface-2 hover:text-text active:bg-surface-3",
   danger:
     "bg-red-bg text-red-fg border border-red-border hover:bg-red-bg hover:border-red/50",
 };

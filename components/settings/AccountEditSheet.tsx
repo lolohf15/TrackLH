@@ -4,8 +4,13 @@ import { useState } from "react";
 import { mutate } from "swr";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Button } from "@/components/ui/Button";
+import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { ColorPicker, PALETTE } from "./ColorPicker";
-import { cn } from "@/lib/utils";
+
+const ACCOUNT_KINDS = [
+  { value: "debit" as const, label: "Débito" },
+  { value: "credit" as const, label: "Crédito" },
+];
 
 export interface EditableAccount {
   id: number;
@@ -97,26 +102,12 @@ export function AccountEditSheet({ account, open, onClose }: Props) {
         </Field>
 
         <Field label="Tipo">
-          <div className="grid grid-cols-2 gap-1 rounded-md bg-surface-2 p-1">
-            {[
-              { label: "Débito", credit: false },
-              { label: "Crédito", credit: true },
-            ].map((opt) => (
-              <button
-                key={opt.label}
-                type="button"
-                onClick={() => setIsCredit(opt.credit)}
-                aria-pressed={isCredit === opt.credit}
-                className={cn(
-                  "press rounded-sm font-mono text-[11px] font-medium uppercase tracking-wide py-2.5 min-h-[40px]",
-                  "transition-colors duration-150 ease-out",
-                  isCredit === opt.credit ? "bg-accent text-white shadow-panel" : "text-text-dim"
-                )}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
+          <SegmentedControl
+            options={ACCOUNT_KINDS}
+            value={isCredit ? "credit" : "debit"}
+            onChange={(v) => setIsCredit(v === "credit")}
+            label="Tipo de cuenta"
+          />
         </Field>
 
         {isCredit && (

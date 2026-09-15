@@ -1,14 +1,22 @@
 @import "tailwindcss";
 
 @theme {
-  /* Type — Manrope for UI, JetBrains Mono for every number */
-  --font-sans:             var(--font-manrope), Manrope, sans-serif;
-  --font-mono:             var(--font-jetbrains-mono), "JetBrains Mono", monospace;
+  /* Type — Inter carries the UI and every figure: the app's numbers are its
+     headline, and they want a face that goes heavy and tight without turning
+     into a ledger printout. JetBrains Mono stays, demoted to the small
+     uppercase eyebrows, where the machined look is the point. */
+  --font-sans:             var(--font-inter), Inter, ui-sans-serif, system-ui, sans-serif;
+  --font-mono:             var(--font-jetbrains-mono), "JetBrains Mono", ui-monospace, monospace;
 
   /* Surfaces — warm, near-black neutrals (a touch of red/yellow in the mix)
      instead of strict greys, so the app reads as an ink-and-brass ledger
      rather than a cold black-on-black screen. A panel still separates by its
-     outline first and its fill second. */
+     outline first and its fill second.
+
+     Dark is the default and the app's identity; light is the opt-in, and
+     every value below is redefined under [data-theme="light"]. Nothing in
+     the app should name a color directly — always the token, or the switch
+     leaves half the screen in the other theme. */
   --color-bg:              #151412;
   --color-surface:         #1c1a16;
   --color-surface-2:       #211f1a;
@@ -25,6 +33,7 @@
 
   /* Accent — interactive: active tab, links, filter chips */
   --color-accent:          #c99b57;
+  --color-accent-ink:      #1a1712;
 
   /* Semantic */
   --color-green:           #6ea377;
@@ -36,6 +45,9 @@
   --color-red-fg:          #e0736a;
   --color-red-bg:          rgba(224, 115, 106, 0.12);
   --color-red-border:      rgba(224, 115, 106, 0.32);
+  /* Reads against a filled red, which is light in this theme and dark in the
+     other — same trick as `accent-ink`. */
+  --color-red-ink:         #2b1512;
 
   --color-amber:           #d1a24a;
   --color-amber-fg:        #d1a24a;
@@ -67,6 +79,61 @@
   --ease-in-out:           cubic-bezier(0.77, 0, 0.175, 1);
   --ease-drawer:           cubic-bezier(0.32, 0.72, 0, 1);
   --ease-slide:            cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Tinted panels — how far a hue bleeds into the surface, and how bright the
+     top edge catches. A tint reads much stronger over a light ground than a
+     dark one, so both drop in the light theme. */
+  --tint-strength:         34%;
+  --tint-edge:             24%;
+  --tint-sheen:            0.055;
+}
+
+/* ─── Light theme ──────────────────────────────────────────────────────────
+   Same warmth, inverted: an off-white with the paper kept slightly yellow,
+   never a flat #fff. The accent and every semantic hue darken, because the
+   dark theme's values sit at roughly 3:1 on white and would fail as text. */
+:root[data-theme="light"] {
+  --color-bg:              #faf8f4;
+  --color-surface:         #ffffff;
+  --color-surface-2:       #f4f1ea;
+  --color-surface-3:       #e9e4d9;
+  --color-border:          #e5e0d4;
+  --color-border-strong:   #cfc8b8;
+  --color-divider:         #efebe2;
+
+  --color-text:            #1f1d19;
+  --color-text-muted:      #5b554b;
+  --color-text-dim:        #837c6f;
+  --color-text-faint:      #a9a294;
+
+  --color-accent:          #8f6828;
+  --color-accent-ink:      #ffffff;
+
+  --color-green:           #3d7a51;
+  --color-green-fg:        #356b47;
+  --color-green-bg:        rgba(61, 122, 81, 0.10);
+  --color-green-border:    rgba(61, 122, 81, 0.28);
+
+  --color-red:             #bf4437;
+  --color-red-fg:          #a93b2f;
+  --color-red-bg:          rgba(191, 68, 55, 0.09);
+  --color-red-border:      rgba(191, 68, 55, 0.26);
+  --color-red-ink:         #ffffff;
+
+  --color-amber:           #9a6f22;
+  --color-amber-fg:        #8a631e;
+  --color-amber-bg:        rgba(154, 111, 34, 0.10);
+  --color-amber-border:    rgba(154, 111, 34, 0.28);
+
+  /* Paper doesn't glow — the lift comes from a soft drop, not an inner edge. */
+  --shadow-panel:  0 1px 2px rgba(60, 50, 30, 0.06), 0 1px 1px rgba(60, 50, 30, 0.04);
+  --shadow-float:  0 6px 14px -4px rgba(60, 50, 30, 0.14), 0 18px 40px -12px rgba(60, 50, 30, 0.12);
+  --shadow-sheet:  0 -12px 48px -12px rgba(60, 50, 30, 0.18);
+  --shadow-glass:  inset 0 1px 0 rgba(255,255,255,0.7), inset 0 0 0 1px rgba(60,50,30,0.06), 0 8px 24px -8px rgba(60,50,30,0.16), 0 1px 2px rgba(60,50,30,0.06);
+
+  --tint-strength:         16%;
+  --tint-edge:             20%;
+  --tint-sheen:            0.5;
 }
 
 @layer base {
@@ -75,12 +142,18 @@
   html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    /* Tells the browser which way to paint its own surfaces — form controls,
+       the date picker, the scrollbar — so they don't stay dark on paper. */
     color-scheme: dark;
     overscroll-behavior-x: none;
     /* Keep pull-to-refresh and scroll-chaining out; the in-page rubber-band
        stays, since it's the correct "end of content" signal on long tabs. */
     overscroll-behavior-y: contain;
     -webkit-text-size-adjust: 100%;
+  }
+
+  html[data-theme="light"] {
+    color-scheme: light;
   }
 
   body {
@@ -116,6 +189,14 @@
     filter: invert(0.8);
     cursor: pointer;
   }
+
+  html[data-theme="light"] input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: none;
+  }
+
+  /* The logomark ships as a white glyph on transparent, which vanishes on
+     paper. It's monochrome, so inverting it is exact — no second asset. */
+  html[data-theme="light"] .logo-mark { filter: invert(1); }
 
   input[type="number"]::-webkit-inner-spin-button,
   input[type="number"]::-webkit-outer-spin-button {
@@ -164,6 +245,45 @@
     border: 1px solid var(--color-border);
     box-shadow: var(--shadow-panel);
     overflow: hidden;
+  }
+
+  /* A panel carrying a hue: the color pools in the top-left corner and drains
+     into the plain surface by the opposite one, so a row of them reads as one
+     family of cards rather than four solid blocks of paint. One rule, one
+     variable — `.tint.tint-green` and so on pick the hue, and both themes are
+     handled by the tokens the mix is built from. */
+  .tint {
+    background-image: linear-gradient(
+      152deg,
+      color-mix(in srgb, var(--tint-hue) var(--tint-strength), var(--color-surface)) 0%,
+      color-mix(in srgb, var(--tint-hue) calc(var(--tint-strength) / 2.6), var(--color-surface)) 52%,
+      var(--color-surface) 100%
+    );
+    border: 1px solid color-mix(in srgb, var(--tint-hue) var(--tint-edge), transparent);
+    border-radius: var(--radius-lg);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, var(--tint-sheen)), var(--shadow-panel);
+    overflow: hidden;
+  }
+
+  .tint-gold     { --tint-hue: var(--color-accent); }
+  .tint-green    { --tint-hue: var(--color-green); }
+  .tint-red      { --tint-hue: var(--color-red); }
+  .tint-amber    { --tint-hue: var(--color-amber); }
+  /* The quiet one, for a card that needs to group without claiming a meaning. */
+  .tint-graphite { --tint-hue: var(--color-text-muted); }
+
+  /* Bars that are present but not the subject — the week's other six days.
+     Texture instead of a second color, so the highlighted bar stays the only
+     thing carrying hue. */
+  .hatch {
+    /* Fill first, texture on top — stripes alone on a transparent bar leave
+       it with no body, and it disappears into whatever card it sits on. */
+    background-color: var(--color-surface-2);
+    background-image: repeating-linear-gradient(
+      -45deg,
+      var(--color-surface-3) 0 2px,
+      transparent 2px 5px
+    );
   }
 
   /* A pane of glass, not a blurred box: translucent fill + brighter top edge

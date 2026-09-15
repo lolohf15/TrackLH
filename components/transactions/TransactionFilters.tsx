@@ -73,7 +73,7 @@ export function TransactionFiltersPanel({ filters, categories, accounts, onChang
         >
           Filtros
           {sheetActiveCount > 0 && (
-            <span className="w-3.5 h-3.5 rounded-full bg-accent text-white text-[9px] flex items-center justify-center font-semibold">
+            <span className="w-3.5 h-3.5 rounded-full bg-accent text-accent-ink text-[9px] flex items-center justify-center font-semibold">
               {sheetActiveCount}
             </span>
           )}
@@ -113,7 +113,7 @@ export function TransactionFiltersPanel({ filters, categories, accounts, onChang
 
           <button
             onClick={() => setSheetOpen(false)}
-            className="press w-full mt-6 rounded-md bg-accent text-white text-sm font-medium py-3.5 min-h-[48px]"
+            className="press w-full mt-6 rounded-md bg-accent text-accent-ink text-sm font-medium py-3.5 min-h-[48px]"
           >
             Aplicar
           </button>

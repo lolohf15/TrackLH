@@ -25,7 +25,7 @@ export function AddRecordButton() {
         }}
         aria-label="Agregar movimiento"
         className="glass-accent press fixed right-4 z-40 w-14 h-14 rounded-full flex items-center justify-center
-                   text-white
+                   text-accent-ink
                    bottom-[calc(4.5rem+env(safe-area-inset-bottom))] md:bottom-6"
       >
         <PlusIcon className="w-6 h-6" />

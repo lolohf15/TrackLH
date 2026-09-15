@@ -4,9 +4,14 @@ import { useState } from "react";
 import { mutate } from "swr";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Button } from "@/components/ui/Button";
+import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { ColorPicker, PALETTE } from "./ColorPicker";
-import { cn } from "@/lib/utils";
 import type { CategoryKind } from "@/types";
+
+const CATEGORY_KINDS = [
+  { value: "expense" as const, label: "Gasto" },
+  { value: "income" as const, label: "Ingreso" },
+];
 
 export interface EditableCategory {
   id: string;
@@ -110,26 +115,12 @@ export function CategoryEditSheet({ category, open, onClose }: Props) {
             once movements are already filed under it. */}
         {isNew && (
           <Field label="Tipo">
-            <div className="grid grid-cols-2 gap-1 rounded-md bg-surface-2 p-1">
-              {[
-                { label: "Gasto", value: "expense" as const },
-                { label: "Ingreso", value: "income" as const },
-              ].map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => setKind(opt.value)}
-                  aria-pressed={kind === opt.value}
-                  className={cn(
-                    "press rounded-sm font-mono text-[11px] font-medium uppercase tracking-wide py-2.5 min-h-[40px]",
-                    "transition-colors duration-150 ease-out",
-                    kind === opt.value ? "bg-accent text-white shadow-panel" : "text-text-dim"
-                  )}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
+            <SegmentedControl
+              options={CATEGORY_KINDS}
+              value={kind}
+              onChange={setKind}
+              label="Tipo de categoría"
+            />
           </Field>
         )}
 

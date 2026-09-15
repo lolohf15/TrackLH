@@ -1,12 +1,13 @@
 import type { Metadata, Viewport } from "next";
-import { Manrope, JetBrains_Mono } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import { SessionProvider } from "next-auth/react";
+import { THEME_BOOT_SCRIPT } from "@/lib/theme";
 import "./globals.css";
 
-const manrope = Manrope({
+const inter = Inter({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800"],
-  variable: "--font-manrope",
+  variable: "--font-inter",
 });
 
 const jetbrainsMono = JetBrains_Mono({
@@ -49,7 +50,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es">
-      <body className={`${manrope.variable} ${jetbrainsMono.variable} ${manrope.className}`}>
+      <head>
+        {/* Runs before first paint: a saved light preference has to be on the
+            element already, or the app flashes dark on every load. */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
+      </head>
+      <body className={`${inter.variable} ${jetbrainsMono.variable} ${inter.className}`}>
         {/* The shell now lives in the (app) route group, so signed-out and
             onboarding screens render without a tab bar. */}
         <SessionProvider>{children}</SessionProvider>

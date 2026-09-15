@@ -6,6 +6,7 @@ import useSWR, { mutate } from "swr";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
+import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { CheckIcon } from "@/components/shell/icons";
 import { cn, getToday, withLocalTime } from "@/lib/utils";
 import {
@@ -14,6 +15,8 @@ import {
   type Transaction,
   type TransactionType,
 } from "@/types";
+
+const TYPE_OPTIONS = VALID_TRANSACTION_TYPES.map((t) => ({ value: t, label: t }));
 
 interface Props {
   open: boolean;
@@ -168,7 +171,7 @@ export function TransactionSheet({
           <Link
             href="/bienvenida"
             onClick={onClose}
-            className="press inline-flex items-center justify-center rounded-md bg-accent text-white text-sm font-medium px-5 py-3 min-h-[48px]"
+            className="press inline-flex items-center justify-center rounded-md bg-accent text-accent-ink text-sm font-medium px-5 py-3 min-h-[48px]"
           >
             Configurar mis cuentas
           </Link>
@@ -180,27 +183,15 @@ export function TransactionSheet({
   return (
     <BottomSheet open={open} onClose={onClose} title={isEdit ? "Editar movimiento" : "Nuevo movimiento"}>
       <div className="pb-6 space-y-5">
-        {/* Tipo — a pill riding inside a track, the way iOS segments work */}
-        <div className="grid grid-cols-3 gap-1 rounded-md bg-surface-2 p-1">
-          {VALID_TRANSACTION_TYPES.map((t) => (
-            <button
-              key={t}
-              type="button"
-              onClick={() => {
-                setType(t);
-                setCategory("");
-              }}
-              aria-pressed={type === t}
-              className={cn(
-                "press rounded-sm font-mono text-[11px] font-medium uppercase tracking-wide py-2.5 min-h-[40px]",
-                "transition-colors duration-150 ease-out",
-                type === t ? "bg-accent text-white shadow-panel" : "text-text-dim"
-              )}
-            >
-              {t}
-            </button>
-          ))}
-        </div>
+        <SegmentedControl
+          options={TYPE_OPTIONS}
+          value={type}
+          onChange={(t) => {
+            setType(t);
+            setCategory("");
+          }}
+          label="Tipo de movimiento"
+        />
 
         {/* Monto — the one field that always matters, so it leads */}
         <Field label="Monto">

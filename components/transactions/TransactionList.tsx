@@ -239,8 +239,8 @@ function ActionButton({
       aria-label={label}
       onClick={onClick}
       className={cn(
-        "press flex flex-1 flex-col items-center justify-center gap-1 text-white",
-        tone === "neutral" ? "bg-surface-3" : "bg-red-fg"
+        "press flex flex-1 flex-col items-center justify-center gap-1",
+        tone === "neutral" ? "bg-surface-3 text-text" : "bg-red-fg text-red-ink"
       )}
     >
       {children}
