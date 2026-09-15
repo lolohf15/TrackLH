@@ -293,7 +293,6 @@
   .glass {
     background-color: color-mix(in srgb, var(--color-surface) 62%, transparent);
     backdrop-filter: blur(20px) saturate(150%);
-    -webkit-backdrop-filter: blur(20px) saturate(150%);
     box-shadow: var(--shadow-glass);
   }
 
@@ -302,7 +301,6 @@
   .glass-accent {
     background-color: color-mix(in srgb, var(--color-accent) 78%, transparent);
     backdrop-filter: blur(20px) saturate(150%);
-    -webkit-backdrop-filter: blur(20px) saturate(150%);
     box-shadow: var(--shadow-glass), var(--shadow-float);
   }
 
@@ -312,7 +310,6 @@
      inconsistent. */
   .glass-refract {
     backdrop-filter: blur(6px) url(#app-glass-distortion) saturate(150%);
-    -webkit-backdrop-filter: blur(6px) url(#app-glass-distortion) saturate(150%);
   }
 
   /* Floating chrome meeting scrolling content: a soft edge, not a 1px rule. */
@@ -353,12 +350,10 @@
   .glass, .glass-refract {
     background-color: var(--color-surface);
     backdrop-filter: none;
-    -webkit-backdrop-filter: none;
   }
   .glass-accent {
     background-color: var(--color-accent);
     backdrop-filter: none;
-    -webkit-backdrop-filter: none;
   }
 }
 

@@ -6,8 +6,13 @@ import { PlusIcon } from "@/components/shell/icons";
 
 /**
  * Always-available way to log a movement, mirroring what the iOS shortcut asks
- * for. The one fully round element in the app, and the one that earns a real
- * shadow: it floats over scrolling content and has to read as above it.
+ * for. On phones it docks into the tab bar's empty middle column and rises out
+ * of it — the thing you do most often sits at the app's center of gravity. On
+ * desktop there's no tab bar, so it goes back to floating bottom-right.
+ *
+ * Positioned by `left`, not a translate: `.press` puts a scale on :active, and
+ * a transform from the stylesheet would drop a translate rather than compose
+ * with it, snapping the button sideways on every tap.
  */
 export function AddRecordButton() {
   const [open, setOpen] = useState(false);
@@ -24,9 +29,10 @@ export function AddRecordButton() {
           setOpen(true);
         }}
         aria-label="Agregar movimiento"
-        className="glass-accent press fixed right-4 z-40 w-14 h-14 rounded-full flex items-center justify-center
+        className="glass-accent press fixed z-40 w-14 h-14 rounded-full flex items-center justify-center
                    text-accent-ink
-                   bottom-[calc(4.5rem+env(safe-area-inset-bottom))] md:bottom-6"
+                   left-[calc(50%-1.75rem)] bottom-[calc(env(safe-area-inset-bottom)+2.5rem)]
+                   md:left-auto md:right-6 md:bottom-6"
       >
         <PlusIcon className="w-6 h-6" />
       </button>

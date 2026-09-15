@@ -1,21 +1,20 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import useSWR from "swr";
 import { mutate } from "swr";
 import { InitialBalances } from "@/components/dashboard/InitialBalances";
-import { AccountPanel } from "@/components/auth/AccountPanel";
 import { ChartSkeleton } from "@/components/ui/Skeleton";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { ChevronDownIcon, PlusIcon } from "@/components/shell/icons";
 import { AccountEditSheet, type EditableAccount } from "@/components/settings/AccountEditSheet";
-import { ThemeToggle } from "@/components/settings/ThemeToggle";
 import { formatMXN, getCurrentMonth, cn } from "@/lib/utils";
 import type { DashboardData, AccountBalance } from "@/types";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
-export default function Cuentas() {
+export default function Wallet() {
   const { data: dashboard, isLoading } =
     useSWR<DashboardData>(`/api/dashboard?month=${getCurrentMonth()}`, fetcher);
   // The dashboard reports balances by name; the config carries the id an edit
@@ -43,7 +42,16 @@ export default function Cuentas() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 md:px-8 pt-4 pb-6">
-      <h1 className="text-[15px] font-semibold text-text mb-4">Cuentas</h1>
+      <div className="flex items-baseline justify-between mb-4">
+        <h1 className="text-[15px] font-semibold text-text">Wallet</h1>
+        {/* Movements live on their own route until F6 folds them in here. */}
+        <Link
+          href="/movimientos"
+          className="font-mono text-[10px] font-medium text-accent hover:brightness-125 tracking-wide"
+        >
+          VER MOVIMIENTOS →
+        </Link>
+      </div>
 
       <div className="md:grid md:grid-cols-2 md:gap-10 md:items-start">
         <div className="space-y-3">
@@ -107,14 +115,6 @@ export default function Cuentas() {
             )}
           >
             <InitialBalances onSaved={() => mutate(() => true)} />
-          </div>
-
-          <div className="mt-3">
-            <ThemeToggle />
-          </div>
-
-          <div className="mt-3">
-            <AccountPanel />
           </div>
 
           <AccountEditSheet

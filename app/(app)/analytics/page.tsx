@@ -186,7 +186,7 @@ function CategoryRow({
 
       {/* Mobile: push to detail route */}
       <Link
-        href={`/categorias/${encodeURIComponent(trend.category)}`}
+        href={`/analytics/${encodeURIComponent(trend.category)}`}
         className="md:hidden block py-[11px] border-t border-divider active:bg-surface-2/40 transition-colors duration-150 ease-out"
       >
         <RowContent trend={trend} pct={pct} barPct={barPct} />

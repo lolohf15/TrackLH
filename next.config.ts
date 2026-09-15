@@ -3,6 +3,16 @@ import withPWA from "@ducanh2912/next-pwa";
 
 const nextConfig: NextConfig = {
   turbopack: {},
+
+  // The tabs were renamed in the redesign. Kept non-permanent on purpose:
+  // a 308 gets cached hard by browsers, and these paths are still in flux.
+  async redirects() {
+    return [
+      { source: "/cuentas", destination: "/wallet", permanent: false },
+      { source: "/categorias", destination: "/analytics", permanent: false },
+      { source: "/categorias/:category", destination: "/analytics/:category", permanent: false },
+    ];
+  },
 };
 
 export default withPWA({

@@ -82,6 +82,25 @@ export function WalletIcon({ className, active }: TabIconProps) {
   );
 }
 
+/** Analytics */
+export function ChartIcon({ className, active }: TabIconProps) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={sw(active)}>
+      <path strokeLinecap="round" d="M5 19.2V12M12 19.2V6M19 19.2v-5" />
+    </svg>
+  );
+}
+
+/** Perfil */
+export function UserIcon({ className, active }: TabIconProps) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={sw(active)}>
+      <circle cx="12" cy="8.4" r="3.9" />
+      <path strokeLinecap="round" d="M4.8 20c.9-3.7 3.8-5.6 7.2-5.6s6.3 1.9 7.2 5.6" />
+    </svg>
+  );
+}
+
 /** Categorías */
 export function GridIcon({ className, active }: TabIconProps) {
   return (
