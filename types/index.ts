@@ -95,7 +95,6 @@ export interface DashboardData {
   categoryExpenses: CategorySummary[];
   budgetItems: BudgetItem[];
   lastSyncAt: string | null;
-  transactionCount: number;
 }
 
 export interface CategoryTrendPoint {

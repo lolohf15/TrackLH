@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireUser, errorResponse } from "@/lib/auth";
-import { round2, computeAccountBalances } from "@/services/finance";
-import type { Transaction } from "@/types";
+import { round2, computeAccountBalancesFromSums } from "@/services/finance";
+import { getAccountSums } from "@/lib/account-sums";
 
 type AccountRow = {
   id: number;
@@ -34,23 +34,6 @@ function serializeAccount(a: AccountRow, calculatedBalance: number, currentBalan
     createdAt: a.createdAt.toISOString(),
     updatedAt: a.updatedAt.toISOString(),
   };
-}
-
-async function fetchTxs(userId: string): Promise<Transaction[]> {
-  const rows = await prisma.transaction.findMany({ where: { userId } });
-  return rows.map((t) => ({
-    id: t.id,
-    date: t.date.toISOString(),
-    amount: t.amount,
-    type: t.type as Transaction["type"],
-    category: t.category,
-    account: t.account,
-    toAccount: t.toAccount,
-    description: t.description,
-    notes: t.notes,
-    procesado: t.procesado,
-    syncedAt: t.syncedAt.toISOString(),
-  }));
 }
 
 /** Add an account after onboarding. */
@@ -95,15 +78,15 @@ export async function GET() {
   try {
     const userId = await requireUser();
 
-    const [accounts, txs] = await Promise.all([
+    const [accounts, sums] = await Promise.all([
       prisma.accountConfig.findMany({
         where: { userId },
         orderBy: [{ isCredit: "asc" }, { account: "asc" }],
       }),
-      fetchTxs(userId),
+      getAccountSums(userId),
     ]);
 
-    const balances = computeAccountBalances(txs, accounts);
+    const balances = computeAccountBalancesFromSums(sums, accounts);
     const balanceMap = new Map(balances.map((b) => [b.account, b]));
 
     return NextResponse.json(
@@ -150,9 +133,9 @@ export async function PUT(req: NextRequest) {
     }
     const rounded = round2(parsed);
 
-    const [accounts, txs] = await Promise.all([
+    const [accounts, sums] = await Promise.all([
       prisma.accountConfig.findMany({ where: { userId } }),
-      fetchTxs(userId),
+      getAccountSums(userId),
     ]);
 
     const config = accounts.find((a) => a.account === account.trim());
@@ -160,7 +143,7 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: `Cuenta "${account}" no encontrada` }, { status: 404 });
     }
 
-    const balances = computeAccountBalances(txs, accounts);
+    const balances = computeAccountBalancesFromSums(sums, accounts);
     const accountBalance = balances.find((b) => b.account === account.trim());
     const calculatedBalance = accountBalance?.calculatedBalance ?? config.initialBalance;
 
@@ -175,10 +158,6 @@ export async function PUT(req: NextRequest) {
         adjustmentDate: new Date(),
       },
     });
-
-    console.log(
-      `[PUT /api/accounts] "${account}" desired=${rounded}, calculated=${calculatedBalance}, adjustment=${adjustment}`
-    );
 
     return NextResponse.json(serializeAccount(updated, calculatedBalance, rounded));
   } catch (err) {

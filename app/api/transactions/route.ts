@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { requireUser, errorResponse } from "@/lib/auth";
 import { validateTransactionInput } from "@/lib/transaction-input";
-import type { Transaction } from "@/types";
+import { mapTransaction } from "@/lib/transaction-map";
 
 export async function GET(req: NextRequest) {
   try {
@@ -38,19 +38,7 @@ export async function GET(req: NextRequest) {
       }),
     ]);
 
-    const data: Transaction[] = rows.map((t) => ({
-      id: t.id,
-      date: t.date.toISOString(),
-      amount: t.amount,
-      type: t.type as Transaction["type"],
-      category: t.category,
-      account: t.account,
-      toAccount: t.toAccount,
-      description: t.description,
-      notes: t.notes,
-      procesado: t.procesado,
-      syncedAt: t.syncedAt.toISOString(),
-    }));
+    const data = rows.map(mapTransaction);
 
     return NextResponse.json({ data, total, page, limit, totalPages: Math.ceil(total / limit) });
   } catch (err) {

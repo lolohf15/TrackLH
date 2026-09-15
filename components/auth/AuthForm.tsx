@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 /** The shared chrome of the login and signup screens. */
@@ -17,7 +18,7 @@ export function AuthShell({
   return (
     <div className="space-y-7">
       <div className="flex flex-col items-center text-center gap-3">
-        <img src="/TrackLHLogo.png" alt="" className="w-11 h-11 rounded-md object-cover" />
+        <Image src="/TrackLHLogo.png" alt="" width={44} height={44} className="w-11 h-11 rounded-md object-cover" />
         <div>
           <h1 className="font-mono text-sm font-semibold tracking-[0.15em] text-text">TRACKLH</h1>
           <p className="text-[19px] font-semibold text-text mt-4">{title}</p>

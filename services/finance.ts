@@ -8,24 +8,18 @@ import type {
   YearlyNetPoint,
 } from "@/types";
 import { UNKNOWN_COLOR } from "@/types";
+import { getCurrentMonth, getPrevMonth } from "@/lib/utils";
 
 /** Category name -> color, built from this user's Category rows. */
 export type ColorMap = Map<string, string>;
 
+// Re-exported so route handlers can pull month helpers from one place
+// alongside the rest of the finance logic they already import from here.
+export { getCurrentMonth, getPrevMonth };
+
 // Rule 12: all amounts rounded to 2 decimals
 export function round2(n: number): number {
   return Math.round(n * 100) / 100;
-}
-
-export function getCurrentMonth(): string {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-}
-
-export function getPrevMonth(month: string): string {
-  const [year, m] = month.split("-").map(Number);
-  const d = new Date(year, m - 2, 1);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
 
 export function getTransactionMonth(date: string): string {
@@ -38,23 +32,32 @@ export function filterByMonth(transactions: Transaction[], month: string): Trans
   return transactions.filter((t) => getTransactionMonth(t.date) === month);
 }
 
+/** Per-account totals across the user's whole history (rule 6/7 inputs). */
+export interface AccountSums {
+  income: number;
+  expenses: number;
+  transfersIn: number;
+  transfersOut: number;
+}
+
 /**
  * Rule 6 (debit):  balance = initial + income − expenses − transfersOut + transfersIn
  * Rule 7 (credit): balance = initial − expenses + transfersIn (payments)
  *
  * Transfers NEVER count as income or expense (rule 10).
+ *
+ * Takes pre-aggregated sums rather than raw transactions — an account's
+ * balance depends on its *entire* history, and summing that in SQL (see
+ * `lib/account-sums.ts`) is the difference between one aggregate query and
+ * pulling every transaction the user has ever logged into memory.
  */
-export function computeAccountBalances(
-  transactions: Transaction[],
+export function computeAccountBalancesFromSums(
+  sums: Map<string, AccountSums>,
   configs: Array<{ account: string; initialBalance: number; isCredit: boolean; color: string | null; balanceAdjustment?: number }>
 ): AccountBalance[] {
   const configMap = new Map(configs.map((c) => [c.account, c]));
 
-  const accounts = new Set([
-    ...configs.map((c) => c.account),
-    ...transactions.map((t) => t.account),
-    ...transactions.filter((t) => t.toAccount).map((t) => t.toAccount as string),
-  ]);
+  const accounts = new Set([...configs.map((c) => c.account), ...sums.keys()]);
 
   return Array.from(accounts).map((account) => {
     const config = configMap.get(account);
@@ -63,21 +66,8 @@ export function computeAccountBalances(
     const color = config?.color ?? UNKNOWN_COLOR;
     const balanceAdjustment = config?.balanceAdjustment ?? 0;
 
-    let income = 0;
-    let expenses = 0;
-    let transfersIn = 0;
-    let transfersOut = 0;
-
-    for (const t of transactions) {
-      if (t.type === "Ingreso" && t.account === account) {
-        income = round2(income + t.amount);
-      } else if (t.type === "Gasto" && t.account === account) {
-        expenses = round2(expenses + t.amount);
-      } else if (t.type === "Transferencia") {
-        if (t.account === account) transfersOut = round2(transfersOut + t.amount);
-        if (t.toAccount === account) transfersIn = round2(transfersIn + t.amount);
-      }
-    }
+    const { income, expenses, transfersIn, transfersOut } =
+      sums.get(account) ?? { income: 0, expenses: 0, transfersIn: 0, transfersOut: 0 };
 
     // Rule 6 vs rule 7 — credit accounts don't accumulate income
     const calculatedBalance = isCredit
@@ -228,12 +218,11 @@ export function computeYearlyNet(transactions: Transaction[], year: number): Yea
 export function buildDashboardData(
   transactions: Transaction[],
   month: string,
-  accountConfigs: Array<{ account: string; initialBalance: number; isCredit: boolean; color: string | null; balanceAdjustment?: number }>,
+  accountBalances: AccountBalance[],
   budgetConfigs: Array<{ category: string; amount: number }>,
   lastSyncAt: string | null,
   colors: ColorMap
 ): DashboardData {
-  const accountBalances = computeAccountBalances(transactions, accountConfigs);
   const totalAvailable = computeTotalAvailable(accountBalances);
   const monthlyExpenses = computeMonthlyExpenses(transactions, month);
   const monthlyIncome = computeMonthlyIncome(transactions, month);
@@ -262,6 +251,5 @@ export function buildDashboardData(
     categoryExpenses,
     budgetItems,
     lastSyncAt,
-    transactionCount: transactions.length,
   };
 }

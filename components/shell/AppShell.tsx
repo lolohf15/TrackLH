@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Sidebar } from "./Sidebar";
@@ -42,7 +43,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="relative flex flex-1 flex-col overflow-x-hidden md:pl-[72px]">
         <header className="glass scroll-edge sticky top-0 z-20 shrink-0 pt-safe md:hidden">
           <div className="px-4 py-3 flex items-center gap-2.5">
-            <img src="/TrackLHLogo.png" alt="TrackLH" className="w-6 h-6 shrink-0 object-cover" />
+            <Image src="/TrackLHLogo.png" alt="TrackLH" width={24} height={24} className="w-6 h-6 shrink-0 object-cover" />
             <h1 className="font-mono text-xs font-semibold tracking-[0.15em] text-text truncate">TRACKLH</h1>
           </div>
         </header>
