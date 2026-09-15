@@ -2,6 +2,7 @@
 
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { ProgressBar } from "@/components/ui/ProgressBar";
 import { formatMXN } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { useCountUp } from "@/lib/useCountUp";
@@ -76,12 +77,7 @@ function BudgetRow({ item }: { item: BudgetItem }) {
           <span className="text-text-faint"> / {formatMXN(item.budget)}</span>
         </span>
       </div>
-      <div className="h-[3px] w-full rounded-full bg-surface-2 overflow-hidden">
-        <div
-          className="h-full transition-[width] duration-300 ease-out"
-          style={{ width: `${Math.min(item.percentage, 100)}%`, background: color }}
-        />
-      </div>
+      <ProgressBar segments={[{ percent: item.percentage, color }]} />
     </div>
   );
 }

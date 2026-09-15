@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { BarChart } from "@/components/ui/BarChart";
+import { ProgressBar } from "@/components/ui/ProgressBar";
 import { formatMXN, formatMonth, cn } from "@/lib/utils";
 import type { CategoryTrend } from "@/types";
 
@@ -39,42 +41,21 @@ export function CategoryDetail({ trend }: { trend: CategoryTrend }) {
               {formatMXN(trend.currentAmount)} / {formatMXN(trend.budget)}
             </span>
           </div>
-          <div className="h-[3px] rounded-full bg-surface-2 overflow-hidden">
-            <div className="h-full" style={{ width: `${pct}%`, background: barColor }} />
-          </div>
+          <ProgressBar segments={[{ percent: pct, color: barColor }]} />
         </div>
       )}
 
       <div>
         <p className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em] mb-3">Tendencia mensual</p>
-        <MiniTrendChart points={trend.points} color={trend.color} />
+        <BarChart
+          bars={trend.points.map((p, i) => ({
+            label: formatMonth(p.month).split(" ")[0].slice(0, 3),
+            value: p.amount,
+            highlight: i === trend.points.length - 1,
+          }))}
+          color={trend.color}
+        />
       </div>
-    </div>
-  );
-}
-
-function MiniTrendChart({ points, color }: { points: CategoryTrend["points"]; color: string }) {
-  const max = Math.max(...points.map((p) => p.amount), 1);
-
-  return (
-    <div className="flex items-end gap-2 h-[110px]">
-      {points.map((p, i) => {
-        const isLast = i === points.length - 1;
-        const heightPct = Math.max(Math.round((p.amount / max) * 100), 2);
-        return (
-          <div key={p.month} className="flex-1 flex flex-col items-center gap-2 h-full justify-end">
-            <div className="w-full flex items-end" style={{ height: "100%" }}>
-              <div
-                className="w-full rounded-t-sm"
-                style={{ height: `${heightPct}%`, background: isLast ? color : "var(--color-surface-2)" }}
-              />
-            </div>
-            <span className="font-mono text-[9.5px] text-text-faint uppercase">
-              {formatMonth(p.month).split(" ")[0].slice(0, 3)}
-            </span>
-          </div>
-        );
-      })}
     </div>
   );
 }

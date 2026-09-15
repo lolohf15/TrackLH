@@ -6,6 +6,7 @@ import { mutate } from "swr";
 import { InitialBalances } from "@/components/dashboard/InitialBalances";
 import { AccountPanel } from "@/components/auth/AccountPanel";
 import { ChartSkeleton } from "@/components/ui/Skeleton";
+import { ProgressBar } from "@/components/ui/ProgressBar";
 import { ChevronDownIcon, PlusIcon } from "@/components/shell/icons";
 import { AccountEditSheet, type EditableAccount } from "@/components/settings/AccountEditSheet";
 import { ThemeToggle } from "@/components/settings/ThemeToggle";
@@ -197,12 +198,7 @@ function CreditLine({ account }: { account: AccountBalance }) {
 
   return (
     <div className="flex flex-col gap-1.5">
-      <div className="h-1 rounded-full bg-surface-2 overflow-hidden">
-        <div
-          className="h-full rounded-full transition-[width] duration-300 ease-out"
-          style={{ width: `${Math.min(pct, 100)}%`, background: tone }}
-        />
-      </div>
+      <ProgressBar segments={[{ percent: pct, color: tone }]} height={4} />
       <div className="flex items-baseline justify-between gap-2 font-mono text-[10.5px] text-text-dim">
         <span className="truncate">
           {formatMXN(account.debt ?? 0)} de {formatMXN(account.creditLimit ?? 0)}
