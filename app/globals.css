@@ -8,32 +8,32 @@
   --font-sans:             var(--font-inter), Inter, ui-sans-serif, system-ui, sans-serif;
   --font-mono:             var(--font-jetbrains-mono), "JetBrains Mono", ui-monospace, monospace;
 
-  /* Surfaces — warm, near-black neutrals (a touch of red/yellow in the mix)
-     instead of strict greys, so the app reads as an ink-and-brass ledger
-     rather than a cold black-on-black screen. A panel still separates by its
+  /* Surfaces — true black ground with neutral greys stepping up from it, so
+     the brass accent is the only warmth on screen and reads as the app's one
+     color rather than a tint everything shares. A panel separates by its
      outline first and its fill second.
 
      Dark is the default and the app's identity; light is the opt-in, and
      every value below is redefined under [data-theme="light"]. Nothing in
      the app should name a color directly — always the token, or the switch
      leaves half the screen in the other theme. */
-  --color-bg:              #151412;
-  --color-surface:         #1c1a16;
-  --color-surface-2:       #211f1a;
-  --color-surface-3:       #2b2820;
-  --color-border:          #2a2620;
-  --color-border-strong:   #3a352c;
-  --color-divider:         #242019;
+  --color-bg:              #000000;
+  --color-surface:         #121212;
+  --color-surface-2:       #1b1b1b;
+  --color-surface-3:       #262626;
+  --color-border:          #242424;
+  --color-border-strong:   #363636;
+  --color-divider:         #1e1e1e;
 
-  /* Text — warm greys to match, dimming from body copy down to rank numbers */
-  --color-text:            #f3f1ec;
-  --color-text-muted:      #a39c8e;
-  --color-text-dim:        #7a756c;
-  --color-text-faint:      #57534a;
+  /* Text — neutral greys, dimming from body copy down to rank numbers */
+  --color-text:            #f4f4f4;
+  --color-text-muted:      #a1a1a1;
+  --color-text-dim:        #787878;
+  --color-text-faint:      #525252;
 
   /* Accent — interactive: active tab, links, filter chips */
   --color-accent:          #c99b57;
-  --color-accent-ink:      #1a1712;
+  --color-accent-ink:      #16130e;
 
   /* Semantic */
   --color-green:           #6ea377;
