@@ -293,6 +293,52 @@ export const es = {
   },
 
   addRecord: "Agregar movimiento",
+
+  /**
+   * What the API answers with when a write is refused. Kept here beside the
+   * rest so both languages stay side by side, and read on the server from the
+   * language cookie — see `lib/api-lang.ts`.
+   */
+  api: {
+    unauthorized: "No autorizado",
+    internal: "Error interno del servidor",
+    invalidJson: "Cuerpo de solicitud inválido (JSON)",
+
+    accountNameRequired: "Escribe un nombre para la cuenta",
+    accountExists: "Ya tienes una cuenta con ese nombre",
+    accountInvalid: "Cuenta inválida",
+    accountMissing: "Cuenta no encontrada",
+    accountFieldRequired: "Campo 'account' requerido",
+    accountNamedMissing: (name: string) => `Cuenta "${name}" no encontrada`,
+    accountInUse: (name: string, count: number) =>
+      `"${name}" tiene ${count} ${count === 1 ? "movimiento" : "movimientos"}. ` +
+      `Bórralos o muévelos a otra cuenta antes de eliminarla.`,
+    balanceEmpty: "El saldo deseado no puede estar vacío",
+    balanceNotNumber: "El saldo deseado debe ser un número válido",
+
+    categoryNameRequired: "Escribe un nombre para la categoría",
+    categoryExists: "Ya tienes una categoría con ese nombre",
+    categoryMissing: "Categoría no encontrada",
+    categoryInUse: (name: string, count: number) =>
+      `"${name}" tiene ${count} ${count === 1 ? "movimiento" : "movimientos"}. ` +
+      `Cámbialos de categoría antes de eliminarla.`,
+
+    movementMissing: "Movimiento no encontrado",
+    typeInvalid: "Tipo de movimiento inválido",
+    amountPositive: "El monto debe ser mayor a 0",
+    dateInvalid: "Fecha inválida",
+    toAccountInvalid: "Cuenta destino inválida",
+    sameAccount: "La cuenta destino debe ser distinta a la de origen",
+    categoryRequired: "La categoría es obligatoria",
+
+    pickAccount: "Elige al menos una cuenta",
+    missingSetup: "Faltan cuentas o categorías",
+
+    emailInvalid: "Escribe un correo válido",
+    passwordTooShort: (min: number) => `La contraseña debe tener al menos ${min} caracteres`,
+    emailTaken: "Ese correo ya está registrado",
+    signupFailed: "No se pudo crear la cuenta",
+  },
 };
 
 export const en: typeof es = {
@@ -569,6 +615,47 @@ export const en: typeof es = {
   },
 
   addRecord: "Add movement",
+
+  api: {
+    unauthorized: "Not authorized",
+    internal: "Internal server error",
+    invalidJson: "Invalid request body (JSON)",
+
+    accountNameRequired: "Enter a name for the account",
+    accountExists: "You already have an account with that name",
+    accountInvalid: "Invalid account",
+    accountMissing: "Account not found",
+    accountFieldRequired: "The 'account' field is required",
+    accountNamedMissing: (name: string) => `Account "${name}" not found`,
+    accountInUse: (name: string, count: number) =>
+      `"${name}" has ${count} ${count === 1 ? "movement" : "movements"}. ` +
+      `Delete them or move them to another account before removing it.`,
+    balanceEmpty: "The balance can't be empty",
+    balanceNotNumber: "The balance must be a valid number",
+
+    categoryNameRequired: "Enter a name for the category",
+    categoryExists: "You already have a category with that name",
+    categoryMissing: "Category not found",
+    categoryInUse: (name: string, count: number) =>
+      `"${name}" has ${count} ${count === 1 ? "movement" : "movements"}. ` +
+      `Move them to another category before removing it.`,
+
+    movementMissing: "Movement not found",
+    typeInvalid: "Invalid movement type",
+    amountPositive: "The amount must be greater than 0",
+    dateInvalid: "Invalid date",
+    toAccountInvalid: "Invalid destination account",
+    sameAccount: "The destination account has to differ from the source",
+    categoryRequired: "A category is required",
+
+    pickAccount: "Pick at least one account",
+    missingSetup: "Accounts or categories are missing",
+
+    emailInvalid: "Enter a valid email",
+    passwordTooShort: (min: number) => `The password must be at least ${min} characters`,
+    emailTaken: "That email is already registered",
+    signupFailed: "Couldn't create the account",
+  },
 };
 
 export type Dictionary = typeof es;

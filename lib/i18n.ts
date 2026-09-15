@@ -5,6 +5,20 @@ export type Lang = "es" | "en";
 export const LANG_KEY = "tracklh-lang";
 
 /**
+ * The same choice, mirrored where the server can see it. Route handlers have
+ * no access to localStorage, and their error messages are read by the same
+ * person reading the rest of the app — so the preference rides along on every
+ * request instead of each fetch having to remember to send it.
+ */
+export const LANG_COOKIE = "tracklh-lang";
+
+const COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
+
+function writeLangCookie(lang: Lang): void {
+  document.cookie = `${LANG_COOKIE}=${lang};path=/;max-age=${COOKIE_MAX_AGE};samesite=lax`;
+}
+
+/**
  * Deliberately free of React: `app/layout.tsx` is a Server Component and
  * imports the boot script from here, so a hook anywhere in this module would
  * pull a client-only API into the server graph and fail the build. The hooks
@@ -23,9 +37,9 @@ const LOCALES: Record<Lang, string> = { es: "es-MX", en: "en-US" };
  */
 export const LANG_BOOT_SCRIPT = `
 try {
-  if (localStorage.getItem("${LANG_KEY}") === "en") {
-    document.documentElement.setAttribute("lang", "en");
-  }
+  var l = localStorage.getItem("${LANG_KEY}") === "en" ? "en" : "es";
+  if (l === "en") document.documentElement.setAttribute("lang", "en");
+  document.cookie = "${LANG_COOKIE}=" + l + ";path=/;max-age=${COOKIE_MAX_AGE};samesite=lax";
 } catch (e) {}
 `.trim();
 
@@ -54,6 +68,8 @@ export function applyLang(lang: Lang): void {
   } catch {
     // Private mode, or storage denied. The choice still holds for this visit.
   }
+
+  writeLangCookie(lang);
 
   for (const listener of listeners) listener();
 }

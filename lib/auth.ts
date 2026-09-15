@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { apiMessages } from "@/lib/api-lang";
 
 /** Thrown by `requireUser` so a route can turn it into a 401 in one place. */
 export class UnauthorizedError extends Error {
@@ -21,12 +22,22 @@ export async function requireUser(): Promise<string> {
   return id;
 }
 
-/** Turns a thrown `UnauthorizedError` into 401 and anything else into 500. */
-export function errorResponse(err: unknown, context: string): NextResponse {
+/**
+ * Turns a thrown `UnauthorizedError` into 401 and anything else into 500.
+ *
+ * The 500 says nothing beyond "something broke": everything this app refuses
+ * on purpose answers 400, 404 or 409 with its own message, so anything
+ * reaching here is a failure nobody wrote a sentence for — usually the
+ * database's own, which is neither translatable nor the reader's business.
+ * The real error goes to the log instead.
+ */
+export async function errorResponse(err: unknown, context: string): Promise<NextResponse> {
+  const m = await apiMessages();
+
   if (err instanceof UnauthorizedError) {
-    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    return NextResponse.json({ error: m.unauthorized }, { status: 401 });
   }
+
   console.error(`[${context}]`, err);
-  const message = err instanceof Error ? err.message : "Error interno del servidor";
-  return NextResponse.json({ error: message }, { status: 500 });
+  return NextResponse.json({ error: m.internal }, { status: 500 });
 }

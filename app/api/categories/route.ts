@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireUser, errorResponse } from "@/lib/auth";
+import { apiMessages } from "@/lib/api-lang";
 import { UNKNOWN_COLOR, type CategoryKind } from "@/types";
 
 /** This user's categories, with the monthly budget attached to each. */
@@ -37,15 +38,16 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const userId = await requireUser();
+    const m = await apiMessages();
 
     const body = (await req.json().catch(() => null)) as Record<string, unknown> | null;
     if (!body) {
-      return NextResponse.json({ error: "Cuerpo de solicitud inválido (JSON)" }, { status: 400 });
+      return NextResponse.json({ error: m.invalidJson }, { status: 400 });
     }
 
     const name = typeof body.name === "string" ? body.name.trim().slice(0, 40) : "";
     if (name === "") {
-      return NextResponse.json({ error: "Escribe un nombre para la categoría" }, { status: 400 });
+      return NextResponse.json({ error: m.categoryNameRequired }, { status: 400 });
     }
 
     const kind: CategoryKind = body.kind === "income" ? "income" : "expense";
@@ -69,7 +71,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, id: created.id }, { status: 201 });
     } catch (err) {
       if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
-        return NextResponse.json({ error: "Ya tienes una categoría con ese nombre" }, { status: 409 });
+        return NextResponse.json({ error: m.categoryExists }, { status: 409 });
       }
       throw err;
     }

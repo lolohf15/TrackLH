@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser, errorResponse } from "@/lib/auth";
+import { apiMessages } from "@/lib/api-lang";
 import { CUSTOM_COLOR_CYCLE } from "@/services/presets";
 
 interface IncomingAccount {
@@ -24,12 +25,13 @@ interface IncomingCategory {
 export async function POST(req: NextRequest) {
   try {
     const userId = await requireUser();
+    const m = await apiMessages();
 
     let body: unknown;
     try {
       body = await req.json();
     } catch {
-      return NextResponse.json({ error: "Cuerpo de solicitud inválido (JSON)" }, { status: 400 });
+      return NextResponse.json({ error: m.invalidJson }, { status: 400 });
     }
 
     const { accounts, categories } = body as {
@@ -38,7 +40,7 @@ export async function POST(req: NextRequest) {
     };
 
     if (!Array.isArray(accounts) || !Array.isArray(categories)) {
-      return NextResponse.json({ error: "Faltan cuentas o categorías" }, { status: 400 });
+      return NextResponse.json({ error: m.missingSetup }, { status: 400 });
     }
 
     const cleanAccounts = accounts
@@ -60,7 +62,7 @@ export async function POST(req: NextRequest) {
       }));
 
     if (cleanAccounts.length === 0) {
-      return NextResponse.json({ error: "Elige al menos una cuenta" }, { status: 400 });
+      return NextResponse.json({ error: m.pickAccount }, { status: 400 });
     }
 
     await prisma.$transaction([

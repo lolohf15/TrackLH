@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireUser, errorResponse } from "@/lib/auth";
+import { apiMessages } from "@/lib/api-lang";
 import { parseCreditLimit } from "@/lib/account-input";
 
 /**
@@ -12,19 +13,20 @@ import { parseCreditLimit } from "@/lib/account-input";
 export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   try {
     const userId = await requireUser();
+    const m = await apiMessages();
     const id = Number((await ctx.params).id);
     if (!Number.isInteger(id)) {
-      return NextResponse.json({ error: "Cuenta inválida" }, { status: 400 });
+      return NextResponse.json({ error: m.accountInvalid }, { status: 400 });
     }
 
     const existing = await prisma.accountConfig.findFirst({ where: { id, userId } });
     if (!existing) {
-      return NextResponse.json({ error: "Cuenta no encontrada" }, { status: 404 });
+      return NextResponse.json({ error: m.accountMissing }, { status: 404 });
     }
 
     const body = (await req.json().catch(() => null)) as Record<string, unknown> | null;
     if (!body) {
-      return NextResponse.json({ error: "Cuerpo de solicitud inválido (JSON)" }, { status: 400 });
+      return NextResponse.json({ error: m.invalidJson }, { status: 400 });
     }
 
     const nextName =
@@ -68,7 +70,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
       ]);
     } catch (err) {
       if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
-        return NextResponse.json({ error: "Ya tienes una cuenta con ese nombre" }, { status: 409 });
+        return NextResponse.json({ error: m.accountExists }, { status: 409 });
       }
       throw err;
     }
@@ -83,14 +85,15 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
 export async function DELETE(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   try {
     const userId = await requireUser();
+    const m = await apiMessages();
     const id = Number((await ctx.params).id);
     if (!Number.isInteger(id)) {
-      return NextResponse.json({ error: "Cuenta inválida" }, { status: 400 });
+      return NextResponse.json({ error: m.accountInvalid }, { status: 400 });
     }
 
     const existing = await prisma.accountConfig.findFirst({ where: { id, userId } });
     if (!existing) {
-      return NextResponse.json({ error: "Cuenta no encontrada" }, { status: 404 });
+      return NextResponse.json({ error: m.accountMissing }, { status: 404 });
     }
 
     const used = await prisma.transaction.count({
@@ -102,11 +105,7 @@ export async function DELETE(_req: NextRequest, ctx: { params: Promise<{ id: str
 
     if (used > 0) {
       return NextResponse.json(
-        {
-          error:
-            `"${existing.account}" tiene ${used} ${used === 1 ? "movimiento" : "movimientos"}. ` +
-            `Bórralos o muévelos a otra cuenta antes de eliminarla.`,
-        },
+        { error: m.accountInUse(existing.account, used) },
         { status: 409 }
       );
     }

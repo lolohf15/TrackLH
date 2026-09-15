@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireUser, errorResponse } from "@/lib/auth";
+import { apiMessages } from "@/lib/api-lang";
 
 /**
  * Like accounts, transactions name their category in plain text, and the
@@ -11,16 +12,17 @@ import { requireUser, errorResponse } from "@/lib/auth";
 export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   try {
     const userId = await requireUser();
+    const m = await apiMessages();
     const { id } = await ctx.params;
 
     const existing = await prisma.category.findFirst({ where: { id, userId } });
     if (!existing) {
-      return NextResponse.json({ error: "Categoría no encontrada" }, { status: 404 });
+      return NextResponse.json({ error: m.categoryMissing }, { status: 404 });
     }
 
     const body = (await req.json().catch(() => null)) as Record<string, unknown> | null;
     if (!body) {
-      return NextResponse.json({ error: "Cuerpo de solicitud inválido (JSON)" }, { status: 400 });
+      return NextResponse.json({ error: m.invalidJson }, { status: 400 });
     }
 
     const nextName =
@@ -69,7 +71,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     } catch (err) {
       if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
         return NextResponse.json(
-          { error: "Ya tienes una categoría con ese nombre" },
+          { error: m.categoryExists },
           { status: 409 }
         );
       }
@@ -86,11 +88,12 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
 export async function DELETE(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   try {
     const userId = await requireUser();
+    const m = await apiMessages();
     const { id } = await ctx.params;
 
     const existing = await prisma.category.findFirst({ where: { id, userId } });
     if (!existing) {
-      return NextResponse.json({ error: "Categoría no encontrada" }, { status: 404 });
+      return NextResponse.json({ error: m.categoryMissing }, { status: 404 });
     }
 
     const used = await prisma.transaction.count({
@@ -99,11 +102,7 @@ export async function DELETE(_req: NextRequest, ctx: { params: Promise<{ id: str
 
     if (used > 0) {
       return NextResponse.json(
-        {
-          error:
-            `"${existing.name}" tiene ${used} ${used === 1 ? "movimiento" : "movimientos"}. ` +
-            `Cámbialos de categoría antes de eliminarla.`,
-        },
+        { error: m.categoryInUse(existing.name, used) },
         { status: 409 }
       );
     }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireUser, errorResponse } from "@/lib/auth";
+import { apiMessages } from "@/lib/api-lang";
 import { round2, computeAccountBalancesFromSums } from "@/services/finance";
 import { getAccountSums } from "@/lib/account-sums";
 import { parseCreditLimit } from "@/lib/account-input";
@@ -43,16 +44,17 @@ function serializeAccount(a: AccountRow, calculatedBalance: number, currentBalan
 export async function POST(req: NextRequest) {
   try {
     const userId = await requireUser();
+    const m = await apiMessages();
 
     const body = (await req.json().catch(() => null)) as Record<string, unknown> | null;
     if (!body) {
-      return NextResponse.json({ error: "Cuerpo de solicitud inválido (JSON)" }, { status: 400 });
+      return NextResponse.json({ error: m.invalidJson }, { status: 400 });
     }
 
     const account =
       typeof body.account === "string" ? body.account.trim().slice(0, 60) : "";
     if (account === "") {
-      return NextResponse.json({ error: "Escribe un nombre para la cuenta" }, { status: 400 });
+      return NextResponse.json({ error: m.accountNameRequired }, { status: 400 });
     }
 
     const isCredit = !!body.isCredit;
@@ -71,7 +73,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, id: created.id }, { status: 201 });
     } catch (err) {
       if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
-        return NextResponse.json({ error: "Ya tienes una cuenta con ese nombre" }, { status: 409 });
+        return NextResponse.json({ error: m.accountExists }, { status: 409 });
       }
       throw err;
     }
@@ -113,12 +115,13 @@ export async function GET() {
 export async function PUT(req: NextRequest) {
   try {
     const userId = await requireUser();
+    const m = await apiMessages();
 
     let body: unknown;
     try {
       body = await req.json();
     } catch {
-      return NextResponse.json({ error: "Cuerpo de solicitud inválido (JSON)" }, { status: 400 });
+      return NextResponse.json({ error: m.invalidJson }, { status: 400 });
     }
 
     const { account, desiredBalance } = body as {
@@ -127,15 +130,15 @@ export async function PUT(req: NextRequest) {
     };
 
     if (!account || typeof account !== "string" || account.trim() === "") {
-      return NextResponse.json({ error: "Campo 'account' requerido" }, { status: 400 });
+      return NextResponse.json({ error: m.accountFieldRequired }, { status: 400 });
     }
 
     if (desiredBalance === undefined || desiredBalance === null || desiredBalance === "") {
-      return NextResponse.json({ error: "El saldo deseado no puede estar vacío" }, { status: 400 });
+      return NextResponse.json({ error: m.balanceEmpty }, { status: 400 });
     }
     const parsed = Number(desiredBalance);
     if (!isFinite(parsed)) {
-      return NextResponse.json({ error: "El saldo deseado debe ser un número válido" }, { status: 400 });
+      return NextResponse.json({ error: m.balanceNotNumber }, { status: 400 });
     }
     const rounded = round2(parsed);
 
@@ -146,7 +149,7 @@ export async function PUT(req: NextRequest) {
 
     const config = accounts.find((a) => a.account === account.trim());
     if (!config) {
-      return NextResponse.json({ error: `Cuenta "${account}" no encontrada` }, { status: 404 });
+      return NextResponse.json({ error: m.accountNamedMissing(account) }, { status: 404 });
     }
 
     const balances = computeAccountBalancesFromSums(sums, accounts);

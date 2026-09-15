@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { requireUser, errorResponse } from "@/lib/auth";
+import { apiMessages } from "@/lib/api-lang";
 import { validateTransactionInput } from "@/lib/transaction-input";
 import { mapTransaction } from "@/lib/transaction-map";
 
@@ -59,10 +60,11 @@ function buildId(at: Date): string {
 export async function POST(req: NextRequest) {
   try {
     const userId = await requireUser();
+    const m = await apiMessages();
 
     const body = (await req.json().catch(() => null)) as Record<string, unknown> | null;
     if (!body) {
-      return NextResponse.json({ error: "Cuerpo de solicitud inválido (JSON)" }, { status: 400 });
+      return NextResponse.json({ error: m.invalidJson }, { status: 400 });
     }
 
     const check = await validateTransactionInput(userId, body);

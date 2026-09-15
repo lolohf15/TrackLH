@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { apiMessages } from "@/lib/api-lang";
 import { isValidTransactionType, type TransactionType } from "@/types";
 
 /** "2026-08-25T09:33:39" — a local wall clock, no zone. Seconds optional. */
@@ -42,10 +43,11 @@ export async function validateTransactionInput(
   userId: string,
   body: Record<string, unknown>
 ): Promise<Result> {
+  const m = await apiMessages();
   const { type, account, toAccount, category, amount, date, description } = body;
 
   if (typeof type !== "string" || !isValidTransactionType(type)) {
-    return { ok: false, error: "Tipo de movimiento inválido", status: 400 };
+    return { ok: false, error: m.typeInvalid, status: 400 };
   }
 
   // Accounts are per-user rows, so the valid set comes from the database —
@@ -60,17 +62,17 @@ export async function validateTransactionInput(
   );
 
   if (typeof account !== "string" || !ownAccounts.has(account)) {
-    return { ok: false, error: "Cuenta inválida", status: 400 };
+    return { ok: false, error: m.accountInvalid, status: 400 };
   }
 
   const parsedAmount = Number(amount);
   if (!isFinite(parsedAmount) || parsedAmount <= 0) {
-    return { ok: false, error: "El monto debe ser mayor a 0", status: 400 };
+    return { ok: false, error: m.amountPositive, status: 400 };
   }
 
   const when = typeof date === "string" ? parseLocalDateTime(date) : null;
   if (!when) {
-    return { ok: false, error: "Fecha inválida", status: 400 };
+    return { ok: false, error: m.dateInvalid, status: 400 };
   }
 
   let resolvedToAccount: string | null = null;
@@ -78,19 +80,19 @@ export async function validateTransactionInput(
 
   if (type === "Transferencia") {
     if (typeof toAccount !== "string" || !ownAccounts.has(toAccount)) {
-      return { ok: false, error: "Cuenta destino inválida", status: 400 };
+      return { ok: false, error: m.toAccountInvalid, status: 400 };
     }
     if (toAccount === account) {
       return {
         ok: false,
-        error: "La cuenta destino debe ser distinta a la de origen",
+        error: m.sameAccount,
         status: 400,
       };
     }
     resolvedToAccount = toAccount;
   } else {
     if (typeof category !== "string" || category.trim() === "") {
-      return { ok: false, error: "La categoría es obligatoria", status: 400 };
+      return { ok: false, error: m.categoryRequired, status: 400 };
     }
     resolvedCategory = category.trim();
   }
