@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { ChevronDownIcon, DownloadIcon } from "@/components/shell/icons";
+import { DownloadIcon } from "@/components/shell/icons";
 import { useT } from "@/lib/i18n-react";
 
 /** Pulls the name the server picked out of `Content-Disposition`. */
@@ -22,19 +21,14 @@ function fileNameFrom(header: string | null, fallback: string): string {
 }
 
 /**
- * The two ways data crosses the app's edge: out as a spreadsheet, in as a
- * bank statement. They sit together because that is how a reader thinks about
- * them, whatever the two features share underneath (nothing).
- *
- * The export downloads here. Reconciling needs room for a table of eighty
- * rows, so it gets its own screen and this only points at it.
+ * Downloads the whole ledger as an .xlsx.
  *
  * A plain `<a download>` would be simpler, but the file is built on demand —
  * a big ledger takes a moment, and a failure would land the reader on a page
  * of raw JSON. Fetching it means the button can say it's working and show
  * the error where they're already looking.
  */
-export function DataPanel() {
+export function DataExport() {
   const t = useT();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -104,19 +98,6 @@ export function DataPanel() {
           {error}
         </p>
       )}
-
-      <Link
-        href="/conciliar"
-        className="press flex items-center justify-between gap-3 -mx-4 px-4 pt-3.5 border-t border-divider"
-      >
-        <span className="min-w-0">
-          <span className="block text-[13px] text-text">{t.reconcile.open}</span>
-          <span className="block text-[11.5px] text-text-dim mt-0.5">
-            {t.reconcile.openHint}
-          </span>
-        </span>
-        <ChevronDownIcon className="w-4 h-4 text-text-faint shrink-0 -rotate-90" />
-      </Link>
     </div>
   );
 }

@@ -16,24 +16,6 @@ export function formatMXN(amount: number): string {
   }).format(amount);
 }
 
-/**
- * The same pesos, to the cent.
- *
- * Whole pesos are right almost everywhere in this app: a dashboard reads
- * better without the noise. Reconciling is the exception — a statement is
- * matched line by line and tied out to the cent, and `-$319` against
- * `-$318.75` is the difference between "that's mine" and "that isn't".
- */
-export function formatMXNExact(amount: number): string {
-  return new Intl.NumberFormat(currentLocale(), {
-    style: "currency",
-    currency: "MXN",
-    currencyDisplay: "narrowSymbol",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(amount);
-}
-
 export function formatDate(dateStr: string): string {
   return new Intl.DateTimeFormat(currentLocale(), {
     day: "numeric",

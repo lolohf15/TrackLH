@@ -301,90 +301,6 @@ export const es = {
   addRecord: "Agregar movimiento",
 
   /**
-   * Reconciling a statement. The screen speaks in terms of what the reader
-   * has to do ("te faltaron") rather than in terms of importing, because the
-   * ledger is never empty when a statement arrives and the difference is the
-   * whole answer.
-   */
-  reconcile: {
-    title: "Conciliar estado de cuenta",
-    subtitle: "Sube el archivo de tu banco y te decimos qué se te pasó registrar.",
-    open: "Conciliar estado de cuenta",
-    openHint: "Compara tu banco contra lo que ya registraste",
-
-    account: "¿Qué cuenta vas a conciliar?",
-    file: "Archivo del banco",
-    filePick: "Toca para elegir el archivo",
-    fileFormats: "CSV o XLSX, hasta 5 MB",
-    analyze: "Analizar",
-    analyzing: "Analizando…",
-
-    mappingTitle: "Así leímos el archivo",
-    mappingHint: "Si alguna columna no cuadra, cámbiala y vuelve a leer.",
-    colDate: "Fecha",
-    colDescription: "Descripción",
-    colAmount: "Importe",
-    colCharge: "Cargo",
-    colCredit: "Abono",
-    colBalance: "Saldo",
-    colNone: "Ninguna",
-    columnNumber: (n: number) => `Columna ${n}`,
-    headerRow: "Fila de encabezados",
-    rowNumber: (n: number) => `Fila ${n}`,
-    invertSigns: "Los cargos vienen en positivo",
-    reread: "Volver a leer",
-    readCount: (n: number) => `${n} ${n === 1 ? "movimiento leído" : "movimientos leídos"}`,
-    skippedCount: (n: number) => `${n} ${n === 1 ? "línea ignorada" : "líneas ignoradas"}`,
-    truncated: "El archivo es muy largo y solo leímos las primeras 5000 líneas.",
-
-    period: (from: string, to: string) => `Del ${from} al ${to}`,
-    matched: "Ya cuadran",
-    matchedHint: "Están en el banco y ya los tenías registrados.",
-    missing: "Te faltaron",
-    missingHint: "El banco los trae y TrackLH no. Elige cuáles agregar.",
-    extra: "Solo en TrackLH",
-    extraHint: "Los registraste y el banco no los trae. Casi siempre es un cargo que todavía no entra al corte.",
-    allClear: "No se te pasó nada. Esta cuenta ya está al día.",
-    dayGap: (n: number) => `${n > 0 ? "+" : ""}${n} d`,
-
-    rowType: "Tipo",
-    rowCategory: "Categoría",
-    rowCounterpartyOut: "Hacia",
-    rowCounterpartyIn: "Desde",
-    noCategory: "Sin categoría",
-    pickAccount: "Elige cuenta",
-    selectAll: "Seleccionar todo",
-    selectNone: "Quitar selección",
-
-    balance: "Saldo al cierre",
-    balanceBank: "Según el banco",
-    balanceApp: "Según TrackLH, ya con lo seleccionado",
-    balanceDiff: "Diferencia",
-    balancePending: (n: number) =>
-      `Ojo: ${n} ${n === 1 ? "movimiento tuyo no entró" : "movimientos tuyos no entraron"} al corte del banco. ` +
-      `Si ajustas ahora, la diferencia se vuelve a abrir cuando el banco los registre.`,
-    balanceApply: "Ajustar el saldo de la cuenta al del banco",
-
-    commit: (n: number) => `Agregar ${n} ${n === 1 ? "movimiento" : "movimientos"}`,
-    saving: "Guardando…",
-    doneTitle: "Cuenta conciliada",
-    doneCount: (n: number) => `Se agregaron ${n} ${n === 1 ? "movimiento" : "movimientos"}.`,
-    again: "Conciliar otra cuenta",
-
-    history: "Conciliaciones recientes",
-    historyEmpty: "Todavía no has conciliado ninguna cuenta.",
-    batchSummary: (created: number, matched: number) =>
-      `${created} agregados · ${matched} ya estaban`,
-    undo: "Deshacer",
-    undoing: "Deshaciendo…",
-    undoConfirm: "Se borrarán los movimientos que creó esta conciliación.",
-    undoYes: "Sí, deshacer",
-
-    back: "Atrás",
-    startOver: "Empezar de nuevo",
-  },
-
-  /**
    * Column headers and sheet names for the Excel export. They are not read on
    * screen, so nothing here has to match a label elsewhere — but they are the
    * only text in a file the user keeps, so both languages carry the full set.
@@ -505,16 +421,6 @@ export const es = {
     sameAccount: "La cuenta destino debe ser distinta a la de origen",
     categoryRequired: "La categoría es obligatoria",
 
-    importNoFile: "Sube un archivo",
-    importTooBig: "El archivo pesa más de 5 MB",
-    importEmptyFile: "El archivo está vacío",
-    importUnsupported: "El formato .xls antiguo no se puede leer. Guárdalo como .xlsx o .csv.",
-    importUnreadable: "No se pudo leer el archivo",
-    importNoTable: "No encontramos la tabla de movimientos. Ajusta el mapeo de columnas.",
-    importNoRows: "No encontramos movimientos en el archivo",
-    importNoSelection: "Selecciona al menos un movimiento",
-    importBadRow: (line: number) => `Revisa el movimiento ${line}: le falta algo o el dato no es válido`,
-    importBatchMissing: "Esa importación ya no existe",
     pickAccount: "Elige al menos una cuenta",
     missingSetup: "Faltan cuentas o categorías",
 
@@ -806,84 +712,6 @@ export const en: typeof es = {
 
   addRecord: "Add movement",
 
-  reconcile: {
-    title: "Reconcile a statement",
-    subtitle: "Upload your bank's file and we'll tell you what you forgot to log.",
-    open: "Reconcile a statement",
-    openHint: "Compare your bank against what you already logged",
-
-    account: "Which account are you reconciling?",
-    file: "Bank file",
-    filePick: "Tap to choose the file",
-    fileFormats: "CSV or XLSX, up to 5 MB",
-    analyze: "Analyze",
-    analyzing: "Analyzing…",
-
-    mappingTitle: "How we read the file",
-    mappingHint: "If a column is off, change it and read the file again.",
-    colDate: "Date",
-    colDescription: "Description",
-    colAmount: "Amount",
-    colCharge: "Charge",
-    colCredit: "Credit",
-    colBalance: "Balance",
-    colNone: "None",
-    columnNumber: (n: number) => `Column ${n}`,
-    headerRow: "Header row",
-    rowNumber: (n: number) => `Row ${n}`,
-    invertSigns: "Charges come through as positive",
-    reread: "Read again",
-    readCount: (n: number) => `${n} ${n === 1 ? "movement read" : "movements read"}`,
-    skippedCount: (n: number) => `${n} ${n === 1 ? "line skipped" : "lines skipped"}`,
-    truncated: "The file is very long, so we only read the first 5,000 lines.",
-
-    period: (from: string, to: string) => `${from} to ${to}`,
-    matched: "Already match",
-    matchedHint: "The bank has them and so do you.",
-    missing: "You missed these",
-    missingHint: "The bank has them, TrackLH doesn't. Pick which ones to add.",
-    extra: "Only in TrackLH",
-    extraHint: "You logged them and the bank doesn't show them. Usually a charge that hasn't posted yet.",
-    allClear: "Nothing missed. This account is up to date.",
-    dayGap: (n: number) => `${n > 0 ? "+" : ""}${n} d`,
-
-    rowType: "Type",
-    rowCategory: "Category",
-    rowCounterpartyOut: "To",
-    rowCounterpartyIn: "From",
-    noCategory: "No category",
-    pickAccount: "Pick account",
-    selectAll: "Select all",
-    selectNone: "Clear selection",
-
-    balance: "Closing balance",
-    balanceBank: "Per the bank",
-    balanceApp: "Per TrackLH, with what you picked",
-    balanceDiff: "Difference",
-    balancePending: (n: number) =>
-      `Heads up: ${n} of your movements ${n === 1 ? "hasn't" : "haven't"} posted at the bank yet. ` +
-      `Adjusting now reopens the gap once the bank catches up.`,
-    balanceApply: "Set the account balance to the bank's",
-
-    commit: (n: number) => `Add ${n} ${n === 1 ? "movement" : "movements"}`,
-    saving: "Saving…",
-    doneTitle: "Account reconciled",
-    doneCount: (n: number) => `Added ${n} ${n === 1 ? "movement" : "movements"}.`,
-    again: "Reconcile another account",
-
-    history: "Recent reconciliations",
-    historyEmpty: "You haven't reconciled an account yet.",
-    batchSummary: (created: number, matched: number) =>
-      `${created} added · ${matched} already there`,
-    undo: "Undo",
-    undoing: "Undoing…",
-    undoConfirm: "This deletes the movements that reconciliation created.",
-    undoYes: "Yes, undo",
-
-    back: "Back",
-    startOver: "Start over",
-  },
-
   xlsx: {
     fileStem: "TrackLH",
     title: "TrackLH · Data export",
@@ -994,16 +822,6 @@ export const en: typeof es = {
     sameAccount: "The destination account has to differ from the source",
     categoryRequired: "A category is required",
 
-    importNoFile: "Upload a file",
-    importTooBig: "The file is over 5 MB",
-    importEmptyFile: "The file is empty",
-    importUnsupported: "The old .xls format can't be read. Save it as .xlsx or .csv.",
-    importUnreadable: "Couldn't read the file",
-    importNoTable: "We couldn't find the movements table. Adjust the column mapping.",
-    importNoRows: "We found no movements in the file",
-    importNoSelection: "Pick at least one movement",
-    importBadRow: (line: number) => `Check movement ${line}: something is missing or invalid`,
-    importBatchMissing: "That import no longer exists",
     pickAccount: "Pick at least one account",
     missingSetup: "Accounts or categories are missing",
 
