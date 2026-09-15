@@ -108,6 +108,44 @@ export interface DashboardData {
   lastSyncAt: string | null;
 }
 
+/** One category's share of a single chart slice. */
+export interface BucketSlice {
+  category: string;
+  amount: number;
+  color: string;
+}
+
+/** A single slice of the charted period — one day, or one month. */
+export interface BucketBreakdown {
+  /** `YYYY-MM-DD` for day slices, `YYYY-MM` for month ones. */
+  key: string;
+  expenses: number;
+  income: number;
+  /** The expense categories inside the slice, largest first. */
+  slices: BucketSlice[];
+}
+
+/** Everything the Analytics tab draws for one period, in one response. */
+export interface AnalyticsData {
+  period: "week" | "month" | "year" | "all";
+  /** The span covered, half-open, so the screen can title itself from the
+   *  figures it is actually showing rather than from the selector. */
+  from: string;
+  to: string;
+  /** How wide each bar is — days for a week or month, months beyond that. */
+  granularity: "day" | "month";
+  buckets: BucketBreakdown[];
+  categories: CategorySummary[];
+  expenses: number;
+  income: number;
+  net: number;
+  /** Both zero for all-time, which has no span before it to compare against. */
+  prevExpenses: number;
+  prevIncome: number;
+  /** Gasto rows in the period — the "across N movements" line. */
+  expenseCount: number;
+}
+
 export interface CategoryTrendPoint {
   month: string;
   amount: number;

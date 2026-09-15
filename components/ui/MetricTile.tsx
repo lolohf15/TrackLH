@@ -16,6 +16,7 @@ export function MetricTile({
   size = "md",
   trend = null,
   trendPolarity = "up-good",
+  trendLabel,
   hint,
   className,
 }: {
@@ -27,6 +28,9 @@ export function MetricTile({
   trend?: number | null;
   /** Whether rising is the good direction. Income rises well; spending doesn't. */
   trendPolarity?: "up-good" | "down-good";
+  /** What the change is measured against — "vs. last month". Rides inline
+   *  with the percentage, since neither half means much without the other. */
+  trendLabel?: string;
   /** A quiet line under the figure, for context the number can't carry. */
   hint?: string;
   className?: string;
@@ -47,8 +51,9 @@ export function MetricTile({
       {hint && <div className="text-[11.5px] text-text-dim mt-1">{hint}</div>}
 
       {trend !== null && (
-        <div className={cn("font-mono text-[10.5px] mt-0.5", good ? "text-green-fg" : "text-red-fg")}>
+        <div className={cn("font-mono text-[10.5px] mt-1", good ? "text-green-fg" : "text-red-fg")}>
           {rising ? "▲" : "▼"} {Math.abs(trend)}%
+          {trendLabel && <span className="text-text-dim ml-1.5">{trendLabel}</span>}
         </div>
       )}
     </div>

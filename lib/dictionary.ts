@@ -110,9 +110,25 @@ export const es = {
     monthlyBudget: "Presupuesto mensual",
     noBudgets: "Sin presupuestos",
     noBudgetsHint: "Define un presupuesto por categoría para verlo aquí",
-    /** Reads as "Septiembre · $4,500 en 7 categorías". */
-    summary: (month: string, amount: string, count: number) =>
-      `${month} · ${amount} en ${count} ${count === 1 ? "categoría" : "categorías"}`,
+    /** Reads as "7 categorías · 32 movimientos". */
+    breakdownMeta: (categories: number, movements: number) =>
+      `${categories} ${categories === 1 ? "categoría" : "categorías"} · ` +
+      `${movements} ${movements === 1 ? "movimiento" : "movimientos"}`,
+    spent: "Gastado",
+    income: "Ingresos",
+    net: "Neto",
+    spendPerDay: "Gasto por día",
+    spendPerMonth: "Gasto por mes",
+    /** Sits on the dashed line across the chart — kept to a few characters. */
+    average: "Prom",
+    distribution: "Distribución",
+    breakdown: "Desglose",
+    /** The ring's leftover slice, once the named categories are drawn. */
+    otherCategories: "Otras",
+    noSpendPeriod: "Sin gastos en este periodo",
+    vsPrevWeek: "vs. semana anterior",
+    vsPrevMonth: "vs. mes anterior",
+    vsPrevYear: "vs. año anterior",
   },
 
   movements: {
@@ -367,8 +383,22 @@ export const en: typeof es = {
     monthlyBudget: "Monthly budget",
     noBudgets: "No budgets",
     noBudgetsHint: "Set a budget per category to see it here",
-    summary: (month: string, amount: string, count: number) =>
-      `${month} · ${amount} across ${count} ${count === 1 ? "category" : "categories"}`,
+    breakdownMeta: (categories: number, movements: number) =>
+      `${categories} ${categories === 1 ? "category" : "categories"} · ` +
+      `${movements} ${movements === 1 ? "movement" : "movements"}`,
+    spent: "Spent",
+    income: "Income",
+    net: "Net",
+    spendPerDay: "Spending per day",
+    spendPerMonth: "Spending per month",
+    average: "Avg",
+    distribution: "Distribution",
+    breakdown: "Breakdown",
+    otherCategories: "Other",
+    noSpendPeriod: "No spending in this period",
+    vsPrevWeek: "vs. last week",
+    vsPrevMonth: "vs. last month",
+    vsPrevYear: "vs. last year",
   },
 
   movements: {

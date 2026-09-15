@@ -1,4 +1,5 @@
 import type {
+  BucketBreakdown,
   Transaction,
   AccountBalance,
   CategorySummary,
@@ -10,6 +11,9 @@ import type {
 import { UNKNOWN_COLOR } from "@/types";
 import { getCurrentMonth, getPrevMonth } from "@/lib/utils";
 import type { Bucket, DateRange, Period } from "./period";
+
+/** What a Gasto with no category is filed under, on screen and in charts. */
+const UNCATEGORIZED = "Sin categoría";
 
 /** Category name -> color, built from this user's Category rows. */
 export type ColorMap = Map<string, string>;
@@ -131,16 +135,62 @@ export function computeExpenses(transactions: Transaction[], range: DateRange): 
   );
 }
 
-/** Income and spending per chart slice, in the order the buckets came in. */
-export function computeBuckets(
+/**
+ * Income and spending per chart slice, with each slice's expenses split by
+ * category so a bar can be stacked.
+ *
+ * One pass over the ledger rather than one filter per bucket: a year charted
+ * by month with a few thousand rows would otherwise walk the whole list
+ * twelve times over. Rows are keyed by the prefix of their stored ISO date,
+ * which is already UTC-pinned, so it lands in the same slice `bucketsFor`
+ * drew.
+ */
+export function computeBucketBreakdowns(
   transactions: Transaction[],
-  buckets: Bucket[]
-): Array<{ key: string; income: number; expenses: number; net: number }> {
-  return buckets.map((bucket) => {
-    const income = computeIncome(transactions, bucket.range);
-    const expenses = computeExpenses(transactions, bucket.range);
-    return { key: bucket.key, income, expenses, net: round2(income - expenses) };
-  });
+  buckets: Bucket[],
+  granularity: "day" | "month",
+  colors: ColorMap
+): BucketBreakdown[] {
+  const keyLength = granularity === "day" ? 10 : 7;
+  const indexOfKey = new Map(buckets.map((b, i) => [b.key, i]));
+
+  const totals = buckets.map(() => ({
+    income: 0,
+    expenses: 0,
+    byCategory: new Map<string, number>(),
+  }));
+
+  for (const t of transactions) {
+    // Rule 10: a transfer is neither income nor spending, in any slice.
+    if (t.type === "Transferencia") continue;
+
+    const slot = totals[indexOfKey.get(t.date.slice(0, keyLength)) ?? -1];
+    // Rows outside the charted span — the previous period, fetched in the
+    // same query for the trend arrows — simply have no bar to land in.
+    if (!slot) continue;
+
+    if (t.type === "Ingreso") {
+      slot.income += t.amount;
+      continue;
+    }
+
+    slot.expenses += t.amount;
+    const category = t.category ?? UNCATEGORIZED;
+    slot.byCategory.set(category, (slot.byCategory.get(category) ?? 0) + t.amount);
+  }
+
+  return buckets.map((bucket, i) => ({
+    key: bucket.key,
+    income: round2(totals[i].income),
+    expenses: round2(totals[i].expenses),
+    slices: Array.from(totals[i].byCategory.entries())
+      .sort((a, b) => b[1] - a[1])
+      .map(([category, amount]) => ({
+        category,
+        amount: round2(amount),
+        color: colors.get(category) ?? UNKNOWN_COLOR,
+      })),
+  }));
 }
 
 export function computeCategoryExpenses(
@@ -153,7 +203,7 @@ export function computeCategoryExpenses(
 
   const map = new Map<string, { amount: number; count: number }>();
   for (const t of inRange) {
-    const cat = t.category ?? "Sin categoría";
+    const cat = t.category ?? UNCATEGORIZED;
     const existing = map.get(cat) ?? { amount: 0, count: 0 };
     map.set(cat, { amount: round2(existing.amount + t.amount), count: existing.count + 1 });
   }
