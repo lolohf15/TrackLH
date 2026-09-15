@@ -11,7 +11,8 @@ import { TransactionList } from "@/components/transactions/TransactionList";
 import { ChartSkeleton } from "@/components/ui/Skeleton";
 import { MetricTile } from "@/components/ui/MetricTile";
 import { useLocale, useT } from "@/lib/i18n-react";
-import { ProgressBar } from "@/components/ui/ProgressBar";
+import { GaugeArc } from "@/components/ui/GaugeArc";
+import { TickMeter } from "@/components/ui/TickMeter";
 import { dayKey, formatPeriodLabel, monthKey, resolvePeriod } from "@/services/period";
 import { formatMXN, cn } from "@/lib/utils";
 import { useCountUp } from "@/lib/useCountUp";
@@ -61,10 +62,17 @@ export default function Home() {
   const income = dashboard?.periodIncome ?? 0;
   const expenses = dashboard?.periodExpenses ?? 0;
   const net = dashboard?.netBalance ?? 0;
-  // A span with no activity at all is not "100% spent" — it has nothing to
-  // split, so the bar stays an empty track rather than going fully red.
-  const hasActivity = income + expenses > 0;
-  const incomePct = hasActivity ? Math.round((income / (income + expenses)) * 100) : 0;
+  // Nothing came in means there was nothing to keep — the dial reads empty
+  // rather than dividing by a month that never started.
+  const savingsRate = income > 0 ? Math.min(Math.max((net / income) * 100, 0), 100) : 0;
+
+  const budgetUsed = dashboard?.budgetUsed ?? 0;
+  const budgetTotal = dashboard?.budgetTotal ?? 0;
+  const hasBudget = budgetTotal > 0;
+  const budgetPct = dashboard?.budgetUsedPercent ?? 0;
+  // The same bands the credit line reads by: fine, watch it, over.
+  const budgetTone =
+    budgetPct >= 100 ? "var(--color-red)" : budgetPct >= 80 ? "var(--color-amber)" : "var(--color-green)";
 
   const prevExpenses = dashboard?.prevPeriodExpenses ?? 0;
   const prevIncome = dashboard?.prevPeriodIncome ?? 0;
@@ -114,8 +122,8 @@ export default function Home() {
       <div className="md:grid md:grid-cols-[1fr_360px] md:gap-8 md:items-start">
         <div className="px-4 md:px-0 space-y-3">
 
-          {/* This month, as one group: the total, then how it split, then what's left */}
-          <div className="panel">
+          {/* This month, as one group: the total and how it split. */}
+          <div className="tint tint-gold">
             <MetricTile
               label={t.home.totalBalance}
               value={totalAvailableDisplay}
@@ -124,12 +132,12 @@ export default function Home() {
               className="px-4 pt-3.5 pb-3.5"
             />
 
-            <div className="grid grid-cols-2 border-t border-divider">
+            <div className="grid grid-cols-2 border-t border-border">
               <MetricTile
                 label={t.home.income}
                 value={incomeDisplay}
                 trend={incomeTrend}
-                className="px-4 py-3 border-r border-divider"
+                className="px-4 py-3 border-r border-border"
               />
               <MetricTile
                 label={t.home.expenses}
@@ -140,25 +148,46 @@ export default function Home() {
               />
             </div>
 
-            <div className="px-4 py-3 border-t border-divider">
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em]">{t.home.monthlySavings}</span>
-                <span className={cn("text-[13px] font-semibold tabular-nums", net >= 0 ? "text-green-fg" : "text-red-fg")}>
+          </div>
+
+          {/* What the month came to, as two dials: how much of what came in
+              stayed, and how much of the budget is gone. */}
+          <div className={cn("grid gap-3", hasBudget ? "grid-cols-2" : "grid-cols-1")}>
+            <div className="tint tint-green px-4 pt-3 pb-3.5">
+              <p className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em]">
+                {t.home.monthlySavings}
+              </p>
+              <GaugeArc
+                percent={savingsRate}
+                color={net >= 0 ? "var(--color-green)" : "var(--color-red)"}
+                className="mt-2"
+              >
+                <p className={cn("text-[19px] font-semibold tabular-nums leading-none", net >= 0 ? "text-text" : "text-red-fg")}>
                   {netDisplay}
-                </span>
-              </div>
-              <ProgressBar
-                height={6}
-                segments={
-                  hasActivity
-                    ? [
-                        { percent: incomePct, color: "var(--color-green-fg)" },
-                        { percent: 100 - incomePct, color: "var(--color-red-fg)" },
-                      ]
-                    : []
-                }
-              />
+                </p>
+              </GaugeArc>
+              <p className="text-[11px] text-text-dim text-center mt-1.5">
+                {t.home.savingsRate(Math.round(savingsRate))}
+              </p>
             </div>
+
+            {hasBudget && (
+              <div className="tint px-4 pt-3 pb-3.5 flex flex-col" style={{ ["--tint-hue" as string]: budgetTone }}>
+                <p className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em]">
+                  {t.home.budgetThisMonth}
+                </p>
+                <div className="my-auto py-4">
+                  <TickMeter percent={budgetPct} color={budgetTone} height={32} ticks={20} />
+                </div>
+                <p className="font-mono text-[11px] tabular-nums">
+                  <span className="text-text font-semibold">{formatMXN(budgetUsed)}</span>
+                  <span className="text-text-dim"> {t.common.of} {formatMXN(budgetTotal)}</span>
+                </p>
+                <p className="font-mono text-[11px] mt-0.5" style={{ color: budgetTone }}>
+                  {Math.round(budgetPct)}%
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Recent activity — the group label sits above its group, not inside it */}

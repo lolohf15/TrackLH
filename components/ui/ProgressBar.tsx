@@ -16,6 +16,7 @@ export function ProgressBar({
   segments,
   height = 3,
   radius = "full",
+  gradient = true,
   className,
 }: {
   segments: BarSegment[];
@@ -23,6 +24,9 @@ export function ProgressBar({
   height?: number;
   /** `sm` squares off the ends for bars thick enough to read as blocks. */
   radius?: "full" | "sm";
+  /** Off for bars split between two meanings, where a fade between them
+   *  would read as a third. */
+  gradient?: boolean;
   className?: string;
 }) {
   return (
@@ -40,7 +44,11 @@ export function ProgressBar({
           className="h-full transition-[width] duration-300 ease-out"
           style={{
             width: `${Math.max(0, Math.min(segment.percent, 100))}%`,
-            background: segment.color,
+            // Full strength at the tip, muted at the root: the end of the
+            // bar is the number, and it should be the brightest thing in it.
+            background: gradient
+              ? `linear-gradient(90deg, color-mix(in srgb, ${segment.color} 55%, var(--color-surface-3)), ${segment.color})`
+              : segment.color,
           }}
         />
       ))}

@@ -6,11 +6,11 @@ import useSWR from "swr";
 import { mutate } from "swr";
 import { InitialBalances } from "@/components/dashboard/InitialBalances";
 import { ChartSkeleton } from "@/components/ui/Skeleton";
-import { ProgressBar } from "@/components/ui/ProgressBar";
+import { TickMeter } from "@/components/ui/TickMeter";
 import { useT } from "@/lib/i18n-react";
 import { ChevronDownIcon, PlusIcon } from "@/components/shell/icons";
 import { AccountEditSheet, type EditableAccount } from "@/components/settings/AccountEditSheet";
-import { formatMXN, getCurrentMonth, cn } from "@/lib/utils";
+import { formatMXN, cn } from "@/lib/utils";
 import type { DashboardData, AccountBalance } from "@/types";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
@@ -18,7 +18,7 @@ const fetcher = (url: string) => fetch(url).then((r) => r.json());
 export default function Wallet() {
   const t = useT();
   const { data: dashboard, isLoading } =
-    useSWR<DashboardData>(`/api/dashboard?month=${getCurrentMonth()}`, fetcher);
+    useSWR<DashboardData>("/api/dashboard?period=month", fetcher);
   // The dashboard reports balances by name; the config carries the id an edit
   // needs, so both are read here.
   const { data: configs } = useSWR<EditableAccount[]>("/api/accounts", fetcher);
@@ -87,9 +87,9 @@ export default function Wallet() {
             </section>
           )}
 
-          <div className="panel px-4 py-3.5 flex items-baseline justify-between">
+          <div className="tint tint-gold px-4 py-3.5 flex items-baseline justify-between">
             <span className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em]">{t.wallet.totalAvailable}</span>
-            <span className="font-mono text-base font-semibold text-text">{formatMXN(totalAvailable)}</span>
+            <span className="text-[19px] font-semibold text-text tabular-nums">{formatMXN(totalAvailable)}</span>
           </div>
         </div>
 
@@ -192,7 +192,8 @@ function AccountRow({
   );
 }
 
-/** How much of the approved line is spoken for, as a bar plus its two numbers. */
+/** How much of the approved line is spoken for, in tally marks plus the
+ *  two numbers behind them. */
 function CreditLine({ account }: { account: AccountBalance }) {
   const t = useT();
   const pct = account.utilizationPercent ?? 0;
@@ -202,7 +203,7 @@ function CreditLine({ account }: { account: AccountBalance }) {
 
   return (
     <div className="flex flex-col gap-1.5">
-      <ProgressBar segments={[{ percent: pct, color: tone }]} height={4} />
+      <TickMeter percent={pct} color={tone} ticks={38} height={15} />
       <div className="flex items-baseline justify-between gap-2 font-mono text-[10.5px] text-text-dim">
         <span className="truncate">
           {formatMXN(account.debt ?? 0)} {t.common.of} {formatMXN(account.creditLimit ?? 0)}

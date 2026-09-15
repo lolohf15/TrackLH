@@ -33,6 +33,10 @@ export function Ring({
   // color still read as two. Dropped when there's only one segment, which
   // would otherwise show a nick in an unbroken ring.
   const gap = segments.length > 1 ? Math.min(circumference * 0.012, 4) : 0;
+  // One arc over a track is a progress ring and wants rounded ends; several
+  // arcs are a division of a whole, and a round cap there would overlap the
+  // neighbour it was just given a gap from.
+  const cap = segments.length === 1 ? "round" : "butt";
 
   let offset = 0;
 
@@ -62,6 +66,7 @@ export function Ring({
                   fill="none"
                   stroke={segment.color}
                   strokeWidth={thickness}
+                  strokeLinecap={cap}
                   strokeDasharray={`${dash} ${circumference - dash}`}
                   strokeDashoffset={-offset}
                   className="transition-[stroke-dasharray,stroke-dashoffset] duration-500 ease-out"

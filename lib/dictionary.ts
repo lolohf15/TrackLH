@@ -50,6 +50,8 @@ export const es = {
     expenses: "Gastos",
     monthlySavings: "Ahorro del mes",
     savings: "Ahorro",
+    /** Under the savings dial: what share of what came in was kept. */
+    savingsRate: (pct: number) => `${pct}% de tus ingresos`,
     recentActivity: "Actividad reciente",
     seeAll: "Ver todo",
     budget: "Presupuesto",
@@ -323,6 +325,7 @@ export const en: typeof es = {
     expenses: "Expenses",
     monthlySavings: "Saved this month",
     savings: "Saved",
+    savingsRate: (pct: number) => `${pct}% of what came in`,
     recentActivity: "Recent activity",
     seeAll: "See all",
     budget: "Budget",

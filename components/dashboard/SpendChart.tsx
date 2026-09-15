@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { StackedBarChart } from "@/components/ui/StackedBarChart";
-import { formatMXN, cn } from "@/lib/utils";
+import { formatMXN } from "@/lib/utils";
 import { useLocale, useT } from "@/lib/i18n-react";
 import type { BucketBreakdown } from "@/types";
 
@@ -63,9 +63,15 @@ export function SpendChart({
 }) {
   const t = useT();
   const locale = useLocale();
-  const [selected, setSelected] = useState<string | null>(null);
+  const [picked, setPicked] = useState<string | null>(null);
 
-  const active = buckets.find((b) => b.key === selected) ?? null;
+  // One column is always lit, and until the reader picks one it's the
+  // heaviest — the slice worth explaining without being asked.
+  const heaviest = buckets.reduce<BucketBreakdown | null>(
+    (best, b) => (b.expenses > 0 && b.expenses > (best?.expenses ?? 0) ? b : best),
+    null
+  );
+  const active = buckets.find((b) => b.key === (picked ?? heaviest?.key)) ?? null;
 
   // The average over the slices that actually saw spending — including the
   // empty ones would drag the line down to something no bar ever reaches.
@@ -83,17 +89,11 @@ export function SpendChart({
         <p className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em]">
           {granularity === "day" ? t.analytics.spendPerDay : t.analytics.spendPerMonth}
         </p>
-        {active ? (
+        {active && (
           <p className="font-mono text-[10.5px] text-text-muted uppercase tracking-wide">
             {readoutLabel(active.key, granularity, locale)}{" "}
             <span className="text-text font-semibold">{formatMXN(active.expenses)}</span>
           </p>
-        ) : (
-          average > 0 && (
-            <p className="font-mono text-[10.5px] text-text-faint uppercase tracking-wide">
-              {t.analytics.average} {formatMXN(average)}
-            </p>
-          )
         )}
       </div>
 
@@ -105,30 +105,24 @@ export function SpendChart({
           segments: bucket.slices.map((s) => ({ value: s.amount, color: s.color })),
         }))}
         reference={{ value: average, label: t.analytics.average }}
-        selectedKey={selected}
-        // Tapping the same column again lets go of it, so the chart can get
-        // back to showing the period as a whole.
-        onSelect={(key) => setSelected((current) => (current === key ? null : key))}
+        highlightKey={active?.key ?? null}
+        onSelect={setPicked}
       />
 
-      {active && (
+      {active && active.slices.length > 0 && (
         <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-3 pt-3 border-t border-divider">
-          {active.slices.length === 0 ? (
-            <span className="text-[11.5px] text-text-dim">{t.analytics.noSpendPeriod}</span>
-          ) : (
-            active.slices.slice(0, 4).map((slice) => (
-              <span key={slice.category} className="flex items-center gap-1.5 min-w-0">
-                <span
-                  className="w-[6px] h-[6px] rounded-full shrink-0"
-                  style={{ backgroundColor: slice.color }}
-                />
-                <span className="text-[11.5px] text-text-muted truncate">{slice.category}</span>
-                <span className={cn("font-mono text-[11px] text-text-dim shrink-0")}>
-                  {formatMXN(slice.amount)}
-                </span>
+          {active.slices.slice(0, 4).map((slice) => (
+            <span key={slice.category} className="flex items-center gap-1.5 min-w-0">
+              <span
+                className="w-[6px] h-[6px] rounded-full shrink-0"
+                style={{ backgroundColor: slice.color }}
+              />
+              <span className="text-[11.5px] text-text-muted truncate">{slice.category}</span>
+              <span className="font-mono text-[11px] text-text-dim shrink-0">
+                {formatMXN(slice.amount)}
               </span>
-            ))
-          )}
+            </span>
+          ))}
         </div>
       )}
     </section>

@@ -1,3 +1,4 @@
+import { TrendBadge } from "./TrendBadge";
 import { cn } from "@/lib/utils";
 
 const SIZES = {
@@ -35,9 +36,6 @@ export function MetricTile({
   hint?: string;
   className?: string;
 }) {
-  const rising = trend !== null && trend >= 0;
-  const good = trendPolarity === "up-good" ? rising : !rising;
-
   return (
     <div className={className}>
       <div className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em]">
@@ -51,9 +49,9 @@ export function MetricTile({
       {hint && <div className="text-[11.5px] text-text-dim mt-1">{hint}</div>}
 
       {trend !== null && (
-        <div className={cn("font-mono text-[10.5px] mt-1", good ? "text-green-fg" : "text-red-fg")}>
-          {rising ? "▲" : "▼"} {Math.abs(trend)}%
-          {trendLabel && <span className="text-text-dim ml-1.5">{trendLabel}</span>}
+        <div className="flex items-center gap-2 mt-1.5">
+          <TrendBadge value={trend} polarity={trendPolarity} />
+          {trendLabel && <span className="text-[11px] text-text-dim">{trendLabel}</span>}
         </div>
       )}
     </div>

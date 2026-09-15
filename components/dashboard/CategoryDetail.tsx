@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { BarChart } from "@/components/ui/BarChart";
+import { StackedBarChart } from "@/components/ui/StackedBarChart";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { formatMXN, formatMonth, cn } from "@/lib/utils";
 import type { CategoryTrend } from "@/types";
@@ -12,6 +12,12 @@ export function CategoryDetail({ trend }: { trend: CategoryTrend }) {
   const isOver = trend.budget > 0 && trend.currentAmount >= trend.budget;
   const isWarning = trend.budget > 0 && trend.currentAmount / trend.budget >= 0.9;
   const pct = trend.budget > 0 ? Math.min((trend.currentAmount / trend.budget) * 100, 100) : 0;
+
+  // Averaged over the months this category was actually used, so a category
+  // started in June isn't judged against four months of zeroes.
+  const active = trend.points.filter((p) => p.amount > 0);
+  const average =
+    active.length > 1 ? active.reduce((sum, p) => sum + p.amount, 0) / active.length : 0;
 
   const barColor = isOver ? "var(--color-red)" : isWarning ? "var(--color-amber)" : trend.color;
 
@@ -49,13 +55,15 @@ export function CategoryDetail({ trend }: { trend: CategoryTrend }) {
 
       <div>
         <p className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em] mb-3">{t.analytics.monthlyTrend}</p>
-        <BarChart
-          bars={trend.points.map((p, i) => ({
+        <StackedBarChart
+          bars={trend.points.map((p) => ({
+            key: p.month,
             label: formatMonth(p.month).split(" ")[0].slice(0, 3),
-            value: p.amount,
-            highlight: i === trend.points.length - 1,
+            total: p.amount,
+            segments: [{ value: p.amount, color: trend.color }],
           }))}
-          color={trend.color}
+          reference={{ value: average, label: t.analytics.average }}
+          highlightKey={trend.points[trend.points.length - 1]?.month ?? null}
         />
       </div>
     </div>
