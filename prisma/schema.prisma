@@ -25,6 +25,7 @@ model User {
   accountConfigs AccountConfig[]
   budgetConfigs  BudgetConfig[]
   categories     Category[]
+  importBatches  ImportBatch[]
 }
 
 model Transaction {
@@ -41,14 +42,42 @@ model Transaction {
   description String?
   notes       String?
   procesado   Boolean  @default(false)
+  /// Set when the row came from a reconciled statement, so the whole import
+  /// can be undone at once. Null for anything typed in or sent by the shortcut.
+  importId    String?
   syncedAt    DateTime @default(now())
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user  User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  batch ImportBatch? @relation(fields: [importId], references: [id], onDelete: SetNull)
 
   @@index([userId])
   @@index([userId, date])
+  @@index([importId])
+}
+
+/// One reconciled statement file. Exists so an import is reversible: the rows
+/// it created all point back here, and undoing it is one delete.
+model ImportBatch {
+  id          String    @id @default(cuid())
+  userId      String
+  /// The account the statement was reconciled against, by name — the same
+  /// loose reference `Transaction.account` uses.
+  account     String
+  fileName    String
+  rowsCreated Int       @default(0)
+  /// How many statement rows already had a movement in the ledger. Kept for
+  /// the history list, which is otherwise silent about what the import did.
+  rowsMatched Int       @default(0)
+  periodFrom  DateTime?
+  periodTo    DateTime?
+  createdAt   DateTime  @default(now())
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+
+  @@index([userId])
 }
 
 model SyncLog {
