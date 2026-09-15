@@ -62,6 +62,14 @@ export interface AccountBalance {
   transfersOut: number;
   isCredit: boolean;
   color: string;
+  /** Credit accounts: the approved line, or null when none is on file. */
+  creditLimit: number | null;
+  /** Credit accounts: what's owed right now. 0 once paid off. Null on debit. */
+  debt: number | null;
+  /** Credit accounts with a line: what's left to spend. Negative when over it. */
+  availableCredit: number | null;
+  /** Credit accounts with a line: share of the line in use, 0–100+. */
+  utilizationPercent: number | null;
 }
 
 export interface CategorySummary {

@@ -70,6 +70,9 @@ model AccountConfig {
   balanceAdjustment  Float     @default(0)
   adjustmentDate     DateTime?
   isCredit           Boolean   @default(false)
+  /// Credit accounts only: the approved line. Null means no line on file — the
+  /// account then reads exactly the way it did before limits existed.
+  creditLimit        Float?
   color              String?
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @default(now()) @updatedAt

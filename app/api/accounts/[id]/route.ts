@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireUser, errorResponse } from "@/lib/auth";
+import { parseCreditLimit } from "@/lib/account-input";
 
 /**
  * Transactions store the account as plain text, not a foreign key, so a rename
@@ -32,6 +33,11 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
         : existing.account;
     const nextIsCredit = typeof body.isCredit === "boolean" ? body.isCredit : existing.isCredit;
     const nextColor = typeof body.color === "string" ? body.color : existing.color;
+    // An omitted field keeps what's on file; switching to debit drops the line.
+    const nextCreditLimit =
+      "creditLimit" in body
+        ? parseCreditLimit(body.creditLimit, nextIsCredit)
+        : parseCreditLimit(existing.creditLimit, nextIsCredit);
 
     const renamed = nextName !== existing.account;
 
@@ -39,7 +45,12 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
       await prisma.$transaction([
         prisma.accountConfig.update({
           where: { id },
-          data: { account: nextName, isCredit: nextIsCredit, color: nextColor },
+          data: {
+            account: nextName,
+            isCredit: nextIsCredit,
+            creditLimit: nextCreditLimit,
+            color: nextColor,
+          },
         }),
         // Carry the history. Both sides of a transfer can name this account.
         ...(renamed

@@ -53,7 +53,7 @@ export interface AccountSums {
  */
 export function computeAccountBalancesFromSums(
   sums: Map<string, AccountSums>,
-  configs: Array<{ account: string; initialBalance: number; isCredit: boolean; color: string | null; balanceAdjustment?: number }>
+  configs: Array<{ account: string; initialBalance: number; isCredit: boolean; color: string | null; balanceAdjustment?: number; creditLimit?: number | null }>
 ): AccountBalance[] {
   const configMap = new Map(configs.map((c) => [c.account, c]));
 
@@ -76,7 +76,26 @@ export function computeAccountBalancesFromSums(
 
     const currentBalance = round2(calculatedBalance + balanceAdjustment);
 
-    return { account, initialBalance, calculatedBalance, balanceAdjustment, currentBalance, income, expenses, transfersIn, transfersOut, isCredit, color };
+    // A credit balance is negative while money is owed, so the debt is its
+    // mirror. Overpaying pushes the balance positive: nothing is owed then,
+    // and the surplus stays visible as the positive balance itself rather
+    // than inflating the available line past the approved limit.
+    const creditLimit = config?.creditLimit ?? null;
+    const debt = isCredit ? round2(Math.max(0, -currentBalance)) : null;
+    const availableCredit =
+      debt !== null && creditLimit !== null ? round2(creditLimit - debt) : null;
+    // Uncapped on purpose, unlike the budget percentages: going past the
+    // approved line is exactly the thing worth seeing.
+    const utilizationPercent =
+      debt !== null && creditLimit !== null && creditLimit > 0
+        ? round2((debt / creditLimit) * 100)
+        : null;
+
+    return {
+      account, initialBalance, calculatedBalance, balanceAdjustment, currentBalance,
+      income, expenses, transfersIn, transfersOut, isCredit, color,
+      creditLimit, debt, availableCredit, utilizationPercent,
+    };
   });
 }
 

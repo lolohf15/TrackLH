@@ -55,7 +55,7 @@ export default function Cuentas() {
                   onEdit={configById.get(a.account) ? () => setEditing(configById.get(a.account)!) : undefined}
                 />
               ))}
-              <AddRow label="Agregar cuenta de débito" onClick={() => setEditing("new")} />
+              <AddRow label="Agregar cuenta" onClick={() => setEditing("new")} />
             </div>
           </section>
 
@@ -135,16 +135,31 @@ function GroupLabel({ children }: { children: React.ReactNode }) {
 function AccountRow({
   account, credit, onEdit,
 }: { account: AccountBalance; credit?: boolean; onEdit?: () => void }) {
+  // Without a line on file there's nothing to be available against, so the
+  // card falls back to reading as a plain debt — the way it always has.
+  const hasLine = credit && account.availableCredit !== null;
+  const overLine = hasLine && (account.availableCredit as number) < 0;
+
   const body = (
-    <>
-      <div className="flex items-center gap-2.5 min-w-0">
-        <span className="w-[7px] h-[7px] rounded-full shrink-0" style={{ backgroundColor: account.color }} />
-        <span className="text-[13.5px] text-text truncate">{account.account}</span>
+    <div className="w-full flex flex-col gap-2 min-w-0">
+      <div className="flex items-center justify-between gap-2.5 min-w-0">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <span className="w-[7px] h-[7px] rounded-full shrink-0" style={{ backgroundColor: account.color }} />
+          <span className="text-[13.5px] text-text truncate">{account.account}</span>
+        </div>
+        <span className="shrink-0 ml-2.5 whitespace-nowrap">
+          <span className={cn(
+            "font-mono text-sm font-semibold",
+            overLine ? "text-red-fg" : credit && !hasLine ? "text-red-fg" : "text-text"
+          )}>
+            {formatMXN(hasLine ? (account.availableCredit as number) : account.currentBalance)}
+          </span>
+          {hasLine && <span className="text-[10.5px] text-text-dim ml-1.5">disponible</span>}
+        </span>
       </div>
-      <span className={cn("font-mono text-sm font-semibold shrink-0 ml-2.5", credit ? "text-red-fg" : "text-text")}>
-        {formatMXN(account.currentBalance)}
-      </span>
-    </>
+
+      {hasLine && <CreditLine account={account} />}
+    </div>
   );
 
   // An account that exists only inside old movements has no config row to
@@ -165,6 +180,33 @@ function AccountRow({
     >
       {body}
     </button>
+  );
+}
+
+/** How much of the approved line is spoken for, as a bar plus its two numbers. */
+function CreditLine({ account }: { account: AccountBalance }) {
+  const pct = account.utilizationPercent ?? 0;
+  // The same bands a credit score reads: comfortable, watch it, too much.
+  const tone =
+    pct >= 70 ? "var(--color-red)" : pct >= 30 ? "var(--color-amber)" : "var(--color-green)";
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <div className="h-1 rounded-full bg-surface-2 overflow-hidden">
+        <div
+          className="h-full rounded-full transition-[width] duration-300 ease-out"
+          style={{ width: `${Math.min(pct, 100)}%`, background: tone }}
+        />
+      </div>
+      <div className="flex items-baseline justify-between gap-2 font-mono text-[10.5px] text-text-dim">
+        <span className="truncate">
+          {formatMXN(account.debt ?? 0)} de {formatMXN(account.creditLimit ?? 0)}
+        </span>
+        <span className="shrink-0" style={{ color: tone }}>
+          {Math.round(pct)}%
+        </span>
+      </div>
+    </div>
   );
 }
 

@@ -11,6 +11,7 @@ export interface EditableAccount {
   id: number;
   account: string;
   isCredit: boolean;
+  creditLimit: number | null;
   color: string | null;
 }
 
@@ -26,6 +27,9 @@ export function AccountEditSheet({ account, open, onClose }: Props) {
 
   const [name, setName] = useState(account?.account ?? "");
   const [isCredit, setIsCredit] = useState(account?.isCredit ?? false);
+  const [creditLimit, setCreditLimit] = useState(
+    account?.creditLimit != null ? String(account.creditLimit) : ""
+  );
   const [color, setColor] = useState(account?.color ?? PALETTE[0]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,7 +45,7 @@ export function AccountEditSheet({ account, open, onClose }: Props) {
       const res = await fetch(isNew ? "/api/accounts" : `/api/accounts/${account.id}`, {
         method: isNew ? "POST" : "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ account: name.trim(), isCredit, color }),
+        body: JSON.stringify({ account: name.trim(), isCredit, creditLimit, color }),
       });
       const payload = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -114,6 +118,26 @@ export function AccountEditSheet({ account, open, onClose }: Props) {
             ))}
           </div>
         </Field>
+
+        {isCredit && (
+          <Field label="Límite de crédito (opcional)">
+            <div className="flex items-baseline gap-2 rounded-md border border-border bg-surface-2 px-3.5 py-2.5 focus-within:border-accent/60 transition-colors duration-150">
+              <span className="font-mono text-lg text-text-dim">$</span>
+              <input
+                value={creditLimit}
+                onChange={(e) => setCreditLimit(e.target.value.replace(/[^\d.]/g, ""))}
+                inputMode="decimal"
+                placeholder="0"
+                aria-label="Límite de crédito"
+                className="flex-1 min-w-0 bg-transparent font-mono text-[19px] font-semibold text-text tabular-nums outline-none placeholder:text-text-faint"
+              />
+            </div>
+            <span className="block text-[11.5px] text-text-dim leading-relaxed pt-0.5">
+              Con un límite, la cuenta muestra cuánto te queda disponible. Déjalo vacío
+              y solo verás el saldo.
+            </span>
+          </Field>
+        )}
 
         <Field label="Color">
           <ColorPicker value={color} onChange={setColor} />

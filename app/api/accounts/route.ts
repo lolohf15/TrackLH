@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUser, errorResponse } from "@/lib/auth";
 import { round2, computeAccountBalancesFromSums } from "@/services/finance";
 import { getAccountSums } from "@/lib/account-sums";
+import { parseCreditLimit } from "@/lib/account-input";
 
 type AccountRow = {
   id: number;
@@ -14,6 +15,7 @@ type AccountRow = {
   balanceAdjustment: number;
   adjustmentDate: Date | null;
   isCredit: boolean;
+  creditLimit: number | null;
   color: string | null;
   createdAt: Date;
   updatedAt: Date;
@@ -30,6 +32,7 @@ function serializeAccount(a: AccountRow, calculatedBalance: number, currentBalan
     calculatedBalance,
     currentBalance,
     isCredit: a.isCredit,
+    creditLimit: a.creditLimit,
     color: a.color,
     createdAt: a.createdAt.toISOString(),
     updatedAt: a.updatedAt.toISOString(),
@@ -52,12 +55,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Escribe un nombre para la cuenta" }, { status: 400 });
     }
 
+    const isCredit = !!body.isCredit;
+
     try {
       const created = await prisma.accountConfig.create({
         data: {
           userId,
           account,
-          isCredit: !!body.isCredit,
+          isCredit,
+          creditLimit: parseCreditLimit(body.creditLimit, isCredit),
           color: typeof body.color === "string" ? body.color : null,
           initialBalance: 0,
         },
