@@ -13,7 +13,7 @@ import { getCurrentMonth, getPrevMonth } from "@/lib/utils";
 import type { Bucket, DateRange, Period } from "./period";
 
 /** What a Gasto with no category is filed under, on screen and in charts. */
-const UNCATEGORIZED = "Sin categoría";
+export const UNCATEGORIZED = "Sin categoría";
 
 /** Category name -> color, built from this user's Category rows. */
 export type ColorMap = Map<string, string>;
