@@ -7,6 +7,7 @@ import { CategoryRanking } from "@/components/dashboard/CategoryRanking";
 import { AccountBalances } from "@/components/dashboard/AccountBalances";
 import { BudgetTracker } from "@/components/dashboard/BudgetTracker";
 import { MonthPickerSheet } from "@/components/dashboard/MonthPickerSheet";
+import { SpendChart } from "@/components/dashboard/SpendChart";
 import { TransactionList } from "@/components/transactions/TransactionList";
 import { ChartSkeleton } from "@/components/ui/Skeleton";
 import { MetricTile } from "@/components/ui/MetricTile";
@@ -15,7 +16,12 @@ import { ProgressBar } from "@/components/ui/ProgressBar";
 import { dayKey, formatPeriodLabel, monthKey, resolvePeriod } from "@/services/period";
 import { formatMXN, cn } from "@/lib/utils";
 import { useCountUp } from "@/lib/useCountUp";
-import type { DashboardData, PaginatedTransactions, YearlyDashboardData } from "@/types";
+import type {
+  AnalyticsData,
+  DashboardData,
+  PaginatedTransactions,
+  YearlyDashboardData,
+} from "@/types";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -36,6 +42,15 @@ export default function Home() {
   const { data: dashboard, isLoading: dashLoading } = useSWR<DashboardData>(
     `/api/dashboard?period=month&anchor=${dayKey(anchor)}`,
     fetcher
+  );
+
+  // The month's pace, drawn by the same card Analytics uses. Kept in its own
+  // request: Inicio needs balances and budgets that this doesn't carry, and
+  // the other three tabs have no use for a bucket per day.
+  const { data: analytics } = useSWR<AnalyticsData>(
+    `/api/analytics?period=month&anchor=${dayKey(anchor)}`,
+    fetcher,
+    { keepPreviousData: true }
   );
 
   const { data: recent, isLoading: recentLoading } =
@@ -70,6 +85,11 @@ export default function Home() {
   const prevIncome = dashboard?.prevPeriodIncome ?? 0;
   const expensesTrend = prevExpenses > 0 ? Math.round(((expenses - prevExpenses) / prevExpenses) * 100) : null;
   const incomeTrend = prevIncome > 0 ? Math.round(((income - prevIncome) / prevIncome) * 100) : null;
+
+  // Only worth its own figure when there's a card balance pulling it away
+  // from the total — otherwise it's the same number twice.
+  const netWorth = dashboard?.netWorth ?? 0;
+  const hasDebt = (dashboard?.totalAvailable ?? 0) !== netWorth;
 
   const totalAvailableDisplay = useCountUp(dashboard?.totalAvailable ?? 0, formatMXN);
   const incomeDisplay = useCountUp(income, formatMXN);
@@ -116,13 +136,24 @@ export default function Home() {
 
           {/* This month, as one group: the total and how it split. */}
           <div className="tint tint-gold">
-            <MetricTile
-              label={t.home.totalBalance}
-              value={totalAvailableDisplay}
-              size="lg"
-              hint={t.home.debitAccounts((dashboard?.accountBalances ?? []).filter((a) => !a.isCredit).length)}
-              className="px-4 pt-3.5 pb-3.5"
-            />
+            <div className="flex items-start justify-between gap-4 px-4 pt-3.5 pb-3.5">
+              <MetricTile
+                label={t.home.totalBalance}
+                value={totalAvailableDisplay}
+                size="lg"
+                hint={t.home.debitAccounts((dashboard?.accountBalances ?? []).filter((a) => !a.isCredit).length)}
+              />
+              {hasDebt && (
+                <div className="text-right shrink-0">
+                  <p className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em]">
+                    {t.home.netWorth}
+                  </p>
+                  <p className="text-[17px] font-semibold text-text tabular-nums mt-1">
+                    {formatMXN(netWorth)}
+                  </p>
+                </div>
+              )}
+            </div>
 
             <div className="grid grid-cols-2 border-t border-border">
               <MetricTile
@@ -162,6 +193,15 @@ export default function Home() {
             </div>
           </div>
 
+          {analytics && (
+            <SpendChart
+              buckets={analytics.buckets}
+              previousExpenses={analytics.previousExpenses}
+              granularity={analytics.granularity}
+              title={t.home.monthPace}
+            />
+          )}
+
           {/* Recent activity — the group label sits above its group, not inside it */}
           <section>
             <SectionLabel>
@@ -176,6 +216,7 @@ export default function Home() {
                 loading={recentLoading}
                 page={1}
                 onPageChange={() => {}}
+                paginate={false}
                 emptyTitle={t.home.emptyTitle}
                 emptyHint={t.home.emptyHint}
               />

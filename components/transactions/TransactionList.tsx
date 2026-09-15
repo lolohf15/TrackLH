@@ -21,6 +21,9 @@ interface Props {
   /** Shown when there is nothing to list. Defaults to the filtered-view copy. */
   emptyTitle?: string;
   emptyHint?: string;
+  /** Off for a preview of the first few, where paging would lead nowhere —
+   *  Inicio's recent activity has "ver todo" for that. */
+  paginate?: boolean;
 }
 
 /** As a value rather than a class: the row's marker mixes it down for its
@@ -68,6 +71,7 @@ export function TransactionList({
   data, loading, page, onPageChange,
   emptyTitle,
   emptyHint,
+  paginate = true,
 }: Props) {
   const t = useT();
   const [editing, setEditing] = useState<Transaction | null>(null);
@@ -143,7 +147,7 @@ export function TransactionList({
         initialConfirmingDelete={deleteIntent}
       />
 
-      {data.totalPages > 1 && (
+      {paginate && data.totalPages > 1 && (
         <div className="flex items-center justify-between pt-3">
           <span className="font-mono text-[10.5px] text-text-dim">
             {t.common.page} {page} {t.common.of} {data.totalPages}

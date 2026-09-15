@@ -93,6 +93,8 @@ export interface DashboardData {
   /** Which span the figures below cover — week, month, year or all. */
   period: "week" | "month" | "year" | "all";
   totalAvailable: number;
+  /** Debit money less what's owed on the credit cards. */
+  netWorth: number;
   periodExpenses: number;
   periodIncome: number;
   netBalance: number;

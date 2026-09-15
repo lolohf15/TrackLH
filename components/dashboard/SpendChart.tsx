@@ -67,10 +67,13 @@ export function SpendChart({
   buckets,
   previousExpenses,
   granularity,
+  title,
 }: {
   buckets: BucketBreakdown[];
   previousExpenses: number[];
   granularity: "day" | "month";
+  /** Defaults to what the chart plots; Inicio calls it the month's pace. */
+  title?: string;
 }) {
   const t = useT();
   const locale = useLocale();
@@ -98,7 +101,7 @@ export function SpendChart({
     <section className="panel px-4 py-3.5 mt-3">
       <div className="flex items-baseline justify-between gap-3 mb-1">
         <p className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em]">
-          {t.analytics.cumulativeSpend}
+          {title ?? t.analytics.cumulativeSpend}
         </p>
         {previous.length > 1 && (
           <span className="flex items-center gap-1.5 font-mono text-[9.5px] text-text-faint uppercase tracking-wide">

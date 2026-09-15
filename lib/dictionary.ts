@@ -44,6 +44,8 @@ export const es = {
   home: {
     title: "Resumen",
     totalBalance: "Saldo total",
+    netWorth: "Patrimonio neto",
+    monthPace: "Ritmo del mes",
     /** Takes the count, because plural and word order aren't the same twice. */
     debitAccounts: (n: number) => `${n} ${n === 1 ? "cuenta" : "cuentas"} de débito`,
     income: "Ingresos",
@@ -330,6 +332,8 @@ export const en: typeof es = {
   home: {
     title: "Overview",
     totalBalance: "Total balance",
+    netWorth: "Net worth",
+    monthPace: "This month's pace",
     debitAccounts: (n: number) => `${n} debit ${n === 1 ? "account" : "accounts"}`,
     income: "Income",
     expenses: "Expenses",

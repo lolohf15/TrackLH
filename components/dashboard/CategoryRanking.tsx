@@ -1,17 +1,15 @@
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { ProgressBar } from "@/components/ui/ProgressBar";
-import { formatMXN } from "@/lib/utils";
+import { CategoryRow } from "@/components/dashboard/CategoryRow";
 import type { CategorySummary } from "@/types";
 import { useT } from "@/lib/i18n-react";
 
 interface Props { data: CategorySummary[]; limit?: number }
 
-/** Ranked ledger table: rank + name + inline bar + amount. No charting library. */
+/** The period's categories, biggest first, in the same row Analytics uses. */
 export function CategoryRanking({ data, limit = 10 }: Props) {
   const t = useT();
   const top = data.slice(0, limit);
-  const max = Math.max(...top.map((c) => c.amount), 1);
 
   return (
     <Card>
@@ -26,20 +24,13 @@ export function CategoryRanking({ data, limit = 10 }: Props) {
           />
         ) : (
           <div className="flex flex-col">
-            {top.map((c, i) => (
-              <div key={c.category} className="flex items-center gap-2.5 py-[7px]">
-                <span className="font-mono text-[11px] text-text-faint w-3.5 shrink-0">{i + 1}</span>
-                <span className="text-[13px] text-text-muted w-[100px] shrink-0 truncate">{c.category}</span>
-                <ProgressBar
-                  segments={[{ percent: Math.round((c.amount / max) * 100), color: c.color }]}
-                  height={12}
-                  radius="sm"
-                  className="flex-1"
-                />
-                <span className="font-mono text-xs text-text-muted w-16 text-right shrink-0">
-                  {formatMXN(c.amount)}
-                </span>
-              </div>
+            {top.map((c) => (
+              <CategoryRow
+                key={c.category}
+                category={c}
+                href={`/analytics/${encodeURIComponent(c.category)}`}
+                className="first:border-t-0"
+              />
             ))}
           </div>
         )}

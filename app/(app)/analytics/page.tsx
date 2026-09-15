@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import useSWR from "swr";
 import { CategoryDetail } from "@/components/dashboard/CategoryDetail";
+import { CategoryRow } from "@/components/dashboard/CategoryRow";
 import { PeriodNav } from "@/components/dashboard/PeriodNav";
 import { SpendChart } from "@/components/dashboard/SpendChart";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -13,7 +13,7 @@ import { ChartSkeleton } from "@/components/ui/Skeleton";
 import { formatMXN, cn } from "@/lib/utils";
 import { dayKey, formatPeriodLabel, type PeriodKind } from "@/services/period";
 import { useLocale, useT } from "@/lib/i18n-react";
-import type { AnalyticsData, CategorySummary, CategoryTrend } from "@/types";
+import type { AnalyticsData, CategoryTrend } from "@/types";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -167,12 +167,21 @@ export default function Analytics() {
 
                 <div className="px-4 pb-2">
                   {categories.map((c) => (
-                    <CategoryRow
-                      key={c.category}
-                      category={c}
-                      active={c.category === selected}
-                      onSelect={() => setPicked(c.category)}
-                    />
+                    <div key={c.category} className="contents">
+                      {/* Desktop selects in place; the phone pushes to the
+                          category's own screen. */}
+                      <CategoryRow
+                        category={c}
+                        active={c.category === selected}
+                        onSelect={() => setPicked(c.category)}
+                        className="hidden md:flex"
+                      />
+                      <CategoryRow
+                        category={c}
+                        href={`/analytics/${encodeURIComponent(c.category)}`}
+                        className="md:hidden flex"
+                      />
+                    </div>
                   ))}
                 </div>
               </section>
@@ -202,61 +211,5 @@ function Figure({ label, value, tone }: { label: string; value: string; tone?: s
         {value}
       </p>
     </div>
-  );
-}
-
-function CategoryRow({
-  category, active, onSelect,
-}: {
-  category: CategorySummary;
-  active: boolean;
-  onSelect: () => void;
-}) {
-  const t = useT();
-
-  const content = (
-    <>
-      <span className="flex items-center gap-3 min-w-0">
-        {/* The ringed marker the reference cards use — at this size a bare
-            dot has nothing to sit in. */}
-        <span
-          className="w-[22px] h-[22px] rounded-full grid place-items-center shrink-0"
-          style={{ border: `1px solid color-mix(in srgb, ${category.color} 32%, transparent)` }}
-        >
-          <span
-            className="w-[7px] h-[7px] rounded-full"
-            style={{ backgroundColor: category.color }}
-          />
-        </span>
-        <span className="min-w-0">
-          <span className="block text-[13.5px] text-text truncate">{category.category}</span>
-          <span className="block text-[11.5px] text-text-dim mt-0.5">
-            {Math.round(category.percentage)}% {t.analytics.ofSpends}
-          </span>
-        </span>
-      </span>
-      <span className="font-mono text-[13.5px] font-semibold text-text whitespace-nowrap shrink-0 ml-2.5">
-        {formatMXN(category.amount)}
-      </span>
-    </>
-  );
-
-  const shape = "w-full flex items-center justify-between py-2.5 border-t border-divider text-left transition-colors duration-150 ease-out";
-
-  return (
-    <>
-      {/* Desktop: select in place */}
-      <button onClick={onSelect} className={cn("hidden md:flex", shape, active && "bg-surface-2/40")}>
-        {content}
-      </button>
-
-      {/* Mobile: push to detail route */}
-      <Link
-        href={`/analytics/${encodeURIComponent(category.category)}`}
-        className={cn("md:hidden flex", shape, "active:bg-surface-2/40")}
-      >
-        {content}
-      </Link>
-    </>
   );
 }

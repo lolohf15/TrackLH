@@ -321,6 +321,11 @@ export function buildDashboardData(
   colors: ColorMap
 ): DashboardData {
   const totalAvailable = computeTotalAvailable(accountBalances);
+  // Rule 8 is untouched — "total disponible" is still debit only. This is the
+  // question asked beside it: what's left once the cards are paid off.
+  const netWorth = round2(
+    totalAvailable - accountBalances.reduce((sum, b) => sum + (b.debt ?? 0), 0)
+  );
   const periodExpenses = computeExpenses(transactions, period.range);
   const periodIncome = computeIncome(transactions, period.range);
   const netBalance = round2(periodIncome - periodExpenses);
@@ -337,6 +342,7 @@ export function buildDashboardData(
   return {
     period: period.kind,
     totalAvailable,
+    netWorth,
     periodExpenses,
     periodIncome,
     netBalance,

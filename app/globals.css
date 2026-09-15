@@ -240,9 +240,19 @@
   .tabular-nums        { font-variant-numeric: tabular-nums; }
 
   /* An inset group of rows — the app's main surface. Rounded, lifted off the
-     page by shadow rather than fenced in by a hairline. */
+     page by shadow rather than fenced in by a hairline, and carrying the same
+     edge glow as the tinted cards so the two read as one family. Grey rather
+     than a hue: these are the cards with nothing in particular to say, and a
+     colour here would be a claim. Kept on the surface rather than dropped to
+     black — a panel holds rows, and rows need something to sit in. */
   .panel {
     background-color: var(--color-surface);
+    background-image: radial-gradient(
+      125% 108% at 50% 50%,
+      transparent 30%,
+      color-mix(in srgb, var(--color-text-muted) calc(var(--tint-strength) / 6), transparent) 72%,
+      color-mix(in srgb, var(--color-text-muted) calc(var(--tint-strength) / 3.2), transparent) 100%
+    );
     border-radius: var(--radius-lg);
     border: 1px solid var(--color-border);
     box-shadow: var(--shadow-panel);
