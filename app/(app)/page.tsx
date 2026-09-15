@@ -10,10 +10,9 @@ import { MonthPickerSheet } from "@/components/dashboard/MonthPickerSheet";
 import { TransactionList } from "@/components/transactions/TransactionList";
 import { ChartSkeleton } from "@/components/ui/Skeleton";
 import { MetricTile } from "@/components/ui/MetricTile";
-import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { useLocale, useT } from "@/lib/i18n-react";
 import { ProgressBar } from "@/components/ui/ProgressBar";
-import { dayKey, monthKey, resolvePeriod, type Period, type PeriodKind } from "@/services/period";
+import { dayKey, formatPeriodLabel, monthKey, resolvePeriod } from "@/services/period";
 import { formatMXN, cn } from "@/lib/utils";
 import { useCountUp } from "@/lib/useCountUp";
 import type { DashboardData, PaginatedTransactions, YearlyDashboardData } from "@/types";
@@ -23,10 +22,7 @@ const fetcher = (url: string) => fetch(url).then((r) => r.json());
 export default function Home() {
   const t = useT();
   const locale = useLocale();
-  const [kind, setKind] = useState<PeriodKind>("month");
-  // The day being looked at. Every period is "the week/month/year containing
-  // this date", so navigating is a matter of moving it rather than of
-  // special-casing each span.
+  // The day being looked at — the month around it is what Inicio shows.
   const [anchor, setAnchor] = useState(() => new Date());
   // Captured once rather than read during render: reading the clock while
   // rendering makes the component non-deterministic, and a dashboard left
@@ -35,10 +31,10 @@ export default function Home() {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerYear, setPickerYear] = useState(() => new Date().getUTCFullYear());
 
-  const period = resolvePeriod(kind, anchor);
+  const period = resolvePeriod("month", anchor);
 
   const { data: dashboard, isLoading: dashLoading } = useSWR<DashboardData>(
-    `/api/dashboard?period=${kind}&anchor=${dayKey(anchor)}`,
+    `/api/dashboard?period=month&anchor=${dayKey(anchor)}`,
     fetcher
   );
 
@@ -50,16 +46,8 @@ export default function Home() {
 
   function navigate(dir: -1 | 1) {
     const next = new Date(anchor);
-    if (kind === "week") next.setUTCDate(next.getUTCDate() + dir * 7);
-    else if (kind === "month") next.setUTCMonth(next.getUTCMonth() + dir);
-    else if (kind === "year") next.setUTCFullYear(next.getUTCFullYear() + dir);
+    next.setUTCMonth(next.getUTCMonth() + dir);
     setAnchor(next);
-  }
-
-  function pickPeriod(next: PeriodKind) {
-    // Jumping back to today on every switch would lose the place someone
-    // navigated to; the anchor stays put and the span around it changes.
-    setKind(next);
   }
 
   function openPicker() {
@@ -68,7 +56,7 @@ export default function Home() {
   }
 
   // A period that already contains today has no "next" to walk into.
-  const atLatest = kind === "all" || period.range.to.getTime() > openedAt;
+  const atLatest = period.range.to.getTime() > openedAt;
 
   const income = dashboard?.periodIncome ?? 0;
   const expenses = dashboard?.periodExpenses ?? 0;
@@ -99,46 +87,28 @@ export default function Home() {
   return (
     <div className="max-w-6xl mx-auto md:px-8">
 
-      {/* Period nav. No page title: the tab bar already names this screen,
-          and repeating it costs a row before any figure appears. */}
-      <div className="flex items-center gap-2 px-4 md:px-0 pt-3 pb-2.5">
-        <SegmentedControl
-          options={[
-            { value: "week", label: t.home.periodWeek },
-            { value: "month", label: t.home.periodMonth },
-            { value: "year", label: t.home.periodYear },
-            { value: "all", label: t.home.periodAll },
-          ]}
-          value={kind}
-          onChange={pickPeriod}
-          label={t.home.title}
-          size="sm"
-          className="flex-1 min-w-0"
-        />
-
-        {/* All-time has no span to step through, so the stepper goes away
-            and the segments take the width back. */}
-        {kind !== "all" && (
-          <div className="flex items-center shrink-0 -my-2">
-            <MonthNavButton label={t.home.prevPeriod} onClick={() => navigate(-1)}>
-              ‹
-            </MonthNavButton>
-            <button
-              onClick={openPicker}
-              disabled={kind !== "month"}
-              className="press font-mono text-[10px] text-text-muted min-w-[70px] text-center uppercase tracking-wide hover:text-text transition-colors duration-150 ease-out disabled:hover:text-text-muted"
-            >
-              {periodLabel(period, locale)}
-            </button>
-            <MonthNavButton
-              label={t.home.nextPeriod}
-              onClick={() => navigate(1)}
-              disabled={atLatest}
-            >
-              ›
-            </MonthNavButton>
-          </div>
-        )}
+      {/* Inicio is the overview of a month. Slicing by week or year is a
+          question you go to Analytics to ask. */}
+      <div className="flex items-center justify-between px-4 md:px-0 pt-3 pb-2.5">
+        <span className="text-[15px] font-semibold text-text">{t.home.title}</span>
+        <div className="flex items-center -my-2 -mr-2">
+          <MonthNavButton label={t.home.prevMonth} onClick={() => navigate(-1)}>
+            ‹
+          </MonthNavButton>
+          <button
+            onClick={openPicker}
+            className="press font-mono text-[10px] text-text-muted min-w-[70px] text-center uppercase tracking-wide hover:text-text transition-colors duration-150 ease-out"
+          >
+            {formatPeriodLabel(period, locale)}
+          </button>
+          <MonthNavButton
+            label={t.home.nextMonth}
+            onClick={() => navigate(1)}
+            disabled={atLatest}
+          >
+            ›
+          </MonthNavButton>
+        </div>
       </div>
 
       <div className="md:grid md:grid-cols-[1fr_360px] md:gap-8 md:items-start">
@@ -172,7 +142,7 @@ export default function Home() {
 
             <div className="px-4 py-3 border-t border-divider">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em]">{kind === "month" ? t.home.monthlySavings : t.home.savings}</span>
+                <span className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em]">{t.home.monthlySavings}</span>
                 <span className={cn("text-[13px] font-semibold tabular-nums", net >= 0 ? "text-green-fg" : "text-red-fg")}>
                   {netDisplay}
                 </span>
@@ -213,7 +183,7 @@ export default function Home() {
 
           {/* Mobile: budget + ranking continue the same stack */}
           <section className="md:hidden">
-            <SectionLabel>{kind === "month" ? t.home.budget : t.home.budgetThisMonth}</SectionLabel>
+            <SectionLabel>{t.home.budget}</SectionLabel>
             <div className="panel px-4 py-4">
               <BudgetTracker data={(dashboard?.budgetItems ?? []).slice(0, 4)} bare />
             </div>
@@ -248,28 +218,6 @@ export default function Home() {
       />
     </div>
   );
-}
-
-/**
- * What the arrows are sitting on. A week names its two ends, since "week of
- * the 8th" means nothing at a glance; the longer spans name themselves.
- */
-function periodLabel(period: Period, locale: string): string {
-  const { kind, range } = period;
-  if (kind === "year") return String(range.from.getUTCFullYear());
-  if (kind === "month") {
-    return new Intl.DateTimeFormat(locale, {
-      month: "short", year: "numeric", timeZone: "UTC",
-    }).format(range.from);
-  }
-
-  // The range is half-open, so the last day it covers is the instant before it ends.
-  const last = new Date(range.to.getTime() - 1);
-  // formatRange puts the month where the language wants it and drops the
-  // repeat when both ends share one — "14–20 sept" but "Sep 14 – 20".
-  return new Intl.DateTimeFormat(locale, {
-    day: "numeric", month: "short", timeZone: "UTC",
-  }).formatRange(range.from, last);
 }
 
 /** 36px hit area around a 22px glyph box — the target grows, the chrome doesn't. */

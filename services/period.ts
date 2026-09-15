@@ -165,6 +165,31 @@ export function monthKey(d: Date): string {
   return d.toISOString().slice(0, 7);
 }
 
+/**
+ * What a period is called on screen. A week names its two ends, since "week
+ * of the 8th" means nothing at a glance; the longer spans name themselves.
+ * All-time returns null — it has no dates to show, only a name the caller
+ * already has in its dictionary.
+ */
+export function formatPeriodLabel(period: Period, locale: string): string | null {
+  const { kind, range } = period;
+  if (kind === "all") return null;
+  if (kind === "year") return String(range.from.getUTCFullYear());
+  if (kind === "month") {
+    return new Intl.DateTimeFormat(locale, {
+      month: "short", year: "numeric", timeZone: "UTC",
+    }).format(range.from);
+  }
+
+  // The range is half-open, so the last day it covers is the instant before
+  // it ends. formatRange puts the month where the language wants it and drops
+  // the repeat when both ends share one — "14–20 sept" against "Sep 14 – 20".
+  const last = new Date(range.to.getTime() - 1);
+  return new Intl.DateTimeFormat(locale, {
+    day: "numeric", month: "short", timeZone: "UTC",
+  }).formatRange(range.from, last);
+}
+
 /** `YYYY-MM-DD` or a full ISO string; anything else falls back to today. */
 export function parseAnchor(raw: string | null): Date {
   if (!raw) return new Date();
