@@ -206,6 +206,24 @@
     ::-webkit-scrollbar { width: 0; height: 0; display: none; }
   }
 
+  /* A date input on iOS sizes itself from its own formatted value and ignores
+     the width it was given, so it grows past the sheet's right edge while
+     every field above it stops at the margin. Dropping the native appearance
+     and letting it shrink puts it back inside its box. */
+  input[type="date"] {
+    -webkit-appearance: none;
+    appearance: none;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  /* Safari also centres the value inside the field and gives it margins of its
+     own; every other field on this sheet reads from its left edge. */
+  input[type="date"]::-webkit-date-and-time-value {
+    text-align: left;
+    margin: 0;
+  }
+
   input[type="date"]::-webkit-calendar-picker-indicator {
     filter: invert(0.8);
     cursor: pointer;
