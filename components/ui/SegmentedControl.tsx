@@ -5,6 +5,13 @@ import { cn } from "@/lib/utils";
 export interface SegmentOption<T extends string> {
   value: T;
   label: string;
+  /**
+   * What the pill fills with when this segment is the chosen one. Given, the
+   * control stops being a neutral switch and starts teaching an association —
+   * which is worth it only where the values already mean something in colour
+   * everywhere else in the app.
+   */
+  tone?: string;
 }
 
 /**
@@ -59,9 +66,13 @@ export function SegmentedControl<T extends string>({
               "transition-colors duration-150 ease-out",
               SIZES[size],
               // Dark ink on the brass, not white: white on this gold sits at
-              // about 2:1 and fails every contrast floor there is.
-              active ? "bg-accent text-accent-ink shadow-panel" : "text-text-dim"
+              // about 2:1 and fails every contrast floor there is. The same
+              // holds for every other filled tone, which is what tone-ink is.
+              active && !option.tone && "bg-accent text-accent-ink shadow-panel",
+              active && option.tone && "text-tone-ink shadow-panel",
+              !active && "text-text-dim"
             )}
+            style={active && option.tone ? { backgroundColor: option.tone } : undefined}
           >
             {option.label}
           </button>

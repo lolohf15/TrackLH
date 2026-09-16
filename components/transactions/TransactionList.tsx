@@ -31,13 +31,13 @@ interface Props {
 const typeColors: Record<TransactionType, string> = {
   Gasto: "var(--color-red-fg)",
   Ingreso: "var(--color-green-fg)",
-  Transferencia: "var(--color-amber-fg)",
+  Transferencia: "var(--color-blue-fg)",
 };
 
 const amountColors: Record<TransactionType, string> = {
   Gasto: "text-red-fg",
   Ingreso: "text-green-fg",
-  Transferencia: "text-amber-fg",
+  Transferencia: "text-blue-fg",
 };
 
 /** Revealed by a left swipe — width of the Editar + Eliminar action pair. */

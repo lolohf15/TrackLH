@@ -6,7 +6,14 @@ import { Select } from "@/components/ui/Select";
 import { getMonthOptions, cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n-react";
 import { VALID_TRANSACTION_TYPES } from "@/types";
-import type { TransactionFilters } from "@/types";
+import type { TransactionFilters, TransactionType } from "@/types";
+
+/** Matching the movement form, the lists and the amounts. */
+const TYPE_TONES: Record<TransactionType, string> = {
+  Gasto: "var(--color-red)",
+  Ingreso: "var(--color-green)",
+  Transferencia: "var(--color-blue)",
+};
 
 interface Props {
   filters: TransactionFilters;
@@ -63,7 +70,12 @@ export function TransactionFiltersPanel({ filters, categories, accounts, onChang
         <div className="flex-1 flex gap-1.5 overflow-x-auto">
           <Chip active={filters.type === ""} onClick={() => update("type", "")}>{t.common.all}</Chip>
           {VALID_TRANSACTION_TYPES.map((type) => (
-            <Chip key={type} active={filters.type === type} onClick={() => update("type", filters.type === type ? "" : type)}>
+            <Chip
+              key={type}
+              active={filters.type === type}
+              tone={TYPE_TONES[type]}
+              onClick={() => update("type", filters.type === type ? "" : type)}
+            >
               {t.txType[type]}
             </Chip>
           ))}
@@ -124,14 +136,32 @@ export function TransactionFiltersPanel({ filters, categories, accounts, onChang
   );
 }
 
-function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+function Chip({
+  active, onClick, tone, children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  /** Absent on "all", which stands for no type and so takes no colour. */
+  tone?: string;
+  children: React.ReactNode;
+}) {
   return (
     <button
       onClick={onClick}
       className={cn(
         "press shrink-0 rounded-full font-mono text-[10.5px] font-medium tracking-wide uppercase px-3 py-[7px] border transition-colors duration-150 ease-out",
-        active ? "border-accent text-accent bg-accent/10" : "border-border text-text-dim"
+        active && !tone && "border-accent text-accent bg-accent/10",
+        !active && "border-border text-text-dim"
       )}
+      style={
+        active && tone
+          ? {
+              borderColor: `color-mix(in srgb, ${tone} 55%, transparent)`,
+              color: tone,
+              backgroundColor: `color-mix(in srgb, ${tone} 12%, transparent)`,
+            }
+          : undefined
+      }
     >
       {children}
     </button>

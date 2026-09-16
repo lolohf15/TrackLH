@@ -30,6 +30,14 @@ interface Props {
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
+/** The same three colours every list, amount and dot in the app already uses
+ *  for these types — so picking one here rehearses reading one later. */
+const TYPE_TONES: Record<TransactionType, string> = {
+  Gasto: "var(--color-red)",
+  Ingreso: "var(--color-green)",
+  Transferencia: "var(--color-blue)",
+};
+
 /** The stored clock, as `YYYY-MM-DD`. Rows are wall clocks pinned to UTC. */
 function dayOf(iso: string): string {
   return iso.slice(0, 10);
@@ -56,6 +64,7 @@ export function TransactionSheet({
   const typeOptions = VALID_TRANSACTION_TYPES.map((type) => ({
     value: type,
     label: t.txType[type],
+    tone: TYPE_TONES[type],
   }));
   // The options come from the same rows the server validates against, so the
   // form can never offer something the POST would reject.

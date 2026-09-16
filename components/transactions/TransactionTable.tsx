@@ -108,7 +108,7 @@ function DesktopRow({ tx, onEdit }: { tx: Transaction; onEdit: () => void }) {
       <td className="px-4 py-3 text-right whitespace-nowrap">
         <span className={cn(
           "font-mono text-sm font-semibold",
-          type === "Gasto" ? "text-red-fg" : type === "Ingreso" ? "text-green-fg" : "text-amber-fg"
+          type === "Gasto" ? "text-red-fg" : type === "Ingreso" ? "text-green-fg" : "text-blue-fg"
         )}>
           {type === "Gasto" ? "−" : type === "Ingreso" ? "+" : ""}
           {formatMXN(tx.amount)}

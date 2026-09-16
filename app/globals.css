@@ -54,6 +54,18 @@
   --color-amber-bg:        rgba(209, 162, 74, 0.12);
   --color-amber-border:    rgba(209, 162, 74, 0.32);
 
+  /* Transfers: money that moved without being earned or spent. It needed a
+     colour of its own — it was borrowing amber, which already means "watch
+     this" on every budget and credit line in the app. */
+  --color-blue:            #6f8fb5;
+  --color-blue-fg:         #6f8fb5;
+  --color-blue-bg:         rgba(111, 143, 181, 0.14);
+  --color-blue-border:     rgba(111, 143, 181, 0.34);
+
+  /* Reads against any filled semantic tone, the way accent-ink reads against
+     the brass: near-black here, white on paper. */
+  --color-tone-ink:        #16130e;
+
   /* Corners — the radius steps with the surface it wraps: marks, then
      controls, then panels, then the sheet. Nothing lands on a hard 90°. */
   --radius-xs:             5px;
@@ -125,6 +137,13 @@
   --color-amber-fg:        #8a631e;
   --color-amber-bg:        rgba(154, 111, 34, 0.10);
   --color-amber-border:    rgba(154, 111, 34, 0.28);
+
+  --color-blue:            #2f5f8f;
+  --color-blue-fg:         #2a5580;
+  --color-blue-bg:         rgba(47, 95, 143, 0.10);
+  --color-blue-border:     rgba(47, 95, 143, 0.28);
+
+  --color-tone-ink:        #ffffff;
 
   /* Paper doesn't glow — the lift comes from a soft drop, not an inner edge. */
   --shadow-panel:  0 1px 2px rgba(60, 50, 30, 0.06), 0 1px 1px rgba(60, 50, 30, 0.04);
@@ -241,17 +260,17 @@
 
   /* An inset group of rows — the app's main surface. Rounded, lifted off the
      page by shadow rather than fenced in by a hairline, and carrying the same
-     edge glow as the tinted cards so the two read as one family. Grey rather
-     than a hue: these are the cards with nothing in particular to say, and a
-     colour here would be a claim. Kept on the surface rather than dropped to
-     black — a panel holds rows, and rows need something to sit in. */
+     edge glow as the tinted cards so the two read as one family — same black
+     middle, same climb to the edges, with the page's own text colour standing
+     in for a hue. These are the cards with nothing in particular to say, and
+     a colour here would be a claim; white is the absence of one. */
   .panel {
-    background-color: var(--color-surface);
+    background-color: var(--tint-ground);
     background-image: radial-gradient(
       125% 108% at 50% 50%,
-      transparent 30%,
-      color-mix(in srgb, var(--color-text-muted) calc(var(--tint-strength) / 6), transparent) 72%,
-      color-mix(in srgb, var(--color-text-muted) calc(var(--tint-strength) / 3.2), transparent) 100%
+      transparent 24%,
+      color-mix(in srgb, var(--color-text) calc(var(--tint-strength) / 5), transparent) 66%,
+      color-mix(in srgb, var(--color-text) calc(var(--tint-strength) / 2), transparent) 100%
     );
     border-radius: var(--radius-lg);
     border: 1px solid var(--color-border);

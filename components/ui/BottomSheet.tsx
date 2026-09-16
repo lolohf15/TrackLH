@@ -51,7 +51,11 @@ export function BottomSheet({ open, onClose, title, children, className }: Props
   return (
     <AnimatePresence>
       {open && (
-        <div className="fixed inset-0 z-50 flex flex-col justify-end" role="dialog" aria-modal="true">
+        <div
+          className="fixed inset-0 z-50 flex flex-col justify-end items-center"
+          role="dialog"
+          aria-modal="true"
+        >
           <motion.div
             className="absolute inset-0 bg-black/60"
             initial={{ opacity: 0 }}
@@ -63,7 +67,11 @@ export function BottomSheet({ open, onClose, title, children, className }: Props
 
           <motion.div
             className={cn(
-              "glass relative rounded-t-[var(--radius-sheet)] max-h-[88dvh] flex flex-col",
+              // Capped, not stretched: on a phone this is the whole width, but
+              // a sheet spanning a desktop window turns every field into a
+              // band running off to the right — the date worst of all, since
+              // it shows eight characters and a mile of empty box.
+              "glass relative w-full max-w-lg rounded-t-[var(--radius-sheet)] max-h-[88dvh] flex flex-col",
               className
             )}
             // .glass's own box-shadow is for chrome that floats generically; a
