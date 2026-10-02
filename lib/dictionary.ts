@@ -80,6 +80,10 @@ export const es = {
     cash: "Efectivo",
     other: "Otra",
     pocket: "Efectivo",
+    viewStack: "Vista de tarjetas",
+    viewGrid: "Vista de lista",
+    showHidden: (n: number) => (n === 1 ? "Mostrar 1 oculta" : `Mostrar ${n} ocultas`),
+    hideHidden: "Esconder ocultas",
     addAccount: "Agregar cuenta",
     totalAvailable: "Total disponible",
     available: "disponible",
@@ -247,6 +251,8 @@ export const es = {
     cycleHint:
       "El día de corte cierra cada ciclo de la tarjeta; el día de pago es la fecha límite. Si es igual o menor al corte, cae el mes siguiente.",
     dayPlaceholder: "1–31",
+    showInWallet: "Mostrar en Wallet",
+    showInWalletHint: "Si la escondes, sigue sumando en tus saldos, totales y movimientos.",
   },
 
   /** Spoken names for the icon keys in lib/category-icons.ts. */
@@ -607,6 +613,10 @@ export const en: typeof es = {
     cash: "Cash",
     other: "Other",
     pocket: "Cash",
+    viewStack: "Card view",
+    viewGrid: "List view",
+    showHidden: (n: number) => `Show ${n} hidden`,
+    hideHidden: "Hide hidden ones",
     addAccount: "Add account",
     totalAvailable: "Total available",
     available: "available",
@@ -767,6 +777,8 @@ export const en: typeof es = {
     cycleHint:
       "The statement day closes each card cycle; the due day is the payment deadline. On or before the statement day, it falls the next month.",
     dayPlaceholder: "1–31",
+    showInWallet: "Show in Wallet",
+    showInWalletHint: "Hidden, it still counts in your balances, totals and movements.",
   },
 
   categoryIcons: {

@@ -23,6 +23,7 @@ type AccountRow = {
   statementDay: number | null;
   dueDay: number | null;
   kind: string | null;
+  hiddenInWallet: boolean;
   color: string | null;
   createdAt: Date;
   updatedAt: Date;
@@ -48,6 +49,7 @@ function serializeAccount(
     statementDay: a.statementDay,
     dueDay: a.dueDay,
     kind: a.kind,
+    hiddenInWallet: a.hiddenInWallet,
     color: a.color,
     createdAt: a.createdAt.toISOString(),
     updatedAt: a.updatedAt.toISOString(),

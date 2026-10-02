@@ -65,6 +65,8 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
             statementDay: nextStatementDay,
             dueDay: nextDueDay,
             kind: nextKind,
+            hiddenInWallet:
+              typeof body.hiddenInWallet === "boolean" ? body.hiddenInWallet : existing.hiddenInWallet,
             color: nextColor,
           },
         }),

@@ -14,6 +14,8 @@ import { ChartSkeleton } from "@/components/ui/Skeleton";
 import { CardStack, type StackCard } from "@/components/wallet/CardStack";
 import { CreditDetails } from "@/components/wallet/CreditDetails";
 import { Pocket } from "@/components/wallet/Pocket";
+import { Eye, EyeOff, LayoutGrid, WalletCards } from "lucide-react";
+import { AccountGrid } from "@/components/wallet/AccountGrid";
 import { shortDay } from "@/components/wallet/DueBadge";
 import { payPrefill, usePaySheet } from "@/components/wallet/PayCard";
 import { useAccounts } from "@/lib/use-accounts";
@@ -34,6 +36,29 @@ import type {
 } from "@/types";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
+
+type WalletView = "stack" | "grid";
+const VIEW_KEY = "tracklh.walletView";
+
+/** A per-device preference: storage can be missing or blocked, and then the
+ *  card stack is the default. */
+function readView(): WalletView {
+  try {
+    return typeof window !== "undefined" && window.localStorage.getItem(VIEW_KEY) === "grid"
+      ? "grid"
+      : "stack";
+  } catch {
+    return "stack";
+  }
+}
+
+function saveView(view: WalletView) {
+  try {
+    window.localStorage.setItem(VIEW_KEY, view);
+  } catch {
+    // Private mode or blocked storage: the choice just won't outlive the tab.
+  }
+}
 
 function buildTxUrl(f: TransactionFilters): string {
   const p = new URLSearchParams();
@@ -141,6 +166,12 @@ function WalletScreen({
     useSWR<{ categories: string[]; accounts: string[] }>("/api/transactions/filters", fetcher);
 
   const [balancesOpen, setBalancesOpen] = useState(false);
+  const [showHidden, setShowHidden] = useState(false);
+  const [view, setViewState] = useState<WalletView>(readView);
+  function setView(next: WalletView) {
+    setViewState(next);
+    saveView(next);
+  }
   // null = closed, "new" = create, otherwise the account being edited.
   const [editing, setEditing] = useState<EditableAccount | "new" | null>(null);
 
@@ -150,16 +181,23 @@ function WalletScreen({
   // Everything but cash goes in the deck: cards first (debit, then credit),
   // then the card-shaped accounts that aren't cards. Cash goes in the pocket.
   const kindOf = (name: string) => configByAccount.get(name)?.kind ?? null;
+  // Hidden accounts stay out unless asked for, or unless they're the one
+  // being looked at (picked from the filters, say).
+  const isHidden = (name: string) => configByAccount.get(name)?.hiddenInWallet ?? false;
+  const hiddenCount = balances.filter((a) => isHidden(a.account)).length;
+  const inWallet = balances.filter(
+    (a) => showHidden || !isHidden(a.account) || a.account === filters.account
+  );
   const cards: StackCard[] = [
-    ...debit.filter((a) => kindOf(a.account) === null),
-    ...balances.filter((a) => a.isCredit),
-    ...balances.filter((a) => kindOf(a.account) === "other"),
+    ...inWallet.filter((a) => !a.isCredit && kindOf(a.account) === null),
+    ...inWallet.filter((a) => a.isCredit),
+    ...inWallet.filter((a) => kindOf(a.account) === "other"),
   ].map((a) => ({
     account: a,
     cycle: configByAccount.get(a.account)?.cycle ?? null,
     plain: kindOf(a.account) === "other",
   }));
-  const bills = balances.filter((a) => kindOf(a.account) === "cash");
+  const bills = inWallet.filter((a) => kindOf(a.account) === "cash");
   const inPocket = filters.account !== "" && kindOf(filters.account) === "cash";
   const selectedConfig = filters.account ? configByAccount.get(filters.account) : undefined;
   const selectedBalance = balances.find((a) => a.account === filters.account);
@@ -244,6 +282,28 @@ function WalletScreen({
     <div className="max-w-6xl mx-auto px-4 md:px-8 pt-4 pb-6">
       <div className="flex items-center justify-between mb-3">
         <h1 className="text-[15px] font-semibold text-text">{t.wallet.title}</h1>
+        <div className="flex items-center gap-1 -my-1.5">
+          <div role="radiogroup" aria-label={t.wallet.title} className="flex items-center rounded-full bg-surface-2 border border-border p-0.5">
+            {([
+              ["stack", WalletCards, t.wallet.viewStack],
+              ["grid", LayoutGrid, t.wallet.viewGrid],
+            ] as const).map(([value, Icon, label]) => (
+              <button
+                key={value}
+                type="button"
+                role="radio"
+                aria-checked={view === value}
+                aria-label={label}
+                onClick={() => setView(value)}
+                className={cn(
+                  "press w-8 h-7 rounded-full flex items-center justify-center transition-colors duration-150 ease-out",
+                  view === value ? "bg-surface-3 text-text" : "text-text-dim hover:text-text"
+                )}
+              >
+                <Icon className="w-4 h-4" aria-hidden />
+              </button>
+            ))}
+          </div>
         <button
           type="button"
           onClick={() => setEditing("new")}
@@ -252,6 +312,7 @@ function WalletScreen({
         >
           <PlusIcon className="w-4 h-4" />
         </button>
+        </div>
       </div>
 
       <div className="md:grid md:grid-cols-[minmax(0,370px)_1fr] md:gap-8 md:items-start">
@@ -266,9 +327,17 @@ function WalletScreen({
             <p className="text-[11.5px] text-text-dim mt-1.5">{t.home.debitAccounts(debit.length)}</p>
           </section>
 
-          {cards.length > 0 ? (
+          {view === "grid" ? (
+            <AccountGrid
+              debit={inWallet.filter((a) => !a.isCredit)}
+              credit={inWallet.filter((a) => a.isCredit)}
+              selected={filters.account}
+              onSelect={pick}
+              onAdd={() => setEditing("new")}
+            />
+          ) : cards.length > 0 ? (
             <CardStack cards={cards} selected={filters.account} onSelect={pick} folded={inPocket} />
-          ) : bills.length > 0 ? null : (
+          ) : bills.length > 0 || hiddenCount > 0 ? null : (
             <button
               type="button"
               onClick={() => setEditing("new")}
@@ -279,7 +348,19 @@ function WalletScreen({
             </button>
           )}
 
-          {bills.length > 0 && <Pocket bills={bills} selected={filters.account} onSelect={pick} />}
+          {view === "stack" && bills.length > 0 && <Pocket bills={bills} selected={filters.account} onSelect={pick} />}
+
+          {hiddenCount > 0 && (
+            <button
+              type="button"
+              onClick={() => setShowHidden((v) => !v)}
+              aria-expanded={showHidden}
+              className="press mx-auto mt-2.5 flex items-center gap-1.5 min-h-[40px] px-3 font-mono text-[10.5px] font-medium text-text-dim uppercase tracking-wide hover:text-text transition-colors duration-150 ease-out"
+            >
+              {showHidden ? <EyeOff className="w-3.5 h-3.5" aria-hidden /> : <Eye className="w-3.5 h-3.5" aria-hidden />}
+              {showHidden ? t.wallet.hideHidden : t.wallet.showHidden(hiddenCount)}
+            </button>
+          )}
 
           <AnimatePresence initial={false} mode="popLayout">
             {/* Waits for the configs: without them a card would read as having
@@ -299,6 +380,7 @@ function WalletScreen({
                     pay(payPrefill(selectedBalance.account, selectedConfig?.cycle ?? null, balances))
                   }
                   onEdit={selectedConfig ? () => setEditing(selectedConfig) : undefined}
+                  showMeter={view === "stack"}
                 />
               </motion.div>
             )}
