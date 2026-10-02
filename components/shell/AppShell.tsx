@@ -9,6 +9,7 @@ import { TabBar } from "./TabBar";
 import { NAV_ITEMS } from "./nav";
 import { AddRecordButton } from "@/components/transactions/AddRecordButton";
 import { GlassFilter } from "@/components/ui/GlassFilter";
+import { ToastProvider } from "@/components/ui/Toast";
 
 function tabIndex(pathname: string): number {
   return NAV_ITEMS.findIndex((item) =>
@@ -36,41 +37,43 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-dvh flex-col bg-bg">
-      <GlassFilter />
-      <Sidebar />
+    <ToastProvider>
+      <div className="flex min-h-dvh flex-col bg-bg">
+        <GlassFilter />
+        <Sidebar />
 
-      <div className="relative flex flex-1 flex-col overflow-x-hidden md:pl-[72px]">
-        <header className="glass scroll-edge sticky top-0 z-20 shrink-0 pt-safe md:hidden">
-          <div className="px-4 py-3 flex items-center gap-2.5">
-            <Image src="/TrackLHLogo.png" alt="TrackLH" width={24} height={24} className="logo-mark w-6 h-6 shrink-0 object-cover" />
-            <h1 className="font-mono text-xs font-semibold tracking-[0.15em] text-text truncate">TRACKLH</h1>
+        <div className="relative flex flex-1 flex-col overflow-x-hidden md:pl-[72px]">
+          <header className="glass scroll-edge sticky top-0 z-20 shrink-0 pt-safe md:hidden">
+            <div className="px-4 py-3 flex items-center gap-2.5">
+              <Image src="/TrackLHLogo.png" alt="TrackLH" width={24} height={24} className="logo-mark w-6 h-6 shrink-0 object-cover" />
+              <h1 className="font-mono text-xs font-semibold tracking-[0.15em] text-text truncate">TRACKLH</h1>
+            </div>
+          </header>
+
+          {/*
+            A CSS-grid stack, not `mode="popLayout"`: popLayout leans on
+            Framer's layout-projection measurement to know when it's safe to
+            drop the exiting page from the DOM, and under Next's App Router
+            that measurement can land at the wrong moment — an exiting page
+            would occasionally never get removed, piling up as duplicate,
+            pushed-down content on the next navigation. Every page here shares
+            the same grid cell instead, so exiting and entering always overlap
+            rather than stack, regardless of exactly when Framer clears the
+            old one out.
+          */}
+          <div className="relative flex-1 grid">
+            <AnimatePresence custom={direction} initial={false}>
+              <Page key={pathname} direction={direction}>
+                {children}
+              </Page>
+            </AnimatePresence>
           </div>
-        </header>
-
-        {/*
-          A CSS-grid stack, not `mode="popLayout"`: popLayout leans on
-          Framer's layout-projection measurement to know when it's safe to
-          drop the exiting page from the DOM, and under Next's App Router
-          that measurement can land at the wrong moment — an exiting page
-          would occasionally never get removed, piling up as duplicate,
-          pushed-down content on the next navigation. Every page here shares
-          the same grid cell instead, so exiting and entering always overlap
-          rather than stack, regardless of exactly when Framer clears the
-          old one out.
-        */}
-        <div className="relative flex-1 grid">
-          <AnimatePresence custom={direction} initial={false}>
-            <Page key={pathname} direction={direction}>
-              {children}
-            </Page>
-          </AnimatePresence>
         </div>
-      </div>
 
-      <AddRecordButton />
-      <TabBar />
-    </div>
+        <AddRecordButton />
+        <TabBar />
+      </div>
+    </ToastProvider>
   );
 }
 
