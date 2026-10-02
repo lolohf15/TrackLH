@@ -269,6 +269,12 @@
   50%       { opacity: 0.4; }
 }
 
+/* The amount's caret: on, then off, with no fade — a text cursor blinks. */
+@keyframes caret {
+  0%, 49%   { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
@@ -378,6 +384,7 @@
   .animate-bar-grow    { animation: barGrow 0.5s var(--ease-out) both; transform-origin: left; }
   .animate-pulse-dot   { animation: pulseDot 1.4s ease-in-out infinite; }
   .animate-spin-fast   { animation: spin 0.7s linear infinite; }
+  .animate-caret       { animation: caret 1.06s steps(1) infinite; }
 
   /* Interruptible press feedback */
   .press               { transition: transform 160ms var(--ease-out); }
@@ -389,6 +396,7 @@
   .animate-bar-grow,
   .animate-pulse-dot { animation: none; }
   .animate-spin-fast { animation-duration: 1.4s; }
+  .animate-caret { animation: none; }
   .press { transition: none; }
   .transition-\[max-height\] { transition: none; }
   * { scroll-behavior: auto !important; }

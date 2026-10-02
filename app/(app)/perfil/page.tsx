@@ -11,6 +11,8 @@ import { CategoryEditSheet, type EditableCategory } from "@/components/settings/
 import { ChevronDownIcon, PlusIcon } from "@/components/shell/icons";
 import { formatMXN, cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n-react";
+import { CategoryIcon } from "@/components/ui/CategoryIcon";
+import { UNKNOWN_COLOR } from "@/types";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -79,6 +81,7 @@ export default function Perfil() {
               <ItemRow
                 key={c.id}
                 color={c.color}
+                icon={c.icon}
                 name={c.name}
                 meta={
                   c.kind === "expense" && c.budget > 0
@@ -159,9 +162,11 @@ function ManageSection({
 }
 
 function ItemRow({
-  color, name, meta, onClick,
+  color, icon, name, meta, onClick,
 }: {
   color: string | null;
+  /** Categories pass theirs (null included); accounts have none and keep the dot. */
+  icon?: string | null;
   name: string;
   meta: string;
   onClick: () => void;
@@ -173,10 +178,14 @@ function ItemRow({
       className="press w-full flex items-center justify-between gap-2.5 py-2.5 pl-3 border-t border-divider text-left"
     >
       <span className="flex items-center gap-2.5 min-w-0">
-        <span
-          className="w-[7px] h-[7px] rounded-full shrink-0"
-          style={{ backgroundColor: color ?? "var(--color-text-faint)" }}
-        />
+        {icon !== undefined ? (
+          <CategoryIcon icon={icon} name={name} color={color ?? UNKNOWN_COLOR} size="sm" />
+        ) : (
+          <span
+            className="w-[7px] h-[7px] rounded-full shrink-0"
+            style={{ backgroundColor: color ?? "var(--color-text-faint)" }}
+          />
+        )}
         <span className="text-[13px] text-text truncate">{name}</span>
       </span>
       <span className="font-mono text-[10.5px] text-text-dim shrink-0">{meta}</span>

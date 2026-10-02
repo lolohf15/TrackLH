@@ -5,6 +5,7 @@ import { requireUser, errorResponse } from "@/lib/auth";
 import { apiMessages } from "@/lib/api-lang";
 import { UNKNOWN_COLOR, type CategoryKind } from "@/types";
 import { mapBudget } from "@/lib/money";
+import { isCategoryIconKey } from "@/lib/category-icons";
 
 /** This user's categories, with the monthly budget attached to each. */
 export async function GET() {
@@ -26,6 +27,7 @@ export async function GET() {
         id: c.id,
         name: c.name,
         color: c.color,
+        icon: c.icon,
         kind: c.kind as CategoryKind,
         sortOrder: c.sortOrder,
         budget: budgetMap.get(c.name) ?? 0,
@@ -53,11 +55,12 @@ export async function POST(req: NextRequest) {
 
     const kind: CategoryKind = body.kind === "income" ? "income" : "expense";
     const color = typeof body.color === "string" ? body.color : UNKNOWN_COLOR;
+    const icon = isCategoryIconKey(body.icon) ? body.icon : null;
     const budget = Number(body.budget);
 
     try {
       const created = await prisma.category.create({
-        data: { userId, name, kind, color, sortOrder: 999 },
+        data: { userId, name, kind, color, icon, sortOrder: 999 },
       });
 
       // Income has nothing to budget against, so only expenses get a row.

@@ -4,6 +4,8 @@ import Link from "next/link";
 import { formatMXN, cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n-react";
 import type { CategorySummary } from "@/types";
+import { CategoryIcon } from "@/components/ui/CategoryIcon";
+import { useCategoryIcons } from "@/lib/use-category-icons";
 
 /**
  * One category, wherever it's listed: the marker, what it's called, its
@@ -25,19 +27,19 @@ export function CategoryRow({
   className?: string;
 }) {
   const t = useT();
+  // Every row this renders is a spending category (Analytics and Inicio
+  // break down expenses), so the lookup is scoped to that kind.
+  const iconFor = useCategoryIcons();
 
   const content = (
     <>
       <span className="flex items-center gap-3 min-w-0">
-        <span
-          className="w-[22px] h-[22px] rounded-full grid place-items-center shrink-0"
-          style={{ border: `1px solid color-mix(in srgb, ${category.color} 32%, transparent)` }}
-        >
-          <span
-            className="w-[7px] h-[7px] rounded-full"
-            style={{ backgroundColor: category.color }}
-          />
-        </span>
+        <CategoryIcon
+          icon={iconFor(category.category, "expense")}
+          name={category.category}
+          color={category.color}
+          size="sm"
+        />
         <span className="min-w-0">
           <span className="block text-[13.5px] text-text truncate">{category.category}</span>
           <span className="block text-[11.5px] text-text-dim mt-0.5">

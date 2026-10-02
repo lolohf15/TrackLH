@@ -21,6 +21,8 @@ export interface Category {
   id: string;
   name: string;
   color: string;
+  /** A key from lib/category-icons.ts, or null to show the first letter. */
+  icon: string | null;
   kind: CategoryKind;
   sortOrder: number;
 }
@@ -29,13 +31,22 @@ export interface AccountOption {
   account: string;
   isCredit: boolean;
   color: string | null;
+  /** What it holds right now (negative on a card means money owed). */
+  balance: number;
+  /** Cards with a line on file: what's left to spend. Null otherwise. */
+  availableCredit: number | null;
 }
 
 /** What the add-record form needs: this user's accounts and categories. */
 export interface Catalog {
   accounts: AccountOption[];
+  /** Ordered most-used first over the last 90 days, then by sortOrder. */
   expenseCategories: Category[];
   incomeCategories: Category[];
+  /** The account the user last logged each type from, so the sheet can lead with it. */
+  lastAccount: Partial<Record<TransactionType, string>>;
+  /** The destination of the user's last transfer. */
+  lastToAccount: string | null;
 }
 
 export interface Transaction {

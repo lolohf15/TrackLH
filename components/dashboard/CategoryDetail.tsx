@@ -6,6 +6,8 @@ import { ProgressBar } from "@/components/ui/ProgressBar";
 import { formatMXN, formatMonth, cn } from "@/lib/utils";
 import type { CategoryTrend } from "@/types";
 import { useT } from "@/lib/i18n-react";
+import { CategoryIcon } from "@/components/ui/CategoryIcon";
+import { useCategoryIcons } from "@/lib/use-category-icons";
 
 export function CategoryDetail({
   trend,
@@ -27,13 +29,14 @@ export function CategoryDetail({
   const average =
     active.length > 1 ? active.reduce((sum, p) => sum + p.amount, 0) / active.length : 0;
 
+  const iconFor = useCategoryIcons();
   const barColor = isOver ? "var(--color-red)" : isWarning ? "var(--color-amber)" : trend.color;
 
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-2.5">
-          <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: trend.color }} />
+          <CategoryIcon icon={iconFor(trend.category, "expense")} name={trend.category} color={trend.color} size="md" />
           <h2 className="text-base font-semibold text-text">{trend.category}</h2>
         </div>
         <Link

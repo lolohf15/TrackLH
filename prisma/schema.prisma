@@ -103,6 +103,9 @@ model Category {
   userId    String
   name      String
   color     String
+  /// A key from CATEGORY_ICON_KEYS in lib/category-icons.ts, never raw SVG.
+  /// Null falls back to the name's first letter on a tinted circle.
+  icon      String?
   /// "expense" | "income"
   kind      String   @default("expense")
   sortOrder Int      @default(0)

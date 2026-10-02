@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUser, errorResponse } from "@/lib/auth";
 import { apiMessages } from "@/lib/api-lang";
 import { CUSTOM_COLOR_CYCLE } from "@/services/presets";
+import { suggestCategoryIcon } from "@/lib/category-icons";
 
 interface IncomingAccount {
   account: string;
@@ -77,7 +78,12 @@ export async function POST(req: NextRequest) {
       ...cleanCategories.map((c) =>
         prisma.category.upsert({
           where: { userId_kind_name: { userId, kind: c.kind, name: c.name } },
-          create: { userId, name: c.name, kind: c.kind, color: c.color, sortOrder: c.sortOrder },
+          // Presets and hand-typed names alike start with the icon their
+          // name suggests; the update branch leaves an icon the user chose.
+          create: {
+            userId, name: c.name, kind: c.kind, color: c.color, sortOrder: c.sortOrder,
+            icon: suggestCategoryIcon(c.name),
+          },
           update: { color: c.color, sortOrder: c.sortOrder },
         })
       ),

@@ -12,6 +12,9 @@ import { currentLocale } from "@/lib/i18n";
 import { useT } from "@/lib/i18n-react";
 import type { Dictionary } from "@/lib/dictionary";
 import type { Transaction, TransactionType, PaginatedTransactions } from "@/types";
+import { CATEGORY_ICONS } from "@/components/ui/CategoryIcon";
+import { isCategoryIconKey } from "@/lib/category-icons";
+import { useCategoryIcons } from "@/lib/use-category-icons";
 
 interface Props {
   data: PaginatedTransactions | null;
@@ -173,6 +176,12 @@ function Row({
 }) {
   const t = useT();
   const type = tx.type as TransactionType;
+  const iconFor = useCategoryIcons();
+  const iconKey =
+    type === "Transferencia"
+      ? "transfer"
+      : iconFor(tx.category, type === "Ingreso" ? "income" : "expense");
+  const Glyph = isCategoryIconKey(iconKey) ? CATEGORY_ICONS[iconKey] : null;
   const reduceMotion = useReducedMotion();
   const x = useMotionValue(0);
   const [dragging, setDragging] = useState(false);
@@ -253,16 +262,21 @@ function Row({
         )}
       >
         <div className="flex items-center gap-3 min-w-0">
-          {/* A dot inside a ring, not a bare dot: at this size the ring is
-              what gives the row a left edge to hang off. */}
+          {/* The category's icon inside a ring in the type's colour — the
+              ring gives the row a left edge, the colour still says spent,
+              earned or moved. A category with no icon keeps the dot. */}
           <span
             className="w-[22px] h-[22px] rounded-full grid place-items-center shrink-0"
             style={{ border: `1px solid color-mix(in srgb, ${typeColors[type]} 32%, transparent)` }}
           >
-            <span
-              className="w-[7px] h-[7px] rounded-full"
-              style={{ background: typeColors[type] }}
-            />
+            {Glyph ? (
+              <Glyph size={12} strokeWidth={2.2} aria-hidden="true" style={{ color: typeColors[type] }} />
+            ) : (
+              <span
+                className="w-[7px] h-[7px] rounded-full"
+                style={{ background: typeColors[type] }}
+              />
+            )}
           </span>
           <div className="min-w-0">
             <p className="text-[13.5px] text-text truncate">
