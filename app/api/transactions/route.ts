@@ -5,6 +5,7 @@ import { requireUser, errorResponse } from "@/lib/auth";
 import { apiMessages } from "@/lib/api-lang";
 import { validateTransactionInput } from "@/lib/transaction-input";
 import { mapTransaction } from "@/lib/transaction-map";
+import { isPeriodKind, parseAnchor, resolvePeriod } from "@/services/period";
 
 export async function GET(req: NextRequest) {
   try {
@@ -24,7 +25,16 @@ export async function GET(req: NextRequest) {
     if (account)  where.account  = account;
     if (type)     where.type     = type;
 
-    if (month) {
+    // A named span around an anchor day, the same way Analytics asks, so a
+    // link from any period there lands on exactly those movements. All-time
+    // takes no bound at all. `month` stays for older links.
+    const period = searchParams.get("period") ?? "";
+    if (isPeriodKind(period)) {
+      if (period !== "all") {
+        const { range } = resolvePeriod(period, parseAnchor(searchParams.get("anchor")));
+        where.date = { gte: range.from, lt: range.to };
+      }
+    } else if (month) {
       const [year, m] = month.split("-").map(Number);
       where.date = { gte: new Date(Date.UTC(year, m - 1, 1)), lt: new Date(Date.UTC(year, m, 1)) };
     }

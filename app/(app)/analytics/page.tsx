@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import useSWR from "swr";
 import { CategoryDetail } from "@/components/dashboard/CategoryDetail";
 import { CategoryRow } from "@/components/dashboard/CategoryRow";
@@ -11,7 +12,7 @@ import { MetricTile } from "@/components/ui/MetricTile";
 import { Ring } from "@/components/ui/Ring";
 import { ChartSkeleton } from "@/components/ui/Skeleton";
 import { formatMXN, cn } from "@/lib/utils";
-import { dayKey, formatPeriodLabel, type PeriodKind } from "@/services/period";
+import { dayKey, formatPeriodLabel, todayAnchor, wallClockNow, type PeriodKind } from "@/services/period";
 import { useLocale, useT } from "@/lib/i18n-react";
 import type { AnalyticsData, CategoryTrend } from "@/types";
 
@@ -21,10 +22,10 @@ export default function Analytics() {
   const t = useT();
   const locale = useLocale();
   const [kind, setKind] = useState<PeriodKind>("month");
-  const [anchor, setAnchor] = useState(() => new Date());
+  const [anchor, setAnchor] = useState(todayAnchor);
   // Captured once rather than read during render, which would make the
   // component non-deterministic.
-  const [openedAt] = useState(() => Date.now());
+  const [openedAt] = useState(() => wallClockNow().getTime());
 
   // Everything on this screen but the sparkline comes from one request, so
   // changing the period redraws the whole tab at once.
@@ -77,6 +78,14 @@ export default function Analytics() {
     : data?.period === "year" ? t.analytics.vsPrevYear
     : undefined;
 
+  // The span on screen, as Wallet reads it — so "see movements" lands on
+  // exactly the rows these figures were added up from.
+  const spanQuery = data
+    ? data.period === "all"
+      ? "period=all"
+      : `period=${data.period}&anchor=${data.from.slice(0, 10)}`
+    : "";
+
   const top = categories[0] ?? null;
   const empty = data !== undefined && data.expenseCount === 0 && data.income === 0;
 
@@ -127,6 +136,14 @@ export default function Analytics() {
                   tone={data.net < 0 ? "text-red-fg" : "text-green-fg"}
                 />
               </div>
+
+              <Link
+                href={`/wallet?${spanQuery}`}
+                className="press flex items-center justify-between gap-2 mt-3 pt-3 -mb-1 min-h-[36px] border-t border-border font-mono text-[10.5px] font-medium text-accent uppercase tracking-wide hover:brightness-125"
+              >
+                <span className="truncate">{t.analytics.seeMovements(periodLabel)}</span>
+                <span aria-hidden>→</span>
+              </Link>
             </section>
 
             <SpendChart
@@ -178,7 +195,7 @@ export default function Analytics() {
                       />
                       <CategoryRow
                         category={c}
-                        href={`/analytics/${encodeURIComponent(c.category)}`}
+                        href={`/analytics/${encodeURIComponent(c.category)}?${spanQuery}`}
                         className="md:hidden flex"
                       />
                     </div>
@@ -191,7 +208,7 @@ export default function Analytics() {
           {/* Desktop detail panel */}
           {selectedTrend && (
             <div className="panel hidden md:block sticky top-6 px-5 py-4 mt-3">
-              <CategoryDetail trend={selectedTrend} />
+              <CategoryDetail trend={selectedTrend} spanQuery={spanQuery} />
             </div>
           )}
         </div>

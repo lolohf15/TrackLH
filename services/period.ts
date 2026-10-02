@@ -190,6 +190,33 @@ export function formatPeriodLabel(period: Period, locale: string): string | null
   }).formatRange(range.from, last);
 }
 
+/**
+ * The reader's own clock, pinned to UTC the way rows are stored. `new Date()`
+ * is the real instant, which in Mexico on the evening of the 30th is already
+ * the 1st in UTC — and would open next month, empty.
+ */
+export function wallClockNow(at: Date = new Date()): Date {
+  return new Date(Date.UTC(
+    at.getFullYear(), at.getMonth(), at.getDate(),
+    at.getHours(), at.getMinutes(), at.getSeconds()
+  ));
+}
+
+/** Today on the reader's clock, as the anchor every period starts from. */
+export function todayAnchor(): Date {
+  return startOfUTCDay(wallClockNow());
+}
+
+/** The same kind of span one step before or after. All-time has no
+ *  neighbours, so it stays where it is. */
+export function stepAnchor(kind: PeriodKind, anchor: Date, dir: -1 | 1): Date {
+  const next = new Date(anchor);
+  if (kind === "week") next.setUTCDate(next.getUTCDate() + dir * 7);
+  else if (kind === "month") next.setUTCMonth(next.getUTCMonth() + dir);
+  else if (kind === "year") next.setUTCFullYear(next.getUTCFullYear() + dir);
+  return next;
+}
+
 /** `YYYY-MM-DD` or a full ISO string; anything else falls back to today. */
 export function parseAnchor(raw: string | null): Date {
   if (!raw) return new Date();

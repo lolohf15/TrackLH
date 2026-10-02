@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Select } from "@/components/ui/Select";
-import { getMonthOptions, cn } from "@/lib/utils";
+import { SegmentedControl } from "@/components/ui/SegmentedControl";
+import { FilterIcon } from "@/components/shell/icons";
 import { useT } from "@/lib/i18n-react";
 import { VALID_TRANSACTION_TYPES } from "@/types";
 import type { TransactionFilters, TransactionType } from "@/types";
@@ -24,27 +25,25 @@ interface Props {
 
 export function TransactionFiltersPanel({ filters, categories, accounts, onChange }: Props) {
   const t = useT();
-  const months = getMonthOptions(24);
   const [sheetOpen, setSheetOpen] = useState(false);
 
   function update(key: keyof TransactionFilters, value: string | number) {
     onChange({ ...filters, [key]: value, page: 1 });
   }
 
+  // The span is navigation, not a filter: it has its own stepper above the
+  // list, so clearing leaves it where it is.
   function reset() {
-    onChange({ month: "", category: "", account: "", type: "", page: 1, limit: filters.limit });
+    onChange({ ...filters, category: "", account: "", type: "", page: 1 });
   }
 
-  const sheetActiveCount = [filters.month, filters.category, filters.account].filter(Boolean).length;
+  const sheetActiveCount = [filters.category, filters.account].filter(Boolean).length;
   const activeCount = sheetActiveCount + (filters.type ? 1 : 0);
 
   return (
     <>
       {/* Desktop: inline selects */}
       <div className="hidden sm:flex flex-wrap items-center gap-2">
-        <Select value={filters.month} onChange={(v) => update("month", v)} placeholder={t.movements.allMonths}>
-          {months.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
-        </Select>
         <Select value={filters.type} onChange={(v) => update("type", v)} placeholder={t.movements.allTypes}>
           {VALID_TRANSACTION_TYPES.map((type) => <option key={type} value={type}>{t.txType[type]}</option>)}
         </Select>
@@ -64,29 +63,34 @@ export function TransactionFiltersPanel({ filters, categories, accounts, onChang
         )}
       </div>
 
-      {/* Mobile: type chips + sheet trigger for the rest */}
+      {/* Mobile: every type in one track that fits the width — a row that
+          scrolled sideways hid the last of them behind the filter button. */}
       <div className="sm:hidden flex items-center gap-2">
-        {/* Scrolls sideways itself, so the tab swipe has to keep its hands off. */}
-        <div className="flex-1 flex gap-1.5 overflow-x-auto">
-          <Chip active={filters.type === ""} onClick={() => update("type", "")}>{t.common.all}</Chip>
-          {VALID_TRANSACTION_TYPES.map((type) => (
-            <Chip
-              key={type}
-              active={filters.type === type}
-              tone={TYPE_TONES[type]}
-              onClick={() => update("type", filters.type === type ? "" : type)}
-            >
-              {t.txType[type]}
-            </Chip>
-          ))}
-        </div>
+        <SegmentedControl
+          options={[
+            { value: "", label: t.common.all },
+            ...VALID_TRANSACTION_TYPES.map((type) => ({
+              value: type,
+              label: t.movements.typeShort[type],
+              tone: TYPE_TONES[type],
+            })),
+          ]}
+          value={filters.type}
+          onChange={(v) => update("type", v)}
+          label={t.txSheet.type}
+          size="sm"
+          className="flex-1 min-w-0"
+        />
         <button
           onClick={() => setSheetOpen(true)}
-          className="press flex items-center gap-1.5 rounded-full font-mono text-[10.5px] font-medium border border-border px-3 py-[7px] text-text-muted shrink-0"
+          aria-label={t.movements.filters}
+          className="press relative w-11 h-11 -my-1.5 flex items-center justify-center text-text-muted shrink-0"
         >
-          {t.movements.filters}
+          <span className="w-[34px] h-[34px] rounded-md bg-surface-2 flex items-center justify-center">
+            <FilterIcon className="w-4 h-4" />
+          </span>
           {sheetActiveCount > 0 && (
-            <span className="w-3.5 h-3.5 rounded-full bg-accent text-accent-ink text-[9px] flex items-center justify-center font-semibold">
+            <span className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-accent text-accent-ink text-[9px] flex items-center justify-center font-semibold">
               {sheetActiveCount}
             </span>
           )}
@@ -107,11 +111,6 @@ export function TransactionFiltersPanel({ filters, categories, accounts, onChang
           )}
 
           <div className="space-y-4">
-            <SheetField label={t.movements.month}>
-              <Select value={filters.month} onChange={(v) => update("month", v)} placeholder={t.movements.allMonths} block>
-                {months.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
-              </Select>
-            </SheetField>
             <SheetField label={t.common.account}>
               <Select value={filters.account} onChange={(v) => update("account", v)} placeholder={t.movements.allAccounts} block>
                 {accounts.map((a) => <option key={a} value={a}>{a}</option>)}
@@ -133,38 +132,6 @@ export function TransactionFiltersPanel({ filters, categories, accounts, onChang
         </div>
       </BottomSheet>
     </>
-  );
-}
-
-function Chip({
-  active, onClick, tone, children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  /** Absent on "all", which stands for no type and so takes no colour. */
-  tone?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={cn(
-        "press shrink-0 rounded-full font-mono text-[10.5px] font-medium tracking-wide uppercase px-3 py-[7px] border transition-colors duration-150 ease-out",
-        active && !tone && "border-accent text-accent bg-accent/10",
-        !active && "border-border text-text-dim"
-      )}
-      style={
-        active && tone
-          ? {
-              borderColor: `color-mix(in srgb, ${tone} 55%, transparent)`,
-              color: tone,
-              backgroundColor: `color-mix(in srgb, ${tone} 12%, transparent)`,
-            }
-          : undefined
-      }
-    >
-      {children}
-    </button>
   );
 }
 

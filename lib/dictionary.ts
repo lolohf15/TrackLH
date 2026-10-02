@@ -106,6 +106,7 @@ export const es = {
   },
 
   analytics: {
+    seeMovements: (span: string) => `Ver movimientos · ${span}`,
     title: "Categorías",
     spendByCategory: "Gasto por categoría",
     noSpendTitle: "Sin gastos este mes",
@@ -159,6 +160,10 @@ export const es = {
     description: "Descripción",
     clear: "Limpiar",
     apply: "Aplicar",
+    /** Short enough that four of them share a phone's width. */
+    typeShort: { Gasto: "Gasto", Ingreso: "Ingreso", Transferencia: "Transf." },
+    showAll: (n: number) => `Ver los ${n} movimientos`,
+    showLess: "Ver menos",
   },
 
   txSheet: {
@@ -439,6 +444,7 @@ export const en: typeof es = {
   },
 
   analytics: {
+    seeMovements: (span: string) => `See movements · ${span}`,
     title: "Categories",
     spendByCategory: "Spending by category",
     noSpendTitle: "No spending this month",
@@ -487,6 +493,9 @@ export const en: typeof es = {
     description: "Description",
     clear: "Clear",
     apply: "Apply",
+    typeShort: { Gasto: "Expense", Ingreso: "Income", Transferencia: "Transfer" },
+    showAll: (n: number) => `See all ${n} movements`,
+    showLess: "Show less",
   },
 
   txSheet: {

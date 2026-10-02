@@ -15,9 +15,11 @@ interface Props {
   loading: boolean;
   page: number;
   onPageChange: (page: number) => void;
+  /** Off while the list is cut to a preview: there is no next page of ten. */
+  paginate?: boolean;
 }
 
-export function TransactionTable({ data, loading, page, onPageChange }: Props) {
+export function TransactionTable({ data, loading, page, onPageChange, paginate = true }: Props) {
   const t = useT();
   const [editing, setEditing] = useState<Transaction | null>(null);
 
@@ -58,7 +60,7 @@ export function TransactionTable({ data, loading, page, onPageChange }: Props) {
         </table>
       </div>
 
-      {data.totalPages > 1 && (
+      {paginate && data.totalPages > 1 && (
         <Pagination page={page} totalPages={data.totalPages} total={data.total} limit={data.limit} onPageChange={onPageChange} />
       )}
     </div>

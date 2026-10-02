@@ -13,7 +13,7 @@ import { ChartSkeleton } from "@/components/ui/Skeleton";
 import { MetricTile } from "@/components/ui/MetricTile";
 import { useLocale, useT } from "@/lib/i18n-react";
 import { ProgressBar } from "@/components/ui/ProgressBar";
-import { dayKey, formatPeriodLabel, monthKey, resolvePeriod } from "@/services/period";
+import { dayKey, formatPeriodLabel, monthKey, resolvePeriod, todayAnchor, wallClockNow } from "@/services/period";
 import { formatMXN, cn } from "@/lib/utils";
 import { useCountUp } from "@/lib/useCountUp";
 import type {
@@ -29,13 +29,13 @@ export default function Home() {
   const t = useT();
   const locale = useLocale();
   // The day being looked at — the month around it is what Inicio shows.
-  const [anchor, setAnchor] = useState(() => new Date());
+  const [anchor, setAnchor] = useState(todayAnchor);
   // Captured once rather than read during render: reading the clock while
   // rendering makes the component non-deterministic, and a dashboard left
   // open across midnight is not worth that.
-  const [openedAt] = useState(() => Date.now());
+  const [openedAt] = useState(() => wallClockNow().getTime());
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [pickerYear, setPickerYear] = useState(() => new Date().getUTCFullYear());
+  const [pickerYear, setPickerYear] = useState(() => todayAnchor().getUTCFullYear());
 
   const period = resolvePeriod("month", anchor);
 
@@ -206,7 +206,7 @@ export default function Home() {
           <section>
             <SectionLabel>
               {t.home.recentActivity}
-              <Link href="/wallet" className="font-mono text-[10px] font-medium text-accent hover:brightness-125 tracking-wide normal-case">
+              <Link href={`/wallet?period=month&anchor=${dayKey(anchor)}`} className="font-mono text-[10px] font-medium text-accent hover:brightness-125 tracking-wide normal-case">
                 {t.home.seeAll} →
               </Link>
             </SectionLabel>
