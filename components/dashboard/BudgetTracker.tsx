@@ -8,6 +8,8 @@ import { cn } from "@/lib/utils";
 import { useCountUp } from "@/lib/useCountUp";
 import type { BudgetItem } from "@/types";
 import { useT } from "@/lib/i18n-react";
+import { CategoryIcon } from "@/components/ui/CategoryIcon";
+import { useCategoryIcons } from "@/lib/use-category-icons";
 
 /** Over budget shouts red, near budget shouts amber, otherwise the category
  *  keeps its own colour — which now travels on the item from the database. */
@@ -69,11 +71,15 @@ function BudgetRow({ item }: { item: BudgetItem }) {
   const color = rowColor(item);
   const valueColor = item.percentage >= 100 ? "text-red-fg" : item.percentage >= 90 ? "text-amber-fg" : "text-text";
   const spentDisplay = useCountUp(item.spent, formatMXN);
+  const iconFor = useCategoryIcons();
 
   return (
     <div>
-      <div className="flex items-baseline justify-between mb-[5px]">
-        <span className="text-[13px] text-text-muted">{item.category}</span>
+      <div className="flex items-center justify-between gap-2 mb-[5px]">
+        <span className="inline-flex items-center gap-2 min-w-0 text-[13px] text-text-muted">
+          <CategoryIcon icon={iconFor(item.category, "expense")} name={item.category} color={item.color} size="sm" />
+          <span className="truncate">{item.category}</span>
+        </span>
         <span className="font-mono text-xs tabular-nums">
           <span className={cn("font-semibold", valueColor)}>{spentDisplay}</span>
           <span className="text-text-faint"> / {formatMXN(item.budget)}</span>

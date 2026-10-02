@@ -265,6 +265,7 @@ function buildCategories(wb: ExcelJS.Workbook, bundle: ExportBundle, dict: Dicti
     { header: h.count, key: "count", width: 13 },
     { header: h.monthlyAverage, key: "average", width: 17, numFmt: MONEY },
     { header: h.color, key: "color", width: 11 },
+    { header: h.icon, key: "icon", width: 15 },
   ];
 
   const ws = table(wb, dict.xlsx.sheets.categories, columns);
@@ -283,7 +284,7 @@ function buildCategories(wb: ExcelJS.Workbook, bundle: ExportBundle, dict: Dicti
   };
 
   for (const c of bundle.categories) {
-    addCategoryRow(ws, c.name, kindLabel[c.kind], c.budget, c.color, totals[c.kind]);
+    addCategoryRow(ws, c.name, kindLabel[c.kind], c.budget, c.color, c.icon, totals[c.kind]);
   }
 
   // Then anything the ledger still refers to but the settings no longer list:
@@ -298,7 +299,7 @@ function buildCategories(wb: ExcelJS.Workbook, bundle: ExportBundle, dict: Dicti
       .sort((a, b) => a.localeCompare(b));
 
     for (const name of orphans) {
-      addCategoryRow(ws, name, kindLabel[kind], 0, null, totals[kind]);
+      addCategoryRow(ws, name, kindLabel[kind], 0, null, null, totals[kind]);
     }
   }
 
@@ -342,6 +343,7 @@ function addCategoryRow(
   kind: string,
   budget: number,
   color: string | null,
+  icon: string | null,
   totals: Map<string, CategoryTotals>
 ): void {
   const entry = totals.get(name);
@@ -356,6 +358,9 @@ function addCategoryRow(
     // calendar — a category used twice a year would otherwise read as ~0.
     average: entry && months > 0 ? round2(entry.amount / months) : 0,
     color: color ?? "",
+    // The stored key, not a picture: it round-trips if the sheet is ever
+    // read back in, and stays legible in any spreadsheet app.
+    icon: icon ?? "",
   });
 }
 

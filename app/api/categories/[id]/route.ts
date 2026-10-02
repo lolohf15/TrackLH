@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireUser, errorResponse } from "@/lib/auth";
 import { apiMessages } from "@/lib/api-lang";
+import { isCategoryIconKey } from "@/lib/category-icons";
 
 /**
  * Like accounts, transactions name their category in plain text, and the
@@ -30,6 +31,10 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
         ? body.name.trim().slice(0, 40)
         : existing.name;
     const nextColor = typeof body.color === "string" ? body.color : existing.color;
+    // Absent leaves the icon alone; null (or a key this build doesn't know)
+    // clears it back to the first-letter fallback.
+    const nextIcon =
+      body.icon === undefined ? existing.icon : isCategoryIconKey(body.icon) ? body.icon : null;
     const renamed = nextName !== existing.name;
 
     const rawBudget = Number(body.budget);
@@ -40,7 +45,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
       await prisma.$transaction([
         prisma.category.update({
           where: { id },
-          data: { name: nextName, color: nextColor },
+          data: { name: nextName, color: nextColor, icon: nextIcon },
         }),
         ...(renamed
           ? [

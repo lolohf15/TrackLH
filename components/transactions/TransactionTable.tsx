@@ -8,7 +8,9 @@ import { TableSkeleton } from "@/components/ui/Skeleton";
 import { formatMXN, formatDate } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n-react";
-import type { Transaction, TransactionType, PaginatedTransactions } from "@/types";
+import { UNKNOWN_COLOR, type Transaction, type TransactionType, type PaginatedTransactions } from "@/types";
+import { CategoryIcon } from "@/components/ui/CategoryIcon";
+import { useCategoryLookup } from "@/lib/use-category-icons";
 
 interface Props {
   data: PaginatedTransactions | null;
@@ -81,6 +83,8 @@ function Th({ children, right }: { children: React.ReactNode; right?: boolean })
 function DesktopRow({ tx, onEdit }: { tx: Transaction; onEdit: () => void }) {
   const t = useT();
   const type = tx.type as TransactionType;
+  const lookup = useCategoryLookup();
+  const look = lookup(tx.category, type === "Ingreso" ? "income" : "expense");
 
   return (
     <tr
@@ -94,7 +98,19 @@ function DesktopRow({ tx, onEdit }: { tx: Transaction; onEdit: () => void }) {
         {tx.notes && <p className="text-xs text-text-dim truncate mt-0.5">{tx.notes}</p>}
       </td>
       <td className="px-4 py-3">
-        <span className="text-sm text-text-muted">{tx.category ?? <span className="text-text-faint">—</span>}</span>
+        {tx.category ? (
+          <span className="inline-flex items-center gap-2 text-sm text-text-muted">
+            <CategoryIcon
+              icon={look?.icon}
+              name={tx.category}
+              color={look?.color ?? UNKNOWN_COLOR}
+              size="sm"
+            />
+            {tx.category}
+          </span>
+        ) : (
+          <span className="text-sm text-text-faint">—</span>
+        )}
       </td>
       <td className="px-4 py-3">
         <span className="text-sm text-text-muted">

@@ -16,6 +16,17 @@ export function formatMXN(amount: number): string {
   }).format(amount);
 }
 
+/** Pesos to the cent — for the amount being typed, where $165.50 ≠ $166. */
+export function formatMXNCents(amount: number): string {
+  return new Intl.NumberFormat(currentLocale(), {
+    style: "currency",
+    currency: "MXN",
+    currencyDisplay: "narrowSymbol",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount);
+}
+
 export function formatDate(dateStr: string): string {
   return new Intl.DateTimeFormat(currentLocale(), {
     day: "numeric",

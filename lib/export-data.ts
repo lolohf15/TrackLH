@@ -9,6 +9,8 @@ export interface ExportCategory {
   name: string;
   kind: CategoryKind;
   color: string;
+  /** Icon key from lib/category-icons.ts, or null when none is set. */
+  icon: string | null;
   /** Monthly budget, or 0 when none is set. Income categories never carry one. */
   budget: number;
 }
@@ -64,6 +66,7 @@ export async function collectExportData(userId: string): Promise<ExportBundle> {
     categories: categories.map((c) => ({
       name: c.name,
       color: c.color,
+      icon: c.icon,
       kind: c.kind as CategoryKind,
       budget: budgetMap.get(c.name) ?? 0,
     })),
