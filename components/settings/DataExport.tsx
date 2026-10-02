@@ -64,40 +64,48 @@ export function DataExport() {
     }
   }
 
+  // Grouped the way the rest of Perfil is: the caption outside, one row
+  // inside that is itself the button.
   return (
-    <div className="panel px-4 py-4 space-y-3">
-      <div>
-        <p className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em]">
-          {t.profile.data}
-        </p>
-        <p className="text-[13px] text-text mt-1.5">{t.profile.dataHint}</p>
-        <p className="text-[11.5px] text-text-dim mt-1 leading-relaxed">
-          {t.profile.exportNote}
-        </p>
-      </div>
+    <section>
+      <p className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em] px-1 pb-2">
+        {t.profile.data}
+      </p>
 
-      <button
-        type="button"
-        onClick={download}
-        disabled={busy}
-        className="press w-full inline-flex items-center justify-center gap-2 rounded-md border border-border bg-surface-2 px-4 py-2.5 text-[13px] text-text-muted hover:border-border-strong hover:text-text transition-colors duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
-      >
-        {busy ? (
-          <svg className="animate-spin-fast w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-          </svg>
-        ) : (
-          <DownloadIcon className="w-3.5 h-3.5 shrink-0" />
+      <div className="panel px-4">
+        <button
+          type="button"
+          onClick={download}
+          disabled={busy}
+          aria-busy={busy}
+          className="press w-full flex items-center justify-between gap-3 py-3.5 text-left disabled:cursor-wait"
+        >
+          <span className="min-w-0">
+            <span className="block text-[13.5px] text-text">
+              {busy ? t.profile.exporting : t.profile.exportExcel}
+            </span>
+            <span className="block text-[11.5px] text-text-dim mt-0.5 leading-relaxed">
+              {t.profile.dataHint}
+            </span>
+          </span>
+          <span className="w-8 h-8 rounded-full bg-surface-2 flex items-center justify-center text-accent shrink-0">
+            {busy ? (
+              <svg className="animate-spin-fast w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" aria-hidden>
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+              </svg>
+            ) : (
+              <DownloadIcon className="w-3.5 h-3.5" />
+            )}
+          </span>
+        </button>
+
+        {error && (
+          <p role="alert" className="text-[11.5px] text-red-fg border-t border-divider py-2.5">
+            {error}
+          </p>
         )}
-        {busy ? t.profile.exporting : t.profile.exportExcel}
-      </button>
-
-      {error && (
-        <p role="alert" className="text-[11.5px] text-red-fg">
-          {error}
-        </p>
-      )}
-    </div>
+      </div>
+    </section>
   );
 }
