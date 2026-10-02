@@ -24,3 +24,12 @@ export function parseCycleDays(
   if (!isCredit) return { statementDay: null, dueDay: null };
   return { statementDay: parseCycleDay(body.statementDay), dueDay: parseCycleDay(body.dueDay) };
 }
+
+export type AccountKind = "cash" | "other";
+
+/** "cash" or "other" for an account that isn't a card. A card — debit or
+ *  credit — carries none, so a credit account can never be one. */
+export function parseAccountKind(raw: unknown, isCredit: boolean): AccountKind | null {
+  if (isCredit) return null;
+  return raw === "cash" || raw === "other" ? raw : null;
+}

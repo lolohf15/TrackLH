@@ -3,7 +3,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireUser, errorResponse } from "@/lib/auth";
 import { apiMessages } from "@/lib/api-lang";
-import { parseCreditLimit, parseCycleDays } from "@/lib/account-input";
+import { parseAccountKind, parseCreditLimit, parseCycleDays } from "@/lib/account-input";
 import { toNumberOrNull } from "@/lib/money";
 
 /**
@@ -50,6 +50,8 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
       ? null
       : "dueDay" in body ? parseCycleDays(body, true).dueDay : existing.dueDay;
 
+    const nextKind = parseAccountKind("kind" in body ? body.kind : existing.kind, nextIsCredit);
+
     const renamed = nextName !== existing.account;
 
     try {
@@ -62,6 +64,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
             creditLimit: nextCreditLimit,
             statementDay: nextStatementDay,
             dueDay: nextDueDay,
+            kind: nextKind,
             color: nextColor,
           },
         }),

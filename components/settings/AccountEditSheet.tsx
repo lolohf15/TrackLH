@@ -16,6 +16,7 @@ export interface EditableAccount {
   creditLimit: number | null;
   statementDay: number | null;
   dueDay: number | null;
+  kind: "cash" | "other" | null;
   color: string | null;
 }
 
@@ -32,10 +33,16 @@ export function AccountEditSheet({ account, open, onClose }: Props) {
   const kinds = [
     { value: "debit" as const, label: t.wallet.debit },
     { value: "credit" as const, label: t.wallet.credit },
+    { value: "cash" as const, label: t.wallet.cash },
+    { value: "other" as const, label: t.wallet.other },
   ];
+  type Kind = (typeof kinds)[number]["value"];
 
   const [name, setName] = useState(account?.account ?? "");
-  const [isCredit, setIsCredit] = useState(account?.isCredit ?? false);
+  const [kind, setKind] = useState<Kind>(
+    account?.isCredit ? "credit" : account?.kind ?? "debit"
+  );
+  const isCredit = kind === "credit";
   const [creditLimit, setCreditLimit] = useState(
     account?.creditLimit != null ? String(account.creditLimit) : ""
   );
@@ -58,7 +65,15 @@ export function AccountEditSheet({ account, open, onClose }: Props) {
       const res = await fetch(isNew ? "/api/accounts" : `/api/accounts/${account.id}`, {
         method: isNew ? "POST" : "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ account: name.trim(), isCredit, creditLimit, statementDay, dueDay, color }),
+        body: JSON.stringify({
+          account: name.trim(),
+          isCredit,
+          kind: kind === "cash" || kind === "other" ? kind : null,
+          creditLimit,
+          statementDay,
+          dueDay,
+          color,
+        }),
       });
       const payload = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -112,8 +127,8 @@ export function AccountEditSheet({ account, open, onClose }: Props) {
         <Field label={t.common.kind}>
           <SegmentedControl
             options={kinds}
-            value={isCredit ? "credit" : "debit"}
-            onChange={(v) => setIsCredit(v === "credit")}
+            value={kind}
+            onChange={setKind}
             label={t.accountSheet.kindLabel}
           />
         </Field>

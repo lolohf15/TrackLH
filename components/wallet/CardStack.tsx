@@ -10,6 +10,8 @@ import type { AccountBalance, CreditCycleStatus } from "@/types";
 export interface StackCard {
   account: AccountBalance;
   cycle: CreditCycleStatus | null;
+  /** Card-shaped but not a card (savings, investments): a plain face. */
+  plain?: boolean;
 }
 
 /** Below the card in front, the rest fold into a pile of edges. */
@@ -28,12 +30,15 @@ const SPRING = { type: "spring", duration: 0.5, bounce: 0.14 } as const;
  * motion around from where it is instead of starting over.
  */
 export function CardStack({
-  cards, selected, onSelect,
+  cards, selected, onSelect, folded = false,
 }: {
   cards: StackCard[];
   /** The account in front, or "" for the whole deck. */
   selected: string;
   onSelect: (account: string) => void;
+  /** Something outside the deck is being looked at (the cash in the pocket):
+   *  every card folds into the pile so it has the room. */
+  folded?: boolean;
 }) {
   const t = useT();
   const reduceMotion = useReducedMotion();
@@ -53,9 +58,11 @@ export function CardStack({
   const cardH = width / CARD_RATIO;
   const focus = cards.findIndex((c) => c.account.account === selected);
   const pile = cards.filter((_, i) => i !== focus);
+  const allPiled = focus === -1 && folded;
 
   // Where each card sits, and how tall the deck is around them.
   const place = (i: number): { y: number; scale: number; z: number } => {
+    if (allPiled) return { y: i * SLIVER, scale: 1 - (cards.length - 1 - i) * 0.012, z: i };
     if (focus === -1) return { y: i * CARD_PEEK, scale: 1, z: i };
     if (i === focus) return { y: 0, scale: 1, z: cards.length + 1 };
     const j = i < focus ? i : i - 1;
@@ -63,7 +70,9 @@ export function CardStack({
     return { y: cardH + GAP + j * SLIVER, scale: 1 - (pile.length - 1 - j) * 0.012, z: j };
   };
   const height =
-    focus === -1
+    allPiled
+      ? Math.max(0, cards.length - 1) * SLIVER + CARD_PEEK
+      : focus === -1
       ? Math.max(0, cards.length - 1) * CARD_PEEK + cardH
       : cardH + (pile.length > 0 ? GAP + (pile.length - 1) * SLIVER + CARD_PEEK : 0);
 
@@ -79,8 +88,8 @@ export function CardStack({
           style={{
             margin: -BLEED,
             padding: BLEED,
-            marginBottom: focus === -1 ? -BLEED : 0,
-            paddingBottom: focus === -1 ? BLEED : 0,
+            marginBottom: focus === -1 && !allPiled ? -BLEED : 0,
+            paddingBottom: focus === -1 && !allPiled ? BLEED : 0,
           }}
         >
           <motion.div
@@ -107,7 +116,7 @@ export function CardStack({
                   transition={transition}
                   whileTap={reduceMotion ? undefined : { scale: p.scale * 0.985 }}
                 >
-                  <WalletCard account={card.account} cycle={card.cycle} />
+                  <WalletCard account={card.account} cycle={card.cycle} plain={card.plain} />
                 </motion.button>
               );
             })}
