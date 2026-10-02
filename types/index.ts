@@ -208,6 +208,10 @@ export interface AccountConfigView {
   creditLimit: number | null;
   statementDay: number | null;
   dueDay: number | null;
+  /** "cash" or "other" when it isn't a card; null for a debit or credit card. */
+  kind: "cash" | "other" | null;
+  /** Left out of the Wallet's deck and pocket; still in every total. */
+  hiddenInWallet: boolean;
   color: string | null;
   currentBalance: number;
   /** Cards with a cut day; null for everything else. */

@@ -25,8 +25,14 @@ export function cardFigure(a: AccountBalance): { kind: "balance" | "available" |
  * below it is free to look like a card.
  */
 export function WalletCard({
-  account, cycle,
-}: { account: AccountBalance; cycle: CreditCycleStatus | null }) {
+  account, cycle, plain = false,
+}: {
+  account: AccountBalance;
+  cycle: CreditCycleStatus | null;
+  /** An account that isn't a card (savings, investments): the same shape,
+   *  without the chip, the contactless mark or a debit/credit label. */
+  plain?: boolean;
+}) {
   const t = useT();
   const locale = useLocale();
   const c = account.color;
@@ -66,15 +72,19 @@ export function WalletCard({
         <div className="min-w-0">
           <p className="text-[15.5px] font-semibold tracking-[-0.01em] truncate">{account.account}</p>
           <p className="font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-white/70 mt-0.5 truncate">
-            {account.isCredit ? t.wallet.credit : t.wallet.debit}
-            <span className="mx-1.5 text-white/40">·</span>
+            {!plain && (
+              <>
+                {account.isCredit ? t.wallet.credit : t.wallet.debit}
+                <span className="mx-1.5 text-white/40">·</span>
+              </>
+            )}
             <span className="tabular-nums">{formatMXN(figure.value)}</span>
           </p>
         </div>
-        <ContactlessIcon className="w-5 h-5 shrink-0 text-white/75 mt-0.5" />
+        {!plain && <ContactlessIcon className="w-5 h-5 shrink-0 text-white/75 mt-0.5" />}
       </div>
 
-      <Chip className="absolute left-5 top-[38%] -translate-y-1/2 w-9 h-[27px]" />
+      {!plain && <Chip className="absolute left-5 top-[38%] -translate-y-1/2 w-9 h-[27px]" />}
 
       <div className="absolute inset-x-5 bottom-4 flex items-end justify-between gap-3">
         <div className="min-w-0">

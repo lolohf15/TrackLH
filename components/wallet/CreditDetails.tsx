@@ -12,12 +12,14 @@ import type { AccountBalance, CreditCycleStatus } from "@/types";
  * how much of the line is spoken for, with the payment one tap away.
  */
 export function CreditDetails({
-  account, cycle, onPay, onEdit,
+  account, cycle, onPay, onEdit, showMeter = true,
 }: {
   account: AccountBalance;
   cycle: CreditCycleStatus | null;
   onPay: () => void;
   onEdit?: () => void;
+  /** Off where the card above already draws its line in use. */
+  showMeter?: boolean;
 }) {
   const t = useT();
   const locale = useLocale();
@@ -70,7 +72,7 @@ export function CreditDetails({
         </button>
       )}
 
-      {pct !== null && (
+      {showMeter && pct !== null && (
         <div className={cn("flex flex-col gap-1.5", cycle && "border-t border-divider pt-3")}>
           <TickMeter percent={pct} color={tone} ticks={38} height={15} />
           <div className="flex items-baseline justify-between gap-2 font-mono text-[10.5px] text-text-dim">

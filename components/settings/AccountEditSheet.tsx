@@ -6,6 +6,7 @@ import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Button } from "@/components/ui/Button";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { ColorPicker, PALETTE } from "./ColorPicker";
+import { Switch } from "@/components/ui/Switch";
 import { useT } from "@/lib/i18n-react";
 
 
@@ -16,6 +17,8 @@ export interface EditableAccount {
   creditLimit: number | null;
   statementDay: number | null;
   dueDay: number | null;
+  kind: "cash" | "other" | null;
+  hiddenInWallet?: boolean;
   color: string | null;
 }
 
@@ -32,10 +35,16 @@ export function AccountEditSheet({ account, open, onClose }: Props) {
   const kinds = [
     { value: "debit" as const, label: t.wallet.debit },
     { value: "credit" as const, label: t.wallet.credit },
+    { value: "cash" as const, label: t.wallet.cash },
+    { value: "other" as const, label: t.wallet.other },
   ];
+  type Kind = (typeof kinds)[number]["value"];
 
   const [name, setName] = useState(account?.account ?? "");
-  const [isCredit, setIsCredit] = useState(account?.isCredit ?? false);
+  const [kind, setKind] = useState<Kind>(
+    account?.isCredit ? "credit" : account?.kind ?? "debit"
+  );
+  const isCredit = kind === "credit";
   const [creditLimit, setCreditLimit] = useState(
     account?.creditLimit != null ? String(account.creditLimit) : ""
   );
@@ -44,6 +53,7 @@ export function AccountEditSheet({ account, open, onClose }: Props) {
   );
   const [dueDay, setDueDay] = useState(account?.dueDay != null ? String(account.dueDay) : "");
   const [color, setColor] = useState(account?.color ?? PALETTE[0]);
+  const [showInWallet, setShowInWallet] = useState(!account?.hiddenInWallet);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -58,7 +68,16 @@ export function AccountEditSheet({ account, open, onClose }: Props) {
       const res = await fetch(isNew ? "/api/accounts" : `/api/accounts/${account.id}`, {
         method: isNew ? "POST" : "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ account: name.trim(), isCredit, creditLimit, statementDay, dueDay, color }),
+        body: JSON.stringify({
+          account: name.trim(),
+          isCredit,
+          kind: kind === "cash" || kind === "other" ? kind : null,
+          creditLimit,
+          statementDay,
+          dueDay,
+          color,
+          hiddenInWallet: !showInWallet,
+        }),
       });
       const payload = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -112,8 +131,8 @@ export function AccountEditSheet({ account, open, onClose }: Props) {
         <Field label={t.common.kind}>
           <SegmentedControl
             options={kinds}
-            value={isCredit ? "credit" : "debit"}
-            onChange={(v) => setIsCredit(v === "credit")}
+            value={kind}
+            onChange={setKind}
             label={t.accountSheet.kindLabel}
           />
         </Field>
@@ -152,6 +171,14 @@ export function AccountEditSheet({ account, open, onClose }: Props) {
         <Field label={t.common.color}>
           <ColorPicker value={color} onChange={setColor} />
         </Field>
+
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <p className="text-[14px] text-text">{t.accountSheet.showInWallet}</p>
+            <p className="text-[11.5px] text-text-dim leading-relaxed mt-0.5">{t.accountSheet.showInWalletHint}</p>
+          </div>
+          <Switch checked={showInWallet} onChange={setShowInWallet} label={t.accountSheet.showInWallet} />
+        </div>
 
         {renamed && (
           <p className="rounded-sm bg-amber-bg border border-amber-border text-amber-fg text-xs px-3.5 py-2.5 leading-relaxed">

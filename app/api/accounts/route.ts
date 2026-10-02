@@ -5,7 +5,7 @@ import { requireUser, errorResponse } from "@/lib/auth";
 import { apiMessages } from "@/lib/api-lang";
 import { round2, computeAccountBalancesFromSums } from "@/services/finance";
 import { getAccountSums } from "@/lib/account-sums";
-import { parseCreditLimit, parseCycleDays } from "@/lib/account-input";
+import { parseAccountKind, parseCreditLimit, parseCycleDays } from "@/lib/account-input";
 import { mapAccountConfig } from "@/lib/money";
 import { getCreditCardStatus, type CreditCardStatus } from "@/lib/credit-sums";
 import { readToday } from "@/lib/request-today";
@@ -22,6 +22,8 @@ type AccountRow = {
   creditLimit: number | null;
   statementDay: number | null;
   dueDay: number | null;
+  kind: string | null;
+  hiddenInWallet: boolean;
   color: string | null;
   createdAt: Date;
   updatedAt: Date;
@@ -46,6 +48,8 @@ function serializeAccount(
     creditLimit: a.creditLimit,
     statementDay: a.statementDay,
     dueDay: a.dueDay,
+    kind: a.kind,
+    hiddenInWallet: a.hiddenInWallet,
     color: a.color,
     createdAt: a.createdAt.toISOString(),
     updatedAt: a.updatedAt.toISOString(),
@@ -83,6 +87,7 @@ export async function POST(req: NextRequest) {
           creditLimit: parseCreditLimit(body.creditLimit, isCredit),
           statementDay,
           dueDay,
+          kind: parseAccountKind(body.kind, isCredit),
           color: typeof body.color === "string" ? body.color : null,
           initialBalance: 0,
         },
