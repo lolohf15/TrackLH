@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUser, errorResponse } from "@/lib/auth";
 import { apiMessages } from "@/lib/api-lang";
 import { parseCreditLimit } from "@/lib/account-input";
+import { toNumberOrNull } from "@/lib/money";
 
 /**
  * Transactions store the account as plain text, not a foreign key, so a rename
@@ -39,7 +40,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     const nextCreditLimit =
       "creditLimit" in body
         ? parseCreditLimit(body.creditLimit, nextIsCredit)
-        : parseCreditLimit(existing.creditLimit, nextIsCredit);
+        : parseCreditLimit(toNumberOrNull(existing.creditLimit), nextIsCredit);
 
     const renamed = nextName !== existing.account;
 

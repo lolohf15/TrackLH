@@ -1,3 +1,5 @@
+import type { PeriodKind } from "@/services/period";
+
 export type TransactionType = "Gasto" | "Ingreso" | "Transferencia";
 
 export const VALID_TRANSACTION_TYPES: TransactionType[] = [
@@ -181,7 +183,10 @@ export interface YearlyDashboardData {
 }
 
 export interface TransactionFilters {
-  month: string;
+  /** Which span the list covers; "all" drops the date bound entirely. */
+  period: PeriodKind;
+  /** `YYYY-MM-DD` of any day inside that span. */
+  anchor: string;
   category: string;
   account: string;
   type: string;

@@ -6,6 +6,7 @@ import { apiMessages } from "@/lib/api-lang";
 import { round2, computeAccountBalancesFromSums } from "@/services/finance";
 import { getAccountSums } from "@/lib/account-sums";
 import { parseCreditLimit } from "@/lib/account-input";
+import { mapAccountConfig } from "@/lib/money";
 
 type AccountRow = {
   id: number;
@@ -87,10 +88,12 @@ export async function GET() {
     const userId = await requireUser();
 
     const [accounts, sums] = await Promise.all([
-      prisma.accountConfig.findMany({
-        where: { userId },
-        orderBy: [{ isCredit: "asc" }, { account: "asc" }],
-      }),
+      prisma.accountConfig
+        .findMany({
+          where: { userId },
+          orderBy: [{ isCredit: "asc" }, { account: "asc" }],
+        })
+        .then((rows) => rows.map(mapAccountConfig)),
       getAccountSums(userId),
     ]);
 
@@ -143,7 +146,7 @@ export async function PUT(req: NextRequest) {
     const rounded = round2(parsed);
 
     const [accounts, sums] = await Promise.all([
-      prisma.accountConfig.findMany({ where: { userId } }),
+      prisma.accountConfig.findMany({ where: { userId } }).then((rows) => rows.map(mapAccountConfig)),
       getAccountSums(userId),
     ]);
 
@@ -168,7 +171,7 @@ export async function PUT(req: NextRequest) {
       },
     });
 
-    return NextResponse.json(serializeAccount(updated, calculatedBalance, rounded));
+    return NextResponse.json(serializeAccount(mapAccountConfig(updated), calculatedBalance, rounded));
   } catch (err) {
     return errorResponse(err, "PUT /api/accounts");
   }

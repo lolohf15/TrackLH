@@ -1,30 +1,38 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import useSWR, { mutate } from "swr";
 import { InitialBalances } from "@/components/dashboard/InitialBalances";
 import { TransactionList } from "@/components/transactions/TransactionList";
 import { TransactionTable } from "@/components/transactions/TransactionTable";
 import { TransactionFiltersPanel } from "@/components/transactions/TransactionFilters";
+import { MonthPickerSheet } from "@/components/dashboard/MonthPickerSheet";
+import { StepButton } from "@/components/dashboard/PeriodNav";
 import { ChartSkeleton } from "@/components/ui/Skeleton";
 import { TickMeter } from "@/components/ui/TickMeter";
-import { useT } from "@/lib/i18n-react";
+import { useLocale, useT } from "@/lib/i18n-react";
 import { ChevronDownIcon, CloseIcon, PlusIcon } from "@/components/shell/icons";
 import { AccountEditSheet, type EditableAccount } from "@/components/settings/AccountEditSheet";
-import { formatMXN, getCurrentMonth, cn } from "@/lib/utils";
+import { formatMXN, cn } from "@/lib/utils";
+import {
+  dayKey, formatPeriodLabel, isPeriodKind, monthKey, parseAnchor, resolvePeriod,
+  stepAnchor, todayAnchor, wallClockNow, type PeriodKind,
+} from "@/services/period";
 import type {
   AccountBalance,
   DashboardData,
   PaginatedTransactions,
   TransactionFilters,
+  YearlyDashboardData,
 } from "@/types";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 function buildTxUrl(f: TransactionFilters): string {
   const p = new URLSearchParams();
-  if (f.month) p.set("month", f.month);
+  p.set("period", f.period);
+  if (f.period !== "all") p.set("anchor", f.anchor);
   if (f.category) p.set("category", f.category);
   if (f.account) p.set("account", f.account);
   if (f.type) p.set("type", f.type);
@@ -53,11 +61,38 @@ function WalletEntry() {
   const params = useSearchParams();
   const category = params.get("category") ?? "";
   const account = params.get("account") ?? "";
-  return <WalletScreen key={`${category}|${account}`} category={category} account={account} />;
+  const rawPeriod = params.get("period") ?? "";
+  const period = isPeriodKind(rawPeriod) ? rawPeriod : null;
+  const anchor = params.get("anchor");
+  return (
+    <WalletScreen
+      key={`${category}|${account}|${period}|${anchor}`}
+      category={category}
+      account={account}
+      period={period}
+      anchor={anchor}
+    />
+  );
 }
 
-function WalletScreen({ category, account }: { category: string; account: string }) {
+/** How many movements the list shows before it's asked for the rest. */
+const PREVIEW = 10;
+
+function thisMonth(): Pick<TransactionFilters, "period" | "anchor"> {
+  return { period: "month", anchor: dayKey(todayAnchor()) };
+}
+
+function WalletScreen({
+  category, account, period, anchor,
+}: {
+  category: string;
+  account: string;
+  /** From a link out of Analytics or Inicio; null when arriving plain. */
+  period: PeriodKind | null;
+  anchor: string | null;
+}) {
   const t = useT();
+  const locale = useLocale();
 
   const { data: dashboard, isLoading } =
     useSWR<DashboardData>("/api/dashboard?period=month", fetcher);
@@ -67,10 +102,29 @@ function WalletScreen({ category, account }: { category: string; account: string
 
   // One source of truth for "which account am I looking at": the card and the
   // filter sheet write the same field, and the card lights up from it.
-  const [filters, setFilters] = useState<TransactionFilters>({
-    month: category || account ? "" : getCurrentMonth(),
+  const [filters, setFiltersState] = useState<TransactionFilters>(() => ({
+    // A category or an account asked for on its own is a question about its
+    // history, so it opens on all of it; a plain visit opens on this month.
+    period: period ?? (category || account ? "all" : "month"),
+    anchor: dayKey(anchor ? parseAnchor(anchor) : todayAnchor()),
     category, account, type: "", page: 1, limit: 50,
-  });
+  }));
+  // The list opens cut to a preview, and anything that changes what it lists
+  // cuts it back — turning a page is the one change that keeps it open.
+  const [expanded, setExpanded] = useState(false);
+  function setFilters(update: (f: TransactionFilters) => TransactionFilters) {
+    setFiltersState(update);
+    setExpanded(false);
+  }
+
+  const [openedAt] = useState(() => wallClockNow().getTime());
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerYear, setPickerYear] = useState(() => parseAnchor(filters.anchor).getUTCFullYear());
+  const { data: yearly, isLoading: yearlyLoading } = useSWR<YearlyDashboardData>(
+    pickerOpen ? `/api/dashboard/yearly?year=${pickerYear}` : null,
+    fetcher
+  );
+  const listRef = useRef<HTMLElement>(null);
 
   const { data: transactions, isLoading: txLoading } =
     useSWR<PaginatedTransactions>(buildTxUrl(filters), fetcher);
@@ -92,12 +146,44 @@ function WalletScreen({ category, account }: { category: string; account: string
       f.account === name
         // Tapping the account already being looked at puts the list back to
         // this month across every account, so the card is its own toggle.
-        ? { ...f, account: "", month: getCurrentMonth(), page: 1 }
+        ? { ...f, ...thisMonth(), account: "", page: 1 }
         // Picking one drops the month with it: an account's history is the
         // point of asking, and half of them see nothing in a given month.
-        : { ...f, account: name, month: "", page: 1 }
+        : { ...f, account: name, period: "all", page: 1 }
     );
   }
+
+  const span = resolvePeriod(filters.period, parseAnchor(filters.anchor));
+  const spanLabel = formatPeriodLabel(span, locale) ?? t.home.allTime;
+  // A span that already contains today has no "next" to walk into.
+  const atLatest = span.range.to.getTime() > openedAt;
+
+  function step(dir: -1 | 1) {
+    setFilters((f) => ({
+      ...f,
+      anchor: dayKey(stepAnchor(f.period, parseAnchor(f.anchor), dir)),
+      page: 1,
+    }));
+  }
+
+  function openPicker() {
+    setPickerYear(filters.period === "all" ? todayAnchor().getUTCFullYear() : span.range.from.getUTCFullYear());
+    setPickerOpen(true);
+  }
+
+  function collapse() {
+    setExpanded(false);
+    // Folding a long list back leaves the reader far below it; bring its top
+    // back into view, but only if it has scrolled out.
+    const top = listRef.current?.getBoundingClientRect().top ?? 0;
+    if (top < 0) listRef.current?.scrollIntoView({ block: "start" });
+  }
+
+  const total = transactions?.total ?? 0;
+  const canExpand = (transactions?.data.length ?? 0) > PREVIEW;
+  const shown: PaginatedTransactions | null = transactions
+    ? expanded ? transactions : { ...transactions, data: transactions.data.slice(0, PREVIEW) }
+    : null;
 
   if (isLoading) {
     return (
@@ -164,7 +250,7 @@ function WalletScreen({ category, account }: { category: string; account: string
           </div>
         </div>
 
-        <section className="mt-5 md:mt-0 min-w-0">
+        <section ref={listRef} className="mt-5 md:mt-0 min-w-0 scroll-mt-4">
           <div className="flex items-center justify-between gap-2 px-1 pb-2">
             <p className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em] truncate">
               {t.movements.title}
@@ -191,30 +277,64 @@ function WalletScreen({ category, account }: { category: string; account: string
             )}
           </div>
 
+          {/* Which span the list covers, stepped like Inicio's month. The
+              label opens the month picker — also the way back from all-time,
+              which has nothing to step through. */}
+          <div className="flex items-center justify-between panel px-1 py-0.5 mb-2.5">
+            <StepButton
+              label={t.home.prevPeriod}
+              onClick={() => step(-1)}
+              disabled={filters.period === "all"}
+            >
+              ‹
+            </StepButton>
+            <button
+              onClick={openPicker}
+              className="press flex-1 self-stretch font-mono text-[11px] font-medium text-text uppercase tracking-wide hover:text-accent transition-colors duration-150 ease-out"
+            >
+              {spanLabel}
+            </button>
+            <StepButton
+              label={t.home.nextPeriod}
+              onClick={() => step(1)}
+              disabled={filters.period === "all" || atLatest}
+            >
+              ›
+            </StepButton>
+          </div>
+
           <div className="mb-3">
             <TransactionFiltersPanel
               filters={filters}
               categories={filterOptions?.categories ?? []}
               accounts={filterOptions?.accounts ?? []}
-              onChange={setFilters}
+              onChange={(next) => setFilters(() => next)}
             />
           </div>
 
           <div className="panel hidden md:block">
             <TransactionTable
-              data={transactions ?? null}
+              data={shown}
               loading={txLoading}
               page={filters.page}
-              onPageChange={(p) => setFilters((f) => ({ ...f, page: p }))}
+              onPageChange={(p) => setFiltersState((f) => ({ ...f, page: p }))}
+              paginate={expanded}
             />
+            {canExpand && (
+              <ExpandToggle expanded={expanded} total={total} onExpand={() => setExpanded(true)} onCollapse={collapse} />
+            )}
           </div>
           <div className="panel px-4 pb-2 md:hidden">
             <TransactionList
-              data={transactions ?? null}
+              data={shown}
               loading={txLoading}
               page={filters.page}
-              onPageChange={(p) => setFilters((f) => ({ ...f, page: p }))}
+              onPageChange={(p) => setFiltersState((f) => ({ ...f, page: p }))}
+              paginate={expanded}
             />
+            {canExpand && (
+              <ExpandToggle expanded={expanded} total={total} onExpand={() => setExpanded(true)} onCollapse={collapse} />
+            )}
           </div>
 
           <div className="md:hidden mt-3">
@@ -223,6 +343,20 @@ function WalletScreen({ category, account }: { category: string; account: string
         </section>
       </div>
 
+      <MonthPickerSheet
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        year={pickerYear}
+        onYearChange={setPickerYear}
+        data={yearly}
+        loading={yearlyLoading}
+        selectedMonth={filters.period === "month" ? monthKey(span.range.from) : ""}
+        onSelect={(month) => {
+          setFilters((f) => ({ ...f, period: "month", anchor: `${month}-01`, page: 1 }));
+          setPickerOpen(false);
+        }}
+      />
+
       <AccountEditSheet
         key={editing === "new" ? "new" : editing?.id ?? "none"}
         account={editing === "new" ? null : editing}
@@ -230,6 +364,26 @@ function WalletScreen({ category, account }: { category: string; account: string
         onClose={() => setEditing(null)}
       />
     </div>
+  );
+}
+
+/** Opens the list past its first ten and folds it back. */
+function ExpandToggle({
+  expanded, total, onExpand, onCollapse,
+}: { expanded: boolean; total: number; onExpand: () => void; onCollapse: () => void }) {
+  const t = useT();
+  return (
+    <button
+      type="button"
+      onClick={expanded ? onCollapse : onExpand}
+      aria-expanded={expanded}
+      className="press w-full flex items-center justify-center gap-1.5 min-h-[44px] border-t border-divider font-mono text-[10.5px] font-medium text-accent uppercase tracking-wide"
+    >
+      {expanded ? t.movements.showLess : t.movements.showAll(total)}
+      <ChevronDownIcon
+        className={cn("w-3.5 h-3.5 transition-transform duration-200 ease-out", expanded && "rotate-180")}
+      />
+    </button>
   );
 }
 

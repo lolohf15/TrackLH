@@ -5,6 +5,7 @@ import { buildDashboardData, computeAccountBalancesFromSums } from "@/services/f
 import { isPeriodKind, parseAnchor, resolvePeriod } from "@/services/period";
 import { getAccountSums } from "@/lib/account-sums";
 import { mapTransaction } from "@/lib/transaction-map";
+import { mapAccountConfig, mapBudget } from "@/lib/money";
 
 export async function GET(req: NextRequest) {
   try {
@@ -39,8 +40,8 @@ export async function GET(req: NextRequest) {
         orderBy: { date: "desc" },
       }),
       getAccountSums(userId),
-      prisma.accountConfig.findMany({ where: { userId } }),
-      prisma.budgetConfig.findMany({ where: { userId } }),
+      prisma.accountConfig.findMany({ where: { userId } }).then((rows) => rows.map(mapAccountConfig)),
+      prisma.budgetConfig.findMany({ where: { userId } }).then((rows) => rows.map(mapBudget)),
       prisma.category.findMany({ where: { userId } }),
       prisma.transaction.findFirst({
         where: { userId },

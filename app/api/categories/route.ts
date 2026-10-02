@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUser, errorResponse } from "@/lib/auth";
 import { apiMessages } from "@/lib/api-lang";
 import { UNKNOWN_COLOR, type CategoryKind } from "@/types";
+import { mapBudget } from "@/lib/money";
 
 /** This user's categories, with the monthly budget attached to each. */
 export async function GET() {
@@ -15,7 +16,7 @@ export async function GET() {
         where: { userId },
         orderBy: [{ kind: "asc" }, { sortOrder: "asc" }, { name: "asc" }],
       }),
-      prisma.budgetConfig.findMany({ where: { userId } }),
+      prisma.budgetConfig.findMany({ where: { userId } }).then((rows) => rows.map(mapBudget)),
     ]);
 
     const budgetMap = new Map(budgets.map((b) => [b.category, b.amount]));

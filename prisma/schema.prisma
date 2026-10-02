@@ -33,7 +33,7 @@ model Transaction {
   /// shortcut can keep inserting rows without knowing about users.
   userId      String
   date        DateTime
-  amount      Float
+  amount      Decimal  @db.Decimal(14, 2)
   type        String
   category    String?
   account     String
@@ -65,14 +65,14 @@ model AccountConfig {
   id                 Int       @id @default(autoincrement())
   userId             String
   account            String
-  initialBalance     Float     @default(0)
+  initialBalance     Decimal   @default(0) @db.Decimal(14, 2)
   initialBalanceDate DateTime?
-  balanceAdjustment  Float     @default(0)
+  balanceAdjustment  Decimal   @default(0) @db.Decimal(14, 2)
   adjustmentDate     DateTime?
   isCredit           Boolean   @default(false)
   /// Credit accounts only: the approved line. Null means no line on file — the
   /// account then reads exactly the way it did before limits existed.
-  creditLimit        Float?
+  creditLimit        Decimal?  @db.Decimal(14, 2)
   color              String?
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @default(now()) @updatedAt
@@ -87,7 +87,7 @@ model BudgetConfig {
   id        Int      @id @default(autoincrement())
   userId    String
   category  String
-  amount    Float
+  amount    Decimal  @db.Decimal(14, 2)
   updatedAt DateTime @default(now()) @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)

@@ -2,7 +2,7 @@
 
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { useLocale, useT } from "@/lib/i18n-react";
-import { formatPeriodLabel, resolvePeriod, type PeriodKind } from "@/services/period";
+import { formatPeriodLabel, resolvePeriod, stepAnchor, type PeriodKind } from "@/services/period";
 
 /**
  * Which span is on screen, and which one before or after it. The anchor is a
@@ -35,11 +35,7 @@ export function PeriodNav({
   const atLatest = period.range.to.getTime() > now;
 
   function step(dir: -1 | 1) {
-    const next = new Date(anchor);
-    if (kind === "week") next.setUTCDate(next.getUTCDate() + dir * 7);
-    else if (kind === "month") next.setUTCMonth(next.getUTCMonth() + dir);
-    else if (kind === "year") next.setUTCFullYear(next.getUTCFullYear() + dir);
-    onAnchorChange(next);
+    onAnchorChange(stepAnchor(kind, anchor, dir));
   }
 
   return (
@@ -82,7 +78,7 @@ export function PeriodNav({
 }
 
 /** 36px hit area around a 22px glyph box — the target grows, the chrome doesn't. */
-function StepButton({
+export function StepButton({
   label, onClick, disabled, children,
 }: {
   label: string;
