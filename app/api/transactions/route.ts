@@ -6,6 +6,11 @@ import { apiMessages } from "@/lib/api-lang";
 import { validateTransactionInput } from "@/lib/transaction-input";
 import { mapTransaction } from "@/lib/transaction-map";
 import { isPeriodKind, parseAnchor, resolvePeriod } from "@/services/period";
+import { cycleContaining, parseCycleDay } from "@/services/credit-cycle";
+
+function startOfDay(d: Date): Date {
+  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+}
 
 export async function GET(req: NextRequest) {
   try {
@@ -22,14 +27,22 @@ export async function GET(req: NextRequest) {
     // Seeded with the tenant so the count and the page always share a scope.
     const where: Prisma.TransactionWhereInput = { userId };
     if (category) where.category = category;
-    if (account)  where.account  = account;
+    // An account's history includes what came into it: a card's payments
+    // arrive as transfers that name it as the destination.
+    if (account)  where.OR = [{ account }, { toAccount: account }];
     if (type)     where.type     = type;
 
     // A named span around an anchor day, the same way Analytics asks, so a
     // link from any period there lands on exactly those movements. All-time
     // takes no bound at all. `month` stays for older links.
     const period = searchParams.get("period") ?? "";
-    if (isPeriodKind(period)) {
+    // A card's own cycle, from the day after one cut to the next. `cut` is
+    // the statement day; the anchor is any day inside the cycle.
+    const cut = parseCycleDay(searchParams.get("cut"));
+    if (period === "cycle" && cut !== null) {
+      const cycle = cycleContaining(cut, startOfDay(parseAnchor(searchParams.get("anchor"))));
+      where.date = { gte: cycle.start, lt: cycle.end };
+    } else if (isPeriodKind(period)) {
       if (period !== "all") {
         const { range } = resolvePeriod(period, parseAnchor(searchParams.get("anchor")));
         where.date = { gte: range.from, lt: range.to };

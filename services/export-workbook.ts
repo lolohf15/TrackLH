@@ -51,7 +51,7 @@ export async function buildWorkbook(
 
   buildSummary(wb, bundle, dict, lang, generatedAt);
   buildTransactions(wb, bundle, dict, lang);
-  buildAccounts(wb, bundle, dict);
+  buildAccounts(wb, bundle, dict, lang);
   buildCategories(wb, bundle, dict);
   buildMonthly(wb, bundle, dict);
   buildCategoryPivot(wb, bundle, dict);
@@ -210,7 +210,7 @@ function buildTransactions(
   band(ws, columns.length);
 }
 
-function buildAccounts(wb: ExcelJS.Workbook, bundle: ExportBundle, dict: Dictionary): void {
+function buildAccounts(wb: ExcelJS.Workbook, bundle: ExportBundle, dict: Dictionary, lang: Lang): void {
   const h = dict.xlsx.headers;
 
   const columns: Column[] = [
@@ -227,11 +227,17 @@ function buildAccounts(wb: ExcelJS.Workbook, bundle: ExportBundle, dict: Diction
     { header: h.debt, key: "debt", width: 14, numFmt: MONEY },
     { header: h.availableCredit, key: "available", width: 17, numFmt: MONEY },
     { header: h.utilization, key: "utilization", width: 14, numFmt: PERCENT },
+    { header: h.statementDay, key: "statementDay", width: 12 },
+    { header: h.dueDay, key: "dueDay", width: 12 },
+    { header: h.statementBalance, key: "statementBalance", width: 18, numFmt: MONEY },
+    { header: h.remainingToPay, key: "remaining", width: 16, numFmt: MONEY },
+    { header: h.dueDate, key: "dueDate", width: 14, numFmt: DATE_FORMAT[lang] },
   ];
 
   const ws = table(wb, dict.xlsx.sheets.accounts, columns);
 
   for (const b of bundle.balances) {
+    const cycle = bundle.cycles.get(b.account);
     ws.addRow({
       account: b.account,
       kind: b.isCredit ? dict.wallet.credit : dict.wallet.debit,
@@ -248,6 +254,11 @@ function buildAccounts(wb: ExcelJS.Workbook, bundle: ExportBundle, dict: Diction
       debt: b.debt,
       available: b.availableCredit,
       utilization: b.utilizationPercent,
+      statementDay: cycle?.statementDay ?? null,
+      dueDay: cycle?.dueDay ?? null,
+      statementBalance: cycle?.statementBalance ?? null,
+      remaining: cycle?.remainingToPay ?? null,
+      dueDate: cycle?.dueDate ? new Date(`${cycle.dueDate}T00:00:00Z`) : null,
     });
   }
 

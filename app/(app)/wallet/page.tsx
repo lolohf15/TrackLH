@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useRef, useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useSearchParams } from "next/navigation";
 import useSWR, { mutate } from "swr";
 import { InitialBalances } from "@/components/dashboard/InitialBalances";
@@ -10,7 +11,12 @@ import { TransactionFiltersPanel } from "@/components/transactions/TransactionFi
 import { MonthPickerSheet } from "@/components/dashboard/MonthPickerSheet";
 import { StepButton } from "@/components/dashboard/PeriodNav";
 import { ChartSkeleton } from "@/components/ui/Skeleton";
-import { TickMeter } from "@/components/ui/TickMeter";
+import { CardStack, type StackCard } from "@/components/wallet/CardStack";
+import { CreditDetails } from "@/components/wallet/CreditDetails";
+import { shortDay } from "@/components/wallet/DueBadge";
+import { payPrefill, usePaySheet } from "@/components/wallet/PayCard";
+import { useAccounts } from "@/lib/use-accounts";
+import { cycleContaining, stepCycle } from "@/services/credit-cycle";
 import { useLocale, useT } from "@/lib/i18n-react";
 import { ChevronDownIcon, CloseIcon, PlusIcon } from "@/components/shell/icons";
 import { AccountEditSheet, type EditableAccount } from "@/components/settings/AccountEditSheet";
@@ -20,7 +26,6 @@ import {
   stepAnchor, todayAnchor, wallClockNow, type PeriodKind,
 } from "@/services/period";
 import type {
-  AccountBalance,
   DashboardData,
   PaginatedTransactions,
   TransactionFilters,
@@ -33,6 +38,7 @@ function buildTxUrl(f: TransactionFilters): string {
   const p = new URLSearchParams();
   p.set("period", f.period);
   if (f.period !== "all") p.set("anchor", f.anchor);
+  if (f.period === "cycle" && f.cut) p.set("cut", String(f.cut));
   if (f.category) p.set("category", f.category);
   if (f.account) p.set("account", f.account);
   if (f.type) p.set("type", f.type);
@@ -98,7 +104,9 @@ function WalletScreen({
     useSWR<DashboardData>("/api/dashboard?period=month", fetcher);
   // The dashboard reports balances by name; the config carries the id an edit
   // needs, so both are read here.
-  const { data: configs } = useSWR<EditableAccount[]>("/api/accounts", fetcher);
+  const { data: configs } = useAccounts();
+  const reduceMotion = useReducedMotion();
+  const { pay, sheet: paySheet } = usePaySheet();
 
   // One source of truth for "which account am I looking at": the card and the
   // filter sheet write the same field, and the card lights up from it.
@@ -138,36 +146,63 @@ function WalletScreen({
   const configByAccount = new Map((configs ?? []).map((c) => [c.account, c]));
   const balances = dashboard?.accountBalances ?? [];
   const debit = balances.filter((a) => !a.isCredit);
-  const credit = balances.filter((a) => a.isCredit);
+  // Debit first, then the cards, in one deck.
+  const cards: StackCard[] = [...debit, ...balances.filter((a) => a.isCredit)].map((a) => ({
+    account: a,
+    cycle: configByAccount.get(a.account)?.cycle ?? null,
+  }));
   const selectedConfig = filters.account ? configByAccount.get(filters.account) : undefined;
+  const selectedBalance = balances.find((a) => a.account === filters.account);
 
-  function pick(name: string) {
-    setFilters((f) =>
-      f.account === name
-        // Tapping the account already being looked at puts the list back to
-        // this month across every account, so the card is its own toggle.
-        ? { ...f, ...thisMonth(), account: "", page: 1 }
-        // Picking one drops the month with it: an account's history is the
-        // point of asking, and half of them see nothing in a given month.
-        : { ...f, account: name, period: "all", page: 1 }
-    );
+  /** The filters for looking at one account, or at all of them again. */
+  function lookAt(f: TransactionFilters, name: string): TransactionFilters {
+    if (!name) {
+      return { ...f, ...thisMonth(), cut: undefined, account: "", page: 1 };
+    }
+    // A card with a cut day reads by its own cycle, which starts the day
+    // after the cut wherever that falls in the month.
+    const cut = configByAccount.get(name)?.statementDay ?? null;
+    if (cut !== null) {
+      return { ...f, account: name, period: "cycle", cut, anchor: dayKey(todayAnchor()), page: 1 };
+    }
+    // Any other account drops the month: its history is the point of asking,
+    // and half of them see nothing in a given month.
+    return { ...f, account: name, period: "all", cut: undefined, page: 1 };
   }
 
-  const span = resolvePeriod(filters.period, parseAnchor(filters.anchor));
-  const spanLabel = formatPeriodLabel(span, locale) ?? t.home.allTime;
+  function pick(name: string) {
+    // Tapping the card already in front deals the deck back out, and the
+    // list goes back to this month across every account.
+    setFilters((f) => lookAt(f, f.account === name ? "" : name));
+  }
+
+  const anchorDay = parseAnchor(filters.anchor);
+  const cycle =
+    filters.period === "cycle" && filters.cut ? cycleContaining(filters.cut, anchorDay) : null;
+  const span = cycle ? null : resolvePeriod(filters.period as PeriodKind, anchorDay);
+  const spanLabel = cycle
+    ? t.wallet.cycleRange(
+        shortDay(dayKey(cycle.start), locale),
+        shortDay(dayKey(cycle.statementDate), locale)
+      )
+    : formatPeriodLabel(span!, locale) ?? t.home.allTime;
   // A span that already contains today has no "next" to walk into.
-  const atLatest = span.range.to.getTime() > openedAt;
+  const atLatest = (cycle ? cycle.end : span!.range.to).getTime() > openedAt;
+  const rangeFrom = cycle ? cycle.start : span!.range.from;
 
   function step(dir: -1 | 1) {
-    setFilters((f) => ({
-      ...f,
-      anchor: dayKey(stepAnchor(f.period, parseAnchor(f.anchor), dir)),
-      page: 1,
-    }));
+    setFilters((f) => {
+      const day = parseAnchor(f.anchor);
+      const next =
+        f.period === "cycle" && f.cut
+          ? stepCycle(f.cut, cycleContaining(f.cut, day), dir).statementDate
+          : stepAnchor(f.period as PeriodKind, day, dir);
+      return { ...f, anchor: dayKey(next), page: 1 };
+    });
   }
 
   function openPicker() {
-    setPickerYear(filters.period === "all" ? todayAnchor().getUTCFullYear() : span.range.from.getUTCFullYear());
+    setPickerYear(filters.period === "all" ? todayAnchor().getUTCFullYear() : rangeFrom.getUTCFullYear());
     setPickerOpen(true);
   }
 
@@ -195,11 +230,21 @@ function WalletScreen({
 
   return (
     <div className="max-w-6xl mx-auto px-4 md:px-8 pt-4 pb-6">
-      <h1 className="text-[15px] font-semibold text-text mb-3">{t.wallet.title}</h1>
+      <div className="flex items-center justify-between mb-3">
+        <h1 className="text-[15px] font-semibold text-text">{t.wallet.title}</h1>
+        <button
+          type="button"
+          onClick={() => setEditing("new")}
+          aria-label={t.wallet.addAccount}
+          className="press -my-1.5 -mr-1.5 w-9 h-9 rounded-full flex items-center justify-center text-accent hover:bg-surface-2 transition-colors duration-150 ease-out"
+        >
+          <PlusIcon className="w-4 h-4" />
+        </button>
+      </div>
 
       <div className="md:grid md:grid-cols-[minmax(0,370px)_1fr] md:gap-8 md:items-start">
         <div>
-          <section className="tint tint-gold px-4 pt-3.5 pb-4">
+          <section className="tint tint-gold px-4 pt-3.5 pb-4 mb-4">
             <p className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em]">
               {t.wallet.totalAvailable}
             </p>
@@ -209,41 +254,41 @@ function WalletScreen({
             <p className="text-[11.5px] text-text-dim mt-1.5">{t.home.debitAccounts(debit.length)}</p>
           </section>
 
-          <GroupLabel>{t.wallet.debit}</GroupLabel>
-          <div className="grid grid-cols-2 gap-2.5">
-            {debit.map((a) => (
-              <AccountCard
-                key={a.account}
-                account={a}
-                selected={filters.account === a.account}
-                onSelect={() => pick(a.account)}
-              />
-            ))}
+          {cards.length > 0 ? (
+            <CardStack cards={cards} selected={filters.account} onSelect={pick} />
+          ) : (
             <button
               type="button"
               onClick={() => setEditing("new")}
-              className="press rounded-lg border border-dashed border-border-strong flex items-center justify-center gap-2 py-4 text-accent min-h-[74px]"
+              className="press w-full rounded-[18px] border border-dashed border-border-strong flex items-center justify-center gap-2 py-10 text-accent"
             >
               <PlusIcon className="w-3.5 h-3.5 shrink-0" />
               <span className="text-[12.5px]">{t.wallet.addAccount}</span>
             </button>
-          </div>
-
-          {credit.length > 0 && (
-            <>
-              <GroupLabel>{t.wallet.credit}</GroupLabel>
-              <div className="flex flex-col gap-2.5">
-                {credit.map((a) => (
-                  <CreditCard
-                    key={a.account}
-                    account={a}
-                    selected={filters.account === a.account}
-                    onSelect={() => pick(a.account)}
-                  />
-                ))}
-              </div>
-            </>
           )}
+
+          <AnimatePresence initial={false} mode="popLayout">
+            {/* Waits for the configs: without them a card would read as having
+                no cycle, and a payment would start from the wrong account. */}
+            {selectedBalance?.isCredit && configs && (
+              <motion.div
+                key={selectedBalance.account}
+                initial={{ opacity: 0, y: reduceMotion ? 0 : 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, transition: { duration: 0.12 } }}
+                transition={{ duration: 0.24, ease: [0.23, 1, 0.32, 1], delay: reduceMotion ? 0 : 0.08 }}
+              >
+                <CreditDetails
+                  account={selectedBalance}
+                  cycle={selectedConfig?.cycle ?? null}
+                  onPay={() =>
+                    pay(payPrefill(selectedBalance.account, selectedConfig?.cycle ?? null, balances))
+                  }
+                  onEdit={selectedConfig ? () => setEditing(selectedConfig) : undefined}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           <div className="hidden md:block mt-3">
             <BalancesPanel open={balancesOpen} onToggle={() => setBalancesOpen((v) => !v)} />
@@ -308,7 +353,9 @@ function WalletScreen({
               filters={filters}
               categories={filterOptions?.categories ?? []}
               accounts={filterOptions?.accounts ?? []}
-              onChange={(next) => setFilters(() => next)}
+              onChange={(next) =>
+                setFilters((f) => (next.account !== f.account ? lookAt(next, next.account) : next))
+              }
             />
           </div>
 
@@ -350,7 +397,7 @@ function WalletScreen({
         onYearChange={setPickerYear}
         data={yearly}
         loading={yearlyLoading}
-        selectedMonth={filters.period === "month" ? monthKey(span.range.from) : ""}
+        selectedMonth={filters.period === "month" ? monthKey(rangeFrom) : ""}
         onSelect={(month) => {
           setFilters((f) => ({ ...f, period: "month", anchor: `${month}-01`, page: 1 }));
           setPickerOpen(false);
@@ -363,6 +410,8 @@ function WalletScreen({
         open={editing !== null}
         onClose={() => setEditing(null)}
       />
+
+      {paySheet}
     </div>
   );
 }
@@ -383,112 +432,6 @@ function ExpandToggle({
       <ChevronDownIcon
         className={cn("w-3.5 h-3.5 transition-transform duration-200 ease-out", expanded && "rotate-180")}
       />
-    </button>
-  );
-}
-
-/** Grouped-list caption: names the group below it and sits outside it. */
-function GroupLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em] px-1 pt-4 pb-2">
-      {children}
-    </p>
-  );
-}
-
-/**
- * Each account glows in its own colour — the one already on its dot, its
- * rows in every list, and its slice of every chart. Tapping one points the
- * movements beside it at that account.
- */
-function AccountCard({
-  account, selected, onSelect,
-}: { account: AccountBalance; selected: boolean; onSelect: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onSelect}
-      aria-pressed={selected}
-      className={cn(
-        "tint press px-3 py-2.5 text-left min-w-0 transition-shadow duration-150 ease-out",
-        selected && "ring-1 ring-accent"
-      )}
-      style={{ ["--tint-hue" as string]: account.color }}
-    >
-      <span className="flex items-center gap-2 min-w-0">
-        <span
-          className="w-[7px] h-[7px] rounded-full shrink-0"
-          style={{ backgroundColor: account.color }}
-        />
-        <span className="text-[12px] text-text-muted truncate">{account.account}</span>
-      </span>
-      <span className="block text-[17px] font-semibold text-text tabular-nums mt-1">
-        {formatMXN(account.currentBalance)}
-      </span>
-    </button>
-  );
-}
-
-/** A line of credit says more than a balance does, so it gets the full width:
- *  what's left, then how much of the limit is already spoken for. */
-function CreditCard({
-  account, selected, onSelect,
-}: { account: AccountBalance; selected: boolean; onSelect: () => void }) {
-  const t = useT();
-  // Without a line on file there's nothing to be available against, so the
-  // card falls back to reading as a plain debt — the way it always has.
-  const hasLine = account.availableCredit !== null;
-  const overLine = hasLine && (account.availableCredit as number) < 0;
-  const pct = account.utilizationPercent ?? 0;
-  // The same bands a credit score reads: comfortable, watch it, too much.
-  const tone =
-    pct >= 70 ? "var(--color-red)" : pct >= 30 ? "var(--color-amber)" : "var(--color-green)";
-
-  return (
-    <button
-      type="button"
-      onClick={onSelect}
-      aria-pressed={selected}
-      className={cn(
-        "tint press w-full px-4 py-3 text-left transition-shadow duration-150 ease-out",
-        selected && "ring-1 ring-accent"
-      )}
-      style={{ ["--tint-hue" as string]: account.color }}
-    >
-      <div className="flex items-center justify-between gap-2.5 min-w-0">
-        <span className="flex items-center gap-2.5 min-w-0">
-          <span
-            className="w-[7px] h-[7px] rounded-full shrink-0"
-            style={{ backgroundColor: account.color }}
-          />
-          <span className="text-[13.5px] text-text truncate">{account.account}</span>
-        </span>
-        <span className="shrink-0 whitespace-nowrap">
-          <span
-            className={cn(
-              "text-[17px] font-semibold tabular-nums",
-              overLine || !hasLine ? "text-red-fg" : "text-text"
-            )}
-          >
-            {formatMXN(hasLine ? (account.availableCredit as number) : account.currentBalance)}
-          </span>
-          {hasLine && <span className="text-[10.5px] text-text-dim ml-1.5">{t.wallet.available}</span>}
-        </span>
-      </div>
-
-      {hasLine && (
-        <div className="flex flex-col gap-1.5 mt-2.5">
-          <TickMeter percent={pct} color={tone} ticks={38} height={15} />
-          <div className="flex items-baseline justify-between gap-2 font-mono text-[10.5px] text-text-dim">
-            <span className="truncate">
-              {formatMXN(account.debt ?? 0)} {t.common.of} {formatMXN(account.creditLimit ?? 0)}
-            </span>
-            <span className="shrink-0" style={{ color: tone }}>
-              {Math.round(pct)}%
-            </span>
-          </div>
-        </div>
-      )}
     </button>
   );
 }

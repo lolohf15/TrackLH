@@ -87,6 +87,29 @@ export const es = {
     accountBalances: "Saldo por cuenta",
     noAccounts: "Sin cuentas",
     noAccountsHint: "Agrega una cuenta para ver su saldo aquí",
+    balance: "Saldo",
+    debt: "Deuda",
+    limit: "Límite",
+    statementBalance: "Saldo al corte",
+    statementBalanceHint: "Pago para no generar intereses",
+    paidSinceStatement: "Pagado desde el corte",
+    remainingToPay: "Restante por pagar",
+    currentCycleSpend: "Gasto del ciclo actual",
+    nextStatement: (date: string) => `Corte ${date}`,
+    nextStatementLabel: "Próximo corte",
+    cycleRange: (from: string, to: string) => `${from} – ${to}`,
+    payCard: "Pagar tarjeta",
+    addCycleDates: "Agrega tu día de corte y de pago para ver tu estado de cuenta",
+    backToDeck: "Ver todas las tarjetas",
+    due: {
+      paid: "Pagado",
+      today: "Vence hoy",
+      tomorrow: "Vence mañana",
+      inDays: (n: number) => `Vence en ${n} días`,
+      overdue: (n: number) => (n === 1 ? "Vencido hace 1 día" : `Vencido hace ${n} días`),
+      on: (date: string) => `Fecha límite ${date}`,
+    },
+    upcomingPayments: "Próximos pagos",
   },
 
   balances: {
@@ -216,6 +239,11 @@ export const es = {
     /** Warns that renaming rewrites the history behind it. */
     renameWarning: (name: string) =>
       `Al renombrarla, tus movimientos anteriores pasan a decir «${name}».`,
+    statementDay: "Día de corte",
+    dueDay: "Día de pago",
+    cycleHint:
+      "El día de corte cierra cada ciclo de la tarjeta; el día de pago es la fecha límite. Si es igual o menor al corte, cae el mes siguiente.",
+    dayPlaceholder: "1–31",
   },
 
   /** Spoken names for the icon keys in lib/category-icons.ts. */
@@ -440,6 +468,11 @@ export const es = {
       debt: "Deuda",
       availableCredit: "Crédito disponible",
       utilization: "Uso de la línea",
+      statementDay: "Día de corte",
+      dueDay: "Día de pago",
+      statementBalance: "Saldo al corte",
+      remainingToPay: "Restante por pagar",
+      dueDate: "Fecha límite",
       color: "Color",
       icon: "Ícono",
       budget: "Presupuesto mensual",
@@ -578,6 +611,29 @@ export const en: typeof es = {
     accountBalances: "Balance by account",
     noAccounts: "No accounts",
     noAccountsHint: "Add an account to see its balance here",
+    balance: "Balance",
+    debt: "Debt",
+    limit: "Limit",
+    statementBalance: "Statement balance",
+    statementBalanceHint: "Pay this to avoid interest",
+    paidSinceStatement: "Paid since statement",
+    remainingToPay: "Left to pay",
+    currentCycleSpend: "Spent this cycle",
+    nextStatement: (date: string) => `Statement ${date}`,
+    nextStatementLabel: "Next statement",
+    cycleRange: (from: string, to: string) => `${from} – ${to}`,
+    payCard: "Pay card",
+    addCycleDates: "Add your statement and due days to see where your statement stands",
+    backToDeck: "See all cards",
+    due: {
+      paid: "Paid",
+      today: "Due today",
+      tomorrow: "Due tomorrow",
+      inDays: (n: number) => `Due in ${n} days`,
+      overdue: (n: number) => (n === 1 ? "1 day overdue" : `${n} days overdue`),
+      on: (date: string) => `Due ${date}`,
+    },
+    upcomingPayments: "Upcoming payments",
   },
 
   balances: {
@@ -700,6 +756,11 @@ export const en: typeof es = {
     nameTaken: "You already have an account with that name",
     renameWarning: (name: string) =>
       `Renaming it makes your past movements read “${name}”.`,
+    statementDay: "Statement day",
+    dueDay: "Due day",
+    cycleHint:
+      "The statement day closes each card cycle; the due day is the payment deadline. On or before the statement day, it falls the next month.",
+    dayPlaceholder: "1–31",
   },
 
   categoryIcons: {
@@ -912,6 +973,11 @@ export const en: typeof es = {
       debt: "Debt",
       availableCredit: "Available credit",
       utilization: "Line in use",
+      statementDay: "Statement day",
+      dueDay: "Due day",
+      statementBalance: "Statement balance",
+      remainingToPay: "Left to pay",
+      dueDate: "Due date",
       color: "Color",
       icon: "Icon",
       budget: "Monthly budget",

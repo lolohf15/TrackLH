@@ -5,8 +5,10 @@ import { requireUser, errorResponse } from "@/lib/auth";
 import { apiMessages } from "@/lib/api-lang";
 import { round2, computeAccountBalancesFromSums } from "@/services/finance";
 import { getAccountSums } from "@/lib/account-sums";
-import { parseCreditLimit } from "@/lib/account-input";
+import { parseCreditLimit, parseCycleDays } from "@/lib/account-input";
 import { mapAccountConfig } from "@/lib/money";
+import { getCreditCardStatus, type CreditCardStatus } from "@/lib/credit-sums";
+import { readToday } from "@/lib/request-today";
 
 type AccountRow = {
   id: number;
@@ -18,12 +20,19 @@ type AccountRow = {
   adjustmentDate: Date | null;
   isCredit: boolean;
   creditLimit: number | null;
+  statementDay: number | null;
+  dueDay: number | null;
   color: string | null;
   createdAt: Date;
   updatedAt: Date;
 };
 
-function serializeAccount(a: AccountRow, calculatedBalance: number, currentBalance: number) {
+function serializeAccount(
+  a: AccountRow,
+  calculatedBalance: number,
+  currentBalance: number,
+  cycle: CreditCardStatus | null = null
+) {
   return {
     id: a.id,
     account: a.account,
@@ -35,9 +44,13 @@ function serializeAccount(a: AccountRow, calculatedBalance: number, currentBalan
     currentBalance,
     isCredit: a.isCredit,
     creditLimit: a.creditLimit,
+    statementDay: a.statementDay,
+    dueDay: a.dueDay,
     color: a.color,
     createdAt: a.createdAt.toISOString(),
     updatedAt: a.updatedAt.toISOString(),
+    /** Cards with a cut day: where the statement stands. Null otherwise. */
+    cycle,
   };
 }
 
@@ -59,6 +72,7 @@ export async function POST(req: NextRequest) {
     }
 
     const isCredit = !!body.isCredit;
+    const { statementDay, dueDay } = parseCycleDays(body, isCredit);
 
     try {
       const created = await prisma.accountConfig.create({
@@ -67,6 +81,8 @@ export async function POST(req: NextRequest) {
           account,
           isCredit,
           creditLimit: parseCreditLimit(body.creditLimit, isCredit),
+          statementDay,
+          dueDay,
           color: typeof body.color === "string" ? body.color : null,
           initialBalance: 0,
         },
@@ -83,9 +99,10 @@ export async function POST(req: NextRequest) {
   }
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
     const userId = await requireUser();
+    const today = readToday(req);
 
     const [accounts, sums] = await Promise.all([
       prisma.accountConfig
@@ -100,13 +117,30 @@ export async function GET() {
     const balances = computeAccountBalancesFromSums(sums, accounts);
     const balanceMap = new Map(balances.map((b) => [b.account, b]));
 
+    const cycles = await getCreditCardStatus(
+      userId,
+      accounts.flatMap((a) =>
+        a.isCredit && a.statementDay != null
+          ? [{
+              account: a.account,
+              statementDay: a.statementDay,
+              dueDay: a.dueDay,
+              initialBalance: a.initialBalance,
+              balanceAdjustment: a.balanceAdjustment,
+            }]
+          : []
+      ),
+      today
+    );
+
     return NextResponse.json(
       accounts.map((a) => {
         const b = balanceMap.get(a.account);
         return serializeAccount(
           a,
           b?.calculatedBalance ?? a.initialBalance,
-          b?.currentBalance ?? a.initialBalance
+          b?.currentBalance ?? a.initialBalance,
+          cycles.get(a.account) ?? null
         );
       })
     );
