@@ -3,6 +3,7 @@ import { getAccountSums } from "@/lib/account-sums";
 import { mapTransaction } from "@/lib/transaction-map";
 import { computeAccountBalancesFromSums } from "@/services/finance";
 import type { AccountBalance, CategoryKind, Transaction } from "@/types";
+import { mapAccountConfig, mapBudget } from "@/lib/money";
 
 export interface ExportCategory {
   name: string;
@@ -37,12 +38,14 @@ export async function collectExportData(userId: string): Promise<ExportBundle> {
       select: { email: true, name: true },
     }),
     prisma.transaction.findMany({ where: { userId }, orderBy: { date: "desc" } }),
-    prisma.accountConfig.findMany({ where: { userId }, orderBy: { account: "asc" } }),
+    prisma.accountConfig
+      .findMany({ where: { userId }, orderBy: { account: "asc" } })
+      .then((rows) => rows.map(mapAccountConfig)),
     prisma.category.findMany({
       where: { userId },
       orderBy: [{ kind: "asc" }, { sortOrder: "asc" }, { name: "asc" }],
     }),
-    prisma.budgetConfig.findMany({ where: { userId } }),
+    prisma.budgetConfig.findMany({ where: { userId } }).then((rows) => rows.map(mapBudget)),
     getAccountSums(userId),
   ]);
 

@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { round2, type AccountSums } from "@/services/finance";
+import { toNumber } from "@/lib/money";
 
 /**
  * Per-account income/expense/transfer totals across the user's entire
@@ -33,7 +34,7 @@ export async function getAccountSums(userId: string): Promise<Map<string, Accoun
   }
 
   for (const row of byAccount) {
-    const amount = round2(row._sum.amount ?? 0);
+    const amount = round2(toNumber(row._sum.amount ?? 0));
     const s = ensure(row.account);
     if (row.type === "Ingreso") s.income = amount;
     else if (row.type === "Gasto") s.expenses = amount;
@@ -42,7 +43,7 @@ export async function getAccountSums(userId: string): Promise<Map<string, Accoun
 
   for (const row of transfersIn) {
     if (!row.toAccount) continue;
-    ensure(row.toAccount).transfersIn = round2(row._sum.amount ?? 0);
+    ensure(row.toAccount).transfersIn = round2(toNumber(row._sum.amount ?? 0));
   }
 
   return sums;

@@ -4,6 +4,7 @@ import { requireUser, errorResponse } from "@/lib/auth";
 import { computeCategoryTrends } from "@/services/finance";
 import { monthKey, type Bucket } from "@/services/period";
 import { mapTransaction } from "@/lib/transaction-map";
+import { mapBudget } from "@/lib/money";
 
 export async function GET(req: NextRequest) {
   try {
@@ -31,7 +32,7 @@ export async function GET(req: NextRequest) {
         where: { userId, date: { gte: buckets[0].range.from } },
         orderBy: { date: "desc" },
       }),
-      prisma.budgetConfig.findMany({ where: { userId } }),
+      prisma.budgetConfig.findMany({ where: { userId } }).then((rows) => rows.map(mapBudget)),
       prisma.category.findMany({ where: { userId } }),
     ]);
 

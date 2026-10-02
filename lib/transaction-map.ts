@@ -1,9 +1,11 @@
+import type { Prisma } from "@prisma/client";
 import type { Transaction } from "@/types";
+import { toNumber } from "@/lib/money";
 
 type TransactionRow = {
   id: string;
   date: Date;
-  amount: number;
+  amount: Prisma.Decimal | number;
   type: string;
   category: string | null;
   account: string;
@@ -19,7 +21,7 @@ export function mapTransaction(t: TransactionRow): Transaction {
   return {
     id: t.id,
     date: t.date.toISOString(),
-    amount: t.amount,
+    amount: toNumber(t.amount),
     type: t.type as Transaction["type"],
     category: t.category,
     account: t.account,
