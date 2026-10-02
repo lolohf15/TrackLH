@@ -33,6 +33,16 @@ interface Props {
   transaction?: Transaction | null;
   /** Opened from the row's swipe-to-delete: lead with the delete control. */
   initialConfirmingDelete?: boolean;
+  /** A new movement that starts filled in, like a card payment. Everything
+   *  in it stays editable before saving. */
+  prefill?: RecordPrefill;
+}
+
+export interface RecordPrefill {
+  type: TransactionType;
+  account?: string | null;
+  toAccount?: string | null;
+  amount?: number | null;
 }
 
 // Throws on a failed response so SWR keeps the last good catalog instead of
@@ -109,6 +119,7 @@ export function TransactionSheet({
   onClose,
   transaction = null,
   initialConfirmingDelete = false,
+  prefill,
 }: Props) {
   const isEdit = transaction !== null;
   const t = useT();
@@ -121,13 +132,19 @@ export function TransactionSheet({
   const { data: catalog } = useSWR<Catalog>("/api/catalog", fetcher);
   const accounts = catalog?.accounts ?? [];
 
-  const [type, setType] = useState<TransactionType>(transaction?.type ?? "Gasto");
+  const [type, setType] = useState<TransactionType>(transaction?.type ?? prefill?.type ?? "Gasto");
   // Null until the user picks one: then the account follows the type, so a
   // switch to Ingreso lands on the account income usually goes to.
-  const [pickedAccount, setPickedAccount] = useState<string | null>(transaction?.account ?? null);
-  const [pickedToAccount, setPickedToAccount] = useState<string | null>(transaction?.toAccount ?? null);
+  const [pickedAccount, setPickedAccount] = useState<string | null>(
+    transaction?.account ?? prefill?.account ?? null
+  );
+  const [pickedToAccount, setPickedToAccount] = useState<string | null>(
+    transaction?.toAccount ?? prefill?.toAccount ?? null
+  );
   const [category, setCategory] = useState(transaction?.category ?? "");
-  const [amount, setAmount] = useState(transaction ? amountText(transaction.amount) : "");
+  const [amount, setAmount] = useState(
+    transaction ? amountText(transaction.amount) : prefill?.amount ? amountText(prefill.amount) : ""
+  );
   const [description, setDescription] = useState(transaction?.description ?? "");
   const [noteOpen, setNoteOpen] = useState(!!transaction?.description);
   const [day, setDay] = useState(transaction ? dayOf(transaction.date) : getToday());

@@ -4,6 +4,7 @@ import { mapTransaction } from "@/lib/transaction-map";
 import { computeAccountBalancesFromSums } from "@/services/finance";
 import type { AccountBalance, CategoryKind, Transaction } from "@/types";
 import { mapAccountConfig, mapBudget } from "@/lib/money";
+import { getCreditCardStatus, type CreditCardStatus } from "@/lib/credit-sums";
 
 export interface ExportCategory {
   name: string;
@@ -22,6 +23,8 @@ export interface ExportBundle {
   transactions: Transaction[];
   balances: AccountBalance[];
   categories: ExportCategory[];
+  /** Cards with a cut day: where each statement stands, by account. */
+  cycles: Map<string, CreditCardStatus>;
 }
 
 /**
@@ -33,7 +36,7 @@ export interface ExportBundle {
  * the dashboard uses rather than being re-summed here, so the numbers in the
  * file are the numbers on screen.
  */
-export async function collectExportData(userId: string): Promise<ExportBundle> {
+export async function collectExportData(userId: string, today: Date): Promise<ExportBundle> {
   const [user, rows, accountConfigs, categories, budgets, sums] = await Promise.all([
     prisma.user.findUniqueOrThrow({
       where: { id: userId },
@@ -59,8 +62,25 @@ export async function collectExportData(userId: string): Promise<ExportBundle> {
       Number(a.isCredit) - Number(b.isCredit) || a.account.localeCompare(b.account)
   );
 
+  const cycles = await getCreditCardStatus(
+    userId,
+    accountConfigs.flatMap((a) =>
+      a.isCredit && a.statementDay != null
+        ? [{
+            account: a.account,
+            statementDay: a.statementDay,
+            dueDay: a.dueDay,
+            initialBalance: a.initialBalance,
+            balanceAdjustment: a.balanceAdjustment,
+          }]
+        : []
+    ),
+    today
+  );
+
   return {
     user,
+    cycles,
     transactions: rows.map(mapTransaction),
     balances,
     categories: categories.map((c) => ({

@@ -1,7 +1,8 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { requireUser, errorResponse } from "@/lib/auth";
 import { apiDictionary } from "@/lib/api-lang";
 import { collectExportData } from "@/lib/export-data";
+import { readToday } from "@/lib/request-today";
 import { buildWorkbook, exportFileName } from "@/services/export-workbook";
 
 const XLSX_TYPE =
@@ -15,13 +16,13 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /** The signed-in user's entire ledger as an .xlsx workbook. */
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
     const userId = await requireUser();
     const { dict, lang } = await apiDictionary();
 
     const generatedAt = new Date();
-    const bundle = await collectExportData(userId);
+    const bundle = await collectExportData(userId, readToday(req));
     const buffer = await buildWorkbook(bundle, dict, lang, generatedAt);
 
     const name = exportFileName(dict, generatedAt);

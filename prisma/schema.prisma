@@ -73,6 +73,13 @@ model AccountConfig {
   /// Credit accounts only: the approved line. Null means no line on file — the
   /// account then reads exactly the way it did before limits existed.
   creditLimit        Decimal?  @db.Decimal(14, 2)
+  /// Credit accounts only: the cut-off day of the month, 1–31. Days past the
+  /// end of a short month fall on its last day. Null means no cycle on file,
+  /// and the card reads exactly as it did before cycles existed.
+  statementDay       Int?
+  /// Credit accounts only: the payment due day, 1–31. Falls in the month after
+  /// the cut when it is on or before the statement day.
+  dueDay             Int?
   color              String?
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @default(now()) @updatedAt

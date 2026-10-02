@@ -3,7 +3,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireUser, errorResponse } from "@/lib/auth";
 import { apiMessages } from "@/lib/api-lang";
-import { parseCreditLimit } from "@/lib/account-input";
+import { parseCreditLimit, parseCycleDays } from "@/lib/account-input";
 import { toNumberOrNull } from "@/lib/money";
 
 /**
@@ -42,6 +42,14 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
         ? parseCreditLimit(body.creditLimit, nextIsCredit)
         : parseCreditLimit(toNumberOrNull(existing.creditLimit), nextIsCredit);
 
+    // Same rule per field: omitted keeps what's on file, debit drops it.
+    const nextStatementDay = !nextIsCredit
+      ? null
+      : "statementDay" in body ? parseCycleDays(body, true).statementDay : existing.statementDay;
+    const nextDueDay = !nextIsCredit
+      ? null
+      : "dueDay" in body ? parseCycleDays(body, true).dueDay : existing.dueDay;
+
     const renamed = nextName !== existing.account;
 
     try {
@@ -52,6 +60,8 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
             account: nextName,
             isCredit: nextIsCredit,
             creditLimit: nextCreditLimit,
+            statementDay: nextStatementDay,
+            dueDay: nextDueDay,
             color: nextColor,
           },
         }),

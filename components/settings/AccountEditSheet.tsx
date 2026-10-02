@@ -14,6 +14,8 @@ export interface EditableAccount {
   account: string;
   isCredit: boolean;
   creditLimit: number | null;
+  statementDay: number | null;
+  dueDay: number | null;
   color: string | null;
 }
 
@@ -37,6 +39,10 @@ export function AccountEditSheet({ account, open, onClose }: Props) {
   const [creditLimit, setCreditLimit] = useState(
     account?.creditLimit != null ? String(account.creditLimit) : ""
   );
+  const [statementDay, setStatementDay] = useState(
+    account?.statementDay != null ? String(account.statementDay) : ""
+  );
+  const [dueDay, setDueDay] = useState(account?.dueDay != null ? String(account.dueDay) : "");
   const [color, setColor] = useState(account?.color ?? PALETTE[0]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -52,7 +58,7 @@ export function AccountEditSheet({ account, open, onClose }: Props) {
       const res = await fetch(isNew ? "/api/accounts" : `/api/accounts/${account.id}`, {
         method: isNew ? "POST" : "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ account: name.trim(), isCredit, creditLimit, color }),
+        body: JSON.stringify({ account: name.trim(), isCredit, creditLimit, statementDay, dueDay, color }),
       });
       const payload = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -131,6 +137,18 @@ export function AccountEditSheet({ account, open, onClose }: Props) {
           </Field>
         )}
 
+        {isCredit && (
+          <div className="space-y-1.5">
+            <div className="grid grid-cols-2 gap-2.5">
+              <DayField label={t.accountSheet.statementDay} value={statementDay} onChange={setStatementDay} />
+              <DayField label={t.accountSheet.dueDay} value={dueDay} onChange={setDueDay} />
+            </div>
+            <span className="block text-[11.5px] text-text-dim leading-relaxed">
+              {t.accountSheet.cycleHint}
+            </span>
+          </div>
+        )}
+
         <Field label={t.common.color}>
           <ColorPicker value={color} onChange={setColor} />
         </Field>
@@ -191,5 +209,27 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       </span>
       {children}
     </label>
+  );
+}
+
+/** A day of the month, 1–31. Anything else is dropped as it's typed. */
+function DayField({
+  label, value, onChange,
+}: { label: string; value: string; onChange: (v: string) => void }) {
+  const t = useT();
+  return (
+    <Field label={label}>
+      <input
+        value={value}
+        onChange={(e) => {
+          const digits = e.target.value.replace(/\D/g, "").slice(0, 2);
+          onChange(digits === "" || (Number(digits) >= 1 && Number(digits) <= 31) ? digits : value);
+        }}
+        inputMode="numeric"
+        placeholder={t.accountSheet.dayPlaceholder}
+        aria-label={label}
+        className="w-full rounded-md bg-surface-2 border border-border px-3.5 py-2.5 min-h-[48px] font-mono text-[17px] font-semibold text-text tabular-nums outline-none placeholder:text-text-faint placeholder:font-normal focus:border-accent/60 transition-colors duration-150"
+      />
+    </Field>
   );
 }

@@ -1,4 +1,5 @@
 import type { PeriodKind } from "@/services/period";
+import type { CreditCycleInfo } from "@/services/credit-cycle";
 
 export type TransactionType = "Gasto" | "Ingreso" | "Transferencia";
 
@@ -193,9 +194,32 @@ export interface YearlyDashboardData {
   months: YearlyNetPoint[];
 }
 
+/** Where a card's last statement stands, as `/api/accounts` reports it. */
+export interface CreditCycleStatus extends CreditCycleInfo {
+  /** Where the last payment to this card came from, to prefill the next one. */
+  lastPaymentFrom: string | null;
+}
+
+/** One row of `GET /api/accounts`. */
+export interface AccountConfigView {
+  id: number;
+  account: string;
+  isCredit: boolean;
+  creditLimit: number | null;
+  statementDay: number | null;
+  dueDay: number | null;
+  color: string | null;
+  currentBalance: number;
+  /** Cards with a cut day; null for everything else. */
+  cycle: CreditCycleStatus | null;
+}
+
 export interface TransactionFilters {
-  /** Which span the list covers; "all" drops the date bound entirely. */
-  period: PeriodKind;
+  /** Which span the list covers; "all" drops the date bound entirely, and
+   *  "cycle" is a credit card's own cycle around the anchor, cut on `cut`. */
+  period: PeriodKind | "cycle";
+  /** Statement day, only read when `period` is "cycle". */
+  cut?: number;
   /** `YYYY-MM-DD` of any day inside that span. */
   anchor: string;
   category: string;

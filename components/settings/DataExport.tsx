@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { DownloadIcon } from "@/components/shell/icons";
 import { useT } from "@/lib/i18n-react";
+import { dayKey, todayAnchor } from "@/services/period";
 
 /** Pulls the name the server picked out of `Content-Disposition`. */
 function fileNameFrom(header: string | null, fallback: string): string {
@@ -38,7 +39,7 @@ export function DataExport() {
     setError(null);
 
     try {
-      const res = await fetch("/api/export");
+      const res = await fetch(`/api/export?today=${dayKey(todayAnchor())}`);
       if (!res.ok) {
         const body = await res.json().catch(() => null);
         throw new Error(body?.error ?? t.profile.exportFailed);
