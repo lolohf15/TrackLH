@@ -4,6 +4,10 @@ import withPWA from "@ducanh2912/next-pwa";
 const nextConfig: NextConfig = {
   turbopack: {},
 
+  // Lets a phone on the same Wi-Fi load the dev server by the Mac's LAN
+  // address. Development only; production ignores it.
+  allowedDevOrigins: ["192.168.1.66", "*.local"],
+
   // The tabs were renamed in the redesign. Kept non-permanent on purpose:
   // a 308 gets cached hard by browsers, and these paths are still in flux.
   async redirects() {
