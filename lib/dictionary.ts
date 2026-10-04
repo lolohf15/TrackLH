@@ -643,6 +643,7 @@ export const es = {
     occurrenceNotDue: "Esa fecha ya no está pendiente",
 
     movementMissing: "Movimiento no encontrado",
+    movementAlreadyRecurring: "Ese movimiento ya es parte de una recurrente",
     typeInvalid: "Tipo de movimiento inválido",
     amountPositive: "El monto debe ser mayor a 0",
     dateInvalid: "Fecha inválida",
@@ -1267,6 +1268,7 @@ export const en: typeof es = {
     occurrenceNotDue: "That date isn't pending anymore",
 
     movementMissing: "Movement not found",
+    movementAlreadyRecurring: "That movement already belongs to a recurring rule",
     typeInvalid: "Invalid movement type",
     amountPositive: "The amount must be greater than 0",
     dateInvalid: "Invalid date",

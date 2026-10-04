@@ -1,5 +1,6 @@
-import { Prisma } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { ts } from "@/lib/sql";
 import { getAccountSums } from "@/lib/account-sums";
 import { mapAccountConfig, toNumber } from "@/lib/money";
 import { listRules } from "@/lib/recurring";
@@ -8,10 +9,6 @@ import type { DateRange } from "@/services/period";
 import type { TrendsData } from "@/types";
 import { countWeekdays } from "@/services/trend-window";
 
-/** The column is `timestamp without time zone`; compare it to a bare wall clock. */
-function ts(d: Date): Prisma.Sql {
-  return Prisma.sql`${d.toISOString().slice(0, 19)}::timestamp`;
-}
 
 type MonthRow = {
   month: string;
@@ -56,13 +53,18 @@ export async function getTrends(
       WHERE "userId" = ${userId} AND date >= ${ts(range.from)} AND date < ${ts(range.to)}
       GROUP BY 1
     `,
-    // What left or reached each account per month, from its own side. Income
-    // is added for every account here and dropped for cards below (rule 7).
+    // What left each account per month, from its own side. Income never
+    // lands on a card (rule 7), so a stray one there counts for nothing, the
+    // way `computeAccountBalancesFromSums` ignores it.
     prisma.$queryRaw<FlowRow[]>`
-      SELECT to_char(date_trunc('month', date), 'YYYY-MM') AS month, account,
-        SUM(CASE WHEN type = 'Ingreso' THEN amount ELSE -amount END) AS flow
-      FROM "Transaction"
-      WHERE "userId" = ${userId} AND date >= ${ts(range.from)}
+      SELECT to_char(date_trunc('month', t.date), 'YYYY-MM') AS month, t.account,
+        SUM(CASE
+          WHEN t.type = 'Ingreso' THEN CASE WHEN c."isCredit" THEN 0 ELSE t.amount END
+          ELSE -t.amount
+        END) AS flow
+      FROM "Transaction" t
+      LEFT JOIN "AccountConfig" c ON c."userId" = t."userId" AND c.account = t.account
+      WHERE t."userId" = ${userId} AND t.date >= ${ts(range.from)}
       GROUP BY 1, 2
     `,
     prisma.$queryRaw<FlowRow[]>`
@@ -87,10 +89,6 @@ export async function getTrends(
 
   const byMonth = new Map(monthRows.map((r) => [r.month, r]));
 
-  // Income never lands on a card (rule 7), so a stray one is dropped there
-  // the same way `computeAccountBalancesFromSums` drops it.
-  const incomeOnCards = await cardIncome(userId, range.from, configs.filter((c) => c.isCredit).map((c) => c.account));
-
   const flows = new Map<string, Map<string, number>>(); // account → month → flow
   const addFlow = (account: string, month: string, amount: number) => {
     const perMonth = flows.get(account) ?? new Map<string, number>();
@@ -99,7 +97,6 @@ export async function getTrends(
   };
   for (const r of flowRows) addFlow(r.account, r.month, n(r.flow));
   for (const r of inRows) addFlow(r.account, r.month, n(r.flow));
-  for (const r of incomeOnCards) addFlow(r.account, r.month, -n(r.flow));
 
   const balances = computeAccountBalancesFromSums(sums, configs);
 
@@ -160,16 +157,4 @@ export async function getTrends(
     weekdayCounts: countWeekdays(period),
     fixedCommitment: recurring.fixedExpenses,
   };
-}
-
-/** Income logged against a card: rare, ignored by its balance, so taken back out. */
-async function cardIncome(userId: string, from: Date, cards: string[]): Promise<FlowRow[]> {
-  if (cards.length === 0) return [];
-  return prisma.$queryRaw<FlowRow[]>`
-    SELECT to_char(date_trunc('month', date), 'YYYY-MM') AS month, account, SUM(amount) AS flow
-    FROM "Transaction"
-    WHERE "userId" = ${userId} AND type = 'Ingreso' AND date >= ${ts(from)}
-      AND account IN (${Prisma.join(cards)})
-    GROUP BY 1, 2
-  `;
 }

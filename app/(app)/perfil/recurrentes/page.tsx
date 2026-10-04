@@ -10,19 +10,14 @@ import { ChartSkeleton } from "@/components/ui/Skeleton";
 import { shortDay } from "@/components/wallet/DueBadge";
 import { RecurringEditSheet } from "@/components/recurring/RecurringEditSheet";
 import {
-  ruleTitle, useFrequencyLabel, useRecurringList,
+  AMOUNT_TONES, ruleTitle, useFrequencyLabel, useRecurringList,
 } from "@/components/recurring/use-recurring";
 import { cn, formatMXN, getToday } from "@/lib/utils";
 import { useCountUp } from "@/lib/useCountUp";
 import { useLocale, useT } from "@/lib/i18n-react";
 import { useCategoryLookup } from "@/lib/use-category-icons";
-import type { RecurringRuleView, TransactionType } from "@/types";
+import type { RecurringRuleView } from "@/types";
 
-const AMOUNT_TONES: Record<TransactionType, string> = {
-  Gasto: "text-red-fg",
-  Ingreso: "text-green-fg",
-  Transferencia: "text-blue-fg",
-};
 
 /**
  * Every recurring movement, and what they come to in a month. The figure up

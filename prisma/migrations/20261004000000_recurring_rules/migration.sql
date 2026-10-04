@@ -16,6 +16,7 @@ CREATE TABLE "RecurringRule" (
   "nextDueDate" TIMESTAMP(3) NOT NULL,
   "endDate"     TIMESTAMP(3),
   "active"      BOOLEAN NOT NULL DEFAULT true,
+  "pausedAt"    TIMESTAMP(3),
   "createdAt"   TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
   "updatedAt"   TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT "RecurringRule_pkey" PRIMARY KEY ("id"),

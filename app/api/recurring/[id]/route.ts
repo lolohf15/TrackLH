@@ -4,7 +4,7 @@ import { requireUser, errorResponse } from "@/lib/auth";
 import { apiMessages } from "@/lib/api-lang";
 import { toNumber } from "@/lib/money";
 import { readToday } from "@/lib/request-today";
-import { dayKey, validateRuleInput } from "@/lib/recurring";
+import { dayKey, nextOccurrence, validateRuleInput } from "@/lib/recurring";
 
 /**
  * Edit a rule, pause it or resume it. Omitted fields keep what's on file.
@@ -46,21 +46,32 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     }
     const rule = check.data;
 
-    // Where the count of unhandled days resumes from.
+    // Where the count of unhandled days resumes from. A new start date only
+    // ever moves it forward: everything before the old mark was already
+    // confirmed or skipped, and moving the billing day from the 4th to the
+    // 1st mustn't bring back the 1st of a month that was already paid.
     let nextDueDate = existing.nextDueDate;
-    if (rule.anchorDate.getTime() !== existing.anchorDate.getTime()) {
-      // A new start date restarts the count there. Occurrences already logged
-      // keep their movements, and pending leaves those out on its own.
-      nextDueDate = rule.anchorDate;
-    } else if (rule.active && !existing.active) {
-      // Resuming a paused rule doesn't bill the months it sat paused.
+    if (rule.anchorDate.getTime() > nextDueDate.getTime()) nextDueDate = rule.anchorDate;
+
+    const pausing = !rule.active && existing.active;
+    const resuming = rule.active && !existing.active;
+    if (resuming) {
+      // The months it sat paused aren't billed. What was already due before
+      // the pause still is, so the mark only jumps when nothing was.
       const today = readToday(req);
-      if (today.getTime() > nextDueDate.getTime()) nextDueDate = today;
+      const owed = nextOccurrence({ ...existing, ...rule, nextDueDate });
+      const owedBeforePause =
+        owed !== null && existing.pausedAt !== null && owed.getTime() <= existing.pausedAt.getTime();
+      if (!owedBeforePause && today.getTime() > nextDueDate.getTime()) nextDueDate = today;
     }
 
     await prisma.recurringRule.update({
       where: { id },
-      data: { ...rule, nextDueDate },
+      data: {
+        ...rule,
+        nextDueDate,
+        pausedAt: pausing ? readToday(req) : rule.active ? null : existing.pausedAt,
+      },
     });
 
     return NextResponse.json({ success: true, id });

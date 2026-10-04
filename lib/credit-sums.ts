@@ -1,5 +1,6 @@
-import { Prisma } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { ts } from "@/lib/sql";
 import { toNumber } from "@/lib/money";
 import { round2 } from "@/services/finance";
 import { computeCycleInfo, getCycle, type CreditCycleInfo } from "@/services/credit-cycle";
@@ -17,10 +18,6 @@ export interface CreditCardStatus extends CreditCycleInfo {
   lastPaymentFrom: string | null;
 }
 
-/** The column is `timestamp without time zone`; compare it to a bare wall clock. */
-function ts(d: Date): Prisma.Sql {
-  return Prisma.sql`${d.toISOString().slice(0, 19)}::timestamp`;
-}
 
 type Row = {
   expenses_before: Prisma.Decimal | null;

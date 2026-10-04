@@ -4,6 +4,7 @@ import { requireUser, errorResponse } from "@/lib/auth";
 import { apiMessages } from "@/lib/api-lang";
 import { dayKey, listRules, validateRuleInput } from "@/lib/recurring";
 import { addDays } from "@/services/credit-cycle";
+import { toNumber } from "@/lib/money";
 
 /** This user's recurring rules, and what they add up to in a month. */
 export async function GET() {
@@ -34,13 +35,31 @@ export async function POST(req: NextRequest) {
       typeof body.transactionId === "string"
         ? await prisma.transaction.findFirst({ where: { id: body.transactionId, userId } })
         : null;
-    if (typeof body.transactionId === "string" && (!source || source.recurringRuleId)) {
+    if (typeof body.transactionId === "string" && !source) {
       return NextResponse.json({ error: m.movementMissing }, { status: 404 });
     }
+    if (source?.recurringRuleId) {
+      return NextResponse.json({ error: m.movementAlreadyRecurring }, { status: 409 });
+    }
 
+    // Made from a movement, the rule is that movement: what it is, where it
+    // went and how much come from the row, so its first occurrence can't
+    // disagree with the rule. Only the schedule comes from the request.
     const check = await validateRuleInput(
       userId,
-      source ? { ...body, startDate: dayKey(source.date) } : body,
+      source
+        ? {
+            frequency: body.frequency,
+            interval: body.interval,
+            type: source.type,
+            amount: toNumber(source.amount),
+            account: source.account,
+            toAccount: source.toAccount,
+            category: source.category,
+            description: source.description,
+            startDate: dayKey(source.date),
+          }
+        : body,
       m
     );
     if (!check.ok) {

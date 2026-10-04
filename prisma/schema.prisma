@@ -173,6 +173,9 @@ model RecurringRule {
   endDate     DateTime?
   /// False while paused: a paused rule never shows as pending.
   active      Boolean   @default(true)
+  /// The day it was paused, so resuming can tell what came due before the
+  /// pause (still owed) from what fell inside it (skipped). Null while active.
+  pausedAt    DateTime?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @default(now()) @updatedAt
 

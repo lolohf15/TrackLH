@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import useSWR, { mutate } from "swr";
+import useSWR from "swr";
 import { Minus, Plus, X } from "lucide-react";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Button } from "@/components/ui/Button";
@@ -14,6 +14,7 @@ import { cn, formatMXNCents, getToday } from "@/lib/utils";
 import { evaluateAmount, isExpression } from "@/lib/amount-expression";
 import { useT } from "@/lib/i18n-react";
 import { MAX_INTERVAL, type Frequency } from "@/services/recurrence";
+import { refreshAll } from "./use-recurring";
 import {
   UNKNOWN_COLOR, VALID_TRANSACTION_TYPES,
   type AccountOption, type Catalog, type RecurringRuleView, type TransactionType,
@@ -87,10 +88,6 @@ export function RecurringEditSheet({
     !!account &&
     (isTransfer ? !!toAccount : !!category) &&
     !!startDate;
-
-  function refreshAll() {
-    return mutate((key) => typeof key === "string" && key.startsWith("/api/"));
-  }
 
   async function save() {
     if (!canSave || value === null) return;
