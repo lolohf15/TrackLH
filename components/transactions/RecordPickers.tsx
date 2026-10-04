@@ -8,6 +8,7 @@ import { cn, formatMXN, getToday } from "@/lib/utils";
 import { currentLocale } from "@/lib/i18n";
 import { useT } from "@/lib/i18n-react";
 import { UNKNOWN_COLOR, type AccountOption, type Category } from "@/types";
+import type { Frequency } from "@/services/recurrence";
 
 /** Two rows of five, the last cell being "more" when there is more. */
 const COLLAPSED_COUNT = 9;
@@ -315,6 +316,58 @@ export function DatePanel({ value, onChange }: { value: string; onChange: (day: 
           className="bg-transparent text-[14px] text-text outline-none tabular-nums"
         />
       </label>
+    </div>
+  );
+}
+
+/**
+ * Whether a new movement repeats, and how often. Picking one makes the
+ * movement the first occurrence of a rule; the rest wait on Inicio for a
+ * Confirm, so nothing is ever logged behind the person's back.
+ */
+export function RepeatPanel({
+  value,
+  onChange,
+}: {
+  value: Frequency | null;
+  onChange: (frequency: Frequency | null) => void;
+}) {
+  const t = useT();
+  const options: Array<{ value: Frequency | null; label: string }> = [
+    { value: null, label: t.recurring.noRepeat },
+    { value: "weekly", label: t.recurring.weekly },
+    { value: "monthly", label: t.recurring.monthly },
+    { value: "yearly", label: t.recurring.yearly },
+  ];
+
+  return (
+    <div>
+      <p className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em] mb-2">
+        {t.recurring.repeat}
+      </p>
+      <div role="radiogroup" aria-label={t.recurring.repeat} className="flex flex-wrap gap-2">
+        {options.map((option) => {
+          const selected = option.value === value;
+          return (
+            <button
+              key={option.value ?? "none"}
+              type="button"
+              role="radio"
+              aria-checked={selected}
+              onClick={() => onChange(option.value)}
+              className={cn(
+                "press rounded-full px-3.5 min-h-[44px] text-[13.5px] border transition-colors duration-150",
+                selected
+                  ? "bg-accent text-accent-ink border-transparent font-semibold"
+                  : "bg-surface-2 border-border text-text"
+              )}
+            >
+              {option.label}
+            </button>
+          );
+        })}
+      </div>
+      <p className="mt-3 text-[11.5px] text-text-dim leading-relaxed">{t.recurring.repeatHint}</p>
     </div>
   );
 }

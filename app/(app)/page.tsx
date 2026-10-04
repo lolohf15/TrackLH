@@ -6,6 +6,7 @@ import useSWR from "swr";
 import { CategoryRanking } from "@/components/dashboard/CategoryRanking";
 import { AccountBalances } from "@/components/dashboard/AccountBalances";
 import { UpcomingPayments } from "@/components/dashboard/UpcomingPayments";
+import { PendingRecurring } from "@/components/recurring/PendingRecurring";
 import { BudgetTracker } from "@/components/dashboard/BudgetTracker";
 import { MonthPickerSheet } from "@/components/dashboard/MonthPickerSheet";
 import { SpendChart } from "@/components/dashboard/SpendChart";
@@ -194,6 +195,9 @@ export default function Home() {
             </div>
           </div>
 
+          {/* What's waiting on a decision sits right under the month's figures:
+              recurring movements to confirm, then cards coming due. */}
+          <PendingRecurring />
           <UpcomingPayments balances={dashboard?.accountBalances ?? []} />
 
           {analytics && (

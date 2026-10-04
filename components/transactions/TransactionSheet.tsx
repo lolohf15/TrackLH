@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import useSWR, { mutate } from "swr";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ArrowDown, CalendarDays, NotebookPen } from "lucide-react";
+import { ArrowDown, CalendarDays, NotebookPen, Repeat } from "lucide-react";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Button } from "@/components/ui/Button";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
@@ -12,7 +12,9 @@ import { SuccessCheck } from "@/components/ui/SuccessCheck";
 import { HoldButton } from "@/components/ui/HoldButton";
 import { useToast } from "@/components/ui/Toast";
 import { AmountKeypad } from "./AmountKeypad";
-import { AccountList, AccountPill, CategoryGrid, DatePanel, useDayLabel } from "./RecordPickers";
+import { AccountList, AccountPill, CategoryGrid, DatePanel, RepeatPanel, useDayLabel } from "./RecordPickers";
+import { postOccurrence, useFrequencyLabel } from "@/components/recurring/use-recurring";
+import type { Frequency } from "@/services/recurrence";
 import { cn, formatMXNCents, getToday, withLocalTime } from "@/lib/utils";
 import { evaluateAmount, isExpression } from "@/lib/amount-expression";
 import { keyFromKeyboard, pressKey } from "@/lib/amount-input";
@@ -36,6 +38,9 @@ interface Props {
   /** A new movement that starts filled in, like a card payment. Everything
    *  in it stays editable before saving. */
   prefill?: RecordPrefill;
+  /** A recurring occurrence being reviewed before it's logged: saving
+   *  confirms it instead of creating a free-standing movement. */
+  confirm?: { ruleId: string; occurrenceDate: string };
 }
 
 export interface RecordPrefill {
@@ -43,6 +48,10 @@ export interface RecordPrefill {
   account?: string | null;
   toAccount?: string | null;
   amount?: number | null;
+  category?: string | null;
+  description?: string | null;
+  /** `YYYY-MM-DD`. Defaults to today. */
+  day?: string | null;
 }
 
 // Throws on a failed response so SWR keeps the last good catalog instead of
@@ -74,7 +83,7 @@ const DONE_HOLD_MS = 750;
 const EASE_OUT = [0.23, 1, 0.32, 1] as const;
 
 /** What sits under the footer: the keypad, or whichever picker is open. */
-type Panel = "keypad" | "account" | "toAccount" | "date" | null;
+type Panel = "keypad" | "account" | "toAccount" | "date" | "repeat" | null;
 type Phase = "form" | "saving" | "done";
 
 /** The stored clock, as `YYYY-MM-DD`. Rows are wall clocks pinned to UTC. */
@@ -120,8 +129,12 @@ export function TransactionSheet({
   transaction = null,
   initialConfirmingDelete = false,
   prefill,
+  confirm,
 }: Props) {
   const isEdit = transaction !== null;
+  // Only a brand-new movement can start a rule: an edit already has its
+  // place in the ledger, and a confirmation already belongs to one.
+  const canRepeat = !isEdit && !confirm;
   const t = useT();
   const toast = useToast();
   const reduceMotion = useReducedMotion();
@@ -141,14 +154,18 @@ export function TransactionSheet({
   const [pickedToAccount, setPickedToAccount] = useState<string | null>(
     transaction?.toAccount ?? prefill?.toAccount ?? null
   );
-  const [category, setCategory] = useState(transaction?.category ?? "");
+  const [category, setCategory] = useState(transaction?.category ?? prefill?.category ?? "");
   const [amount, setAmount] = useState(
     transaction ? amountText(transaction.amount) : prefill?.amount ? amountText(prefill.amount) : ""
   );
-  const [description, setDescription] = useState(transaction?.description ?? "");
-  const [noteOpen, setNoteOpen] = useState(!!transaction?.description);
-  const [day, setDay] = useState(transaction ? dayOf(transaction.date) : getToday());
-  const [panel, setPanel] = useState<Panel>(isEdit ? null : "keypad");
+  const [description, setDescription] = useState(transaction?.description ?? prefill?.description ?? "");
+  const [noteOpen, setNoteOpen] = useState(!!(transaction?.description ?? prefill?.description));
+  const [day, setDay] = useState(transaction ? dayOf(transaction.date) : prefill?.day ?? getToday());
+  const [repeat, setRepeat] = useState<Frequency | null>(null);
+  const frequencyLabel = useFrequencyLabel();
+  // A movement that arrives already filled in — an edit, or a recurring one
+  // being reviewed — opens on itself rather than on the keypad.
+  const [panel, setPanel] = useState<Panel>(isEdit || confirm ? null : "keypad");
 
   const [phase, setPhase] = useState<Phase>("form");
   const [busy, setBusy] = useState(false);
@@ -283,7 +300,7 @@ export function TransactionSheet({
     if (!canSubmit || value === null) return;
     setError(null);
 
-    const body = JSON.stringify({
+    const fields = {
       type,
       account,
       toAccount: isTransfer ? toAccount : undefined,
@@ -291,7 +308,8 @@ export function TransactionSheet({
       amount: value,
       date: isEdit ? keepClock(transaction.date, day) : withLocalTime(day),
       description: description.trim() || undefined,
-    });
+    };
+    const body = JSON.stringify(fields);
     const text = summary(value);
 
     if (isEdit) {
@@ -325,11 +343,26 @@ export function TransactionSheet({
     // the sheet doesn't shrink under the ring.
     setPhase("saving");
     try {
-      const res = await fetch("/api/transactions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body,
-      });
+      const res = confirm
+        ? await fetch(
+            `/api/recurring/${encodeURIComponent(confirm.ruleId)}/confirm?today=${getToday()}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              // An emptied note is sent as null, not left out: left out, the
+              // server falls back to the rule's own and the note comes back.
+              body: JSON.stringify({
+                ...fields,
+                description: fields.description ?? null,
+                occurrenceDate: confirm.occurrenceDate,
+              }),
+            }
+          )
+        : await fetch("/api/transactions", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body,
+          });
       const payload = await res.json().catch(() => ({}));
       if (!res.ok || typeof payload?.id !== "string") {
         setPhase("form");
@@ -338,21 +371,61 @@ export function TransactionSheet({
       }
 
       const id: string = payload.id;
+
+      // The movement is in. Its rule rides on it as the first occurrence, so
+      // a failure here leaves a logged movement and says so, rather than
+      // pretending the save didn't happen.
+      let ruleId: string | null = null;
+      let ruleFailed = false;
+      if (repeat) {
+        const made = await fetch("/api/recurring", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...fields, transactionId: id, frequency: repeat, interval: 1 }),
+        }).catch(() => null);
+        const madePayload = await made?.json().catch(() => ({}));
+        if (made?.ok && typeof madePayload?.id === "string") ruleId = madePayload.id;
+        else ruleFailed = true;
+      }
+
       setPhase("done");
       hapticTap();
       refreshAll();
 
-      afterClose.current = () =>
+      const detail = repeat && ruleId ? `${text} · ${frequencyLabel(repeat, 1)}` : text;
+
+      afterClose.current = () => {
+        if (ruleFailed) {
+          toast({ message: t.recurring.createFailed, detail: text, tone: "error" });
+          return;
+        }
         toast({
           message: t.txSheet.registered,
-          detail: text,
+          detail,
           action: {
             label: t.txSheet.undo,
             onClick: async () => {
-              const undo = await fetch(`/api/transactions/${encodeURIComponent(id)}`, {
-                method: "DELETE",
-              }).catch(() => null);
-              if (!undo?.ok) {
+              try {
+                if (confirm) {
+                  // Back to pending, with the movement it logged gone.
+                  await postOccurrence(confirm.ruleId, "reopen", {
+                    occurrenceDate: confirm.occurrenceDate,
+                  });
+                } else {
+                  // The rule first: deleting the movement alone would leave
+                  // a rule behind that nobody asked to keep.
+                  if (ruleId) {
+                    const gone = await fetch(`/api/recurring/${encodeURIComponent(ruleId)}`, {
+                      method: "DELETE",
+                    });
+                    if (!gone.ok) throw new Error();
+                  }
+                  const undo = await fetch(`/api/transactions/${encodeURIComponent(id)}`, {
+                    method: "DELETE",
+                  });
+                  if (!undo.ok) throw new Error();
+                }
+              } catch {
                 toast({ message: t.txSheet.undoFailed, tone: "error" });
                 return;
               }
@@ -361,6 +434,7 @@ export function TransactionSheet({
             },
           },
         });
+      };
       closeTimer.current = setTimeout(finish, DONE_HOLD_MS);
     } catch {
       setPhase("form");
@@ -437,7 +511,7 @@ export function TransactionSheet({
       onClose={requestClose}
       // A new movement skips the heading: the type control already says what
       // this is, and the keypad needs the 40px more than the title does.
-      title={isEdit ? t.txSheet.editTitle : undefined}
+      title={isEdit ? t.txSheet.editTitle : confirm ? t.recurring.editBeforeConfirm : undefined}
     >
       <div className="relative">
         <motion.div
@@ -550,7 +624,10 @@ export function TransactionSheet({
                   onFocus={() => setPanel(null)}
                   placeholder={t.txSheet.notePlaceholder}
                   aria-label={t.txSheet.note}
-                  autoFocus={!isEdit}
+                  // Only when the person just asked for a note. A note that
+                  // arrives filled in (an edit, a recurring one under review)
+                  // would otherwise pull the keyboard up over the sheet.
+                  autoFocus={!isEdit && !prefill?.description}
                   className="mt-4 w-full rounded-md bg-surface-2 border border-border px-3.5 min-h-[48px] text-[15px] text-text outline-none placeholder:text-text-faint focus:border-accent/60 transition-colors duration-150"
                 />
               </motion.div>
@@ -591,6 +668,23 @@ export function TransactionSheet({
               </button>
             )}
 
+            {canRepeat && (
+              <button
+                type="button"
+                onClick={() => setPanel(panel === "repeat" ? null : "repeat")}
+                aria-label={`${t.recurring.repeat}: ${repeat ? frequencyLabel(repeat, 1) : t.recurring.noRepeat}`}
+                aria-expanded={panel === "repeat"}
+                className={cn(
+                  "press shrink-0 w-12 h-12 rounded-full grid place-items-center border transition-colors duration-150",
+                  repeat
+                    ? "bg-accent/15 border-accent/40 text-accent"
+                    : "bg-surface-2 border-border text-text-dim"
+                )}
+              >
+                <Repeat size={18} aria-hidden="true" />
+              </button>
+            )}
+
             <Button
               onClick={submit}
               disabled={!canSubmit}
@@ -598,7 +692,7 @@ export function TransactionSheet({
               size="lg"
               className="flex-1 min-h-[48px] rounded-full"
             >
-              {isEdit ? t.common.saveChanges : t.txSheet.save}
+              {isEdit ? t.common.saveChanges : confirm ? t.recurring.confirm : t.txSheet.save}
             </Button>
           </div>
 
@@ -648,6 +742,15 @@ export function TransactionSheet({
                     value={day}
                     onChange={(d) => {
                       setDay(d);
+                      closePicker();
+                    }}
+                  />
+                )}
+                {panel === "repeat" && (
+                  <RepeatPanel
+                    value={repeat}
+                    onChange={(f) => {
+                      setRepeat(f);
                       closePicker();
                     }}
                   />

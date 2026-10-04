@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import useSWR from "swr";
 import { AccountPanel } from "@/components/auth/AccountPanel";
 import { ThemeToggle } from "@/components/settings/ThemeToggle";
@@ -95,6 +96,19 @@ export default function Perfil() {
             ))}
             <AddRow label={t.analytics.addCategory} onClick={() => setEditingCategory("new")} />
           </ManageSection>
+
+          {/* Its own screen rather than a fold: a rule has a schedule, a
+              status and a monthly figure, which a two-word row can't carry. */}
+          <Link
+            href="/perfil/recurrentes"
+            className="press w-full flex items-center justify-between gap-3 py-3.5 text-left border-t border-divider"
+          >
+            <span className="min-w-0">
+              <span className="block text-[13.5px] text-text">{t.recurring.title}</span>
+              <span className="block text-[11.5px] text-text-dim mt-0.5">{t.recurring.hint}</span>
+            </span>
+            <ChevronDownIcon className="w-4 h-4 text-text-faint shrink-0 -rotate-90" />
+          </Link>
         </div>
       </section>
 

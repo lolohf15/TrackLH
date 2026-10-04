@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { animate, motion, useMotionValue, useReducedMotion, type PanInfo } from "framer-motion";
+import { Repeat } from "lucide-react";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { TransactionSheet } from "./TransactionSheet";
 import { TableSkeleton } from "@/components/ui/Skeleton";
@@ -282,7 +283,14 @@ function Row({
             <p className="text-[13.5px] text-text truncate">
               {tx.description ?? tx.category ?? t.movements.fallbackName}
             </p>
-            <p className="text-[11.5px] text-text-dim mt-0.5 truncate">{tx.category ?? tx.type} · {tx.account}</p>
+            <p className="text-[11.5px] text-text-dim mt-0.5 truncate">
+              {tx.recurringRuleId && (
+                // Logged from a recurring rule: a small mark, so a fixed charge
+                // reads as one in the list without a column of its own.
+                <Repeat size={10} strokeWidth={2.4} aria-label={t.recurring.title} className="inline -mt-px mr-1 text-text-faint" />
+              )}
+              {tx.category ?? tx.type} · {tx.account}
+            </p>
           </div>
         </div>
         <span className={cn("font-mono text-[13.5px] font-semibold ml-2.5 shrink-0", amountColors[type])}>
