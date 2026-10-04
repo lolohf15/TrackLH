@@ -293,3 +293,37 @@ export interface PendingOccurrence {
   /** How many are waiting in all, this one included. */
   count: number;
 }
+
+/** One month of `GET /api/analytics/trends`. */
+export interface TrendMonth {
+  /** `YYYY-MM`. */
+  key: string;
+  income: number;
+  expenses: number;
+  /** The part of `expenses` confirmed from a recurring rule. */
+  fixed: number;
+  /** Debit money at the end of the month. */
+  available: number;
+  /** `available` less what was owed on the cards at the end of the month. */
+  netWorth: number;
+}
+
+export interface CardTrend {
+  account: string;
+  color: string;
+  limit: number;
+  points: Array<{ key: string; debt: number; utilization: number }>;
+}
+
+/** What the trend charts on Analytics draw. */
+export interface TrendsData {
+  months: TrendMonth[];
+  /** Cards with a limit on file, each month's end against it. */
+  cards: CardTrend[];
+  /** Spending in the period on screen, Monday first. */
+  weekdays: number[];
+  /** How many of each weekday the period has had so far, Monday first. */
+  weekdayCounts: number[];
+  /** What the active recurring expenses come to a month, from the rules. */
+  fixedCommitment: number;
+}
