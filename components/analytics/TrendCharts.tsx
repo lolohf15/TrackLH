@@ -57,7 +57,9 @@ export function IncomeExpenseChart({ months }: { months: TrendMonth[] }) {
   const a = t.analytics;
   const labels = useMonthLabels();
   const [picked, setPicked] = useState<string | null>(null);
-  const selected = picked ?? lastActive(months);
+  // A month picked under another period may not be in this one; then the
+  // readout falls back rather than going blank.
+  const selected = picked !== null && months.some((x) => x.key === picked) ? picked : lastActive(months);
   const m = months.find((x) => x.key === selected) ?? null;
 
   const income = months.reduce((s, x) => s + x.income, 0);
@@ -119,7 +121,9 @@ export function FixedVariableChart({ months, commitment }: { months: TrendMonth[
   const a = t.analytics;
   const labels = useMonthLabels();
   const [picked, setPicked] = useState<string | null>(null);
-  const selected = picked ?? lastActive(months);
+  // A month picked under another period may not be in this one; then the
+  // readout falls back rather than going blank.
+  const selected = picked !== null && months.some((x) => x.key === picked) ? picked : lastActive(months);
   const m = months.find((x) => x.key === selected) ?? null;
   const variable = (x: TrendMonth) => Math.max(0, Math.round((x.expenses - x.fixed) * 100) / 100);
   const share = (x: TrendMonth) => (x.expenses > 0 ? Math.round((x.fixed / x.expenses) * 100) : 0);
@@ -181,7 +185,8 @@ export function NetWorthChart({ months }: { months: TrendMonth[] }) {
   const a = t.analytics;
   const labels = useMonthLabels();
   const [picked, setPicked] = useState<string | null>(null);
-  const selected = picked ?? months[months.length - 1]?.key ?? null;
+  const selected =
+    picked !== null && months.some((x) => x.key === picked) ? picked : months[months.length - 1]?.key ?? null;
   const m = months.find((x) => x.key === selected) ?? null;
 
   const first = months[0];
