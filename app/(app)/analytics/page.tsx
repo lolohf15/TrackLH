@@ -11,10 +11,11 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { MetricTile } from "@/components/ui/MetricTile";
 import { Ring } from "@/components/ui/Ring";
 import { ChartSkeleton } from "@/components/ui/Skeleton";
+import { TrendCharts } from "@/components/analytics/TrendCharts";
 import { formatMXN, cn } from "@/lib/utils";
 import { dayKey, formatPeriodLabel, todayAnchor, wallClockNow, type PeriodKind } from "@/services/period";
 import { useLocale, useT } from "@/lib/i18n-react";
-import type { AnalyticsData, CategoryTrend } from "@/types";
+import type { AnalyticsData, CategoryTrend, TrendsData } from "@/types";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -35,6 +36,14 @@ export default function Analytics() {
     // Stepping to another period keeps the one on screen until its
     // replacement lands, instead of blanking the tab to a skeleton on every
     // tap of the arrows.
+    { keepPreviousData: true }
+  );
+
+  // Months either side of the period, and its weekdays. Its own request so
+  // the period's figures above don't wait on a walk through balance history.
+  const { data: trends, isLoading: trendsLoading } = useSWR<TrendsData>(
+    `/api/analytics/trends?period=${kind}&anchor=${dayKey(anchor)}&today=${dayKey(todayAnchor())}`,
+    fetcher,
     { keepPreviousData: true }
   );
 
@@ -211,6 +220,30 @@ export default function Analytics() {
               <CategoryDetail trend={selectedTrend} spanQuery={spanQuery} />
             </div>
           )}
+        </div>
+      )}
+
+      {/* The longer view: how the months around this one went, and which
+          days of it cost the most. Shown even for an empty period, since the
+          months before it may not be. */}
+      {!trends ? (
+        data && <ChartSkeleton height="h-72" />
+      ) : (
+        <div
+          className={cn(
+            "mt-6 transition-opacity duration-200 ease-out",
+            trendsLoading && "opacity-50"
+          )}
+        >
+          <p className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em] px-1">
+            {t.analytics.trends} ·{" "}
+            {data?.period === "year"
+              ? t.analytics.yearByMonth(data.from.slice(0, 4))
+              : t.analytics.lastMonths(trends.months.length)}
+          </p>
+          <div className="md:grid md:grid-cols-2 md:gap-x-6 md:items-start">
+            <TrendCharts data={trends} />
+          </div>
         </div>
       )}
     </div>

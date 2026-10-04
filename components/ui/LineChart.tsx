@@ -47,9 +47,12 @@ export function LineChart({
   const id = useId();
   const n = points.length;
   const max = Math.max(...points.map((p) => p.value), ...(comparison ?? []), 1);
+  // Zero unless a value goes below it — a net worth can — so every chart that
+  // only ever climbs keeps the exact geometry it had.
+  const min = Math.min(0, ...points.map((p) => p.value), ...(comparison ?? []));
 
   const x = (i: number) => (n <= 1 ? 50 : (i / (n - 1)) * 100);
-  const y = (value: number) => HEADROOM + (1 - value / max) * (100 - HEADROOM);
+  const y = (value: number) => HEADROOM + (1 - (value - min) / (max - min)) * (100 - HEADROOM);
 
   const path = (values: number[]) =>
     values.map((v, i) => `${i === 0 ? "M" : "L"} ${x(i)} ${y(v)}`).join(" ");
