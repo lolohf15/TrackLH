@@ -42,16 +42,19 @@ export function UpcomingPayments({ balances }: { balances: AccountBalance[] }) {
         {due.map((a) => {
           const cycle = a.cycle!;
           return (
+            // The badge sits under the figures rather than beside them: name,
+            // badge and button side by side left the name two letters wide
+            // on a phone.
             <div key={a.id} className="flex items-center gap-3 py-3 border-t border-divider first:border-t-0">
-              <span className="w-[7px] h-[7px] rounded-full shrink-0" style={{ backgroundColor: a.color ?? undefined }} />
+              <span className="w-[7px] h-[7px] rounded-full shrink-0 self-start mt-[7px]" style={{ backgroundColor: a.color ?? undefined }} />
               <div className="min-w-0 flex-1">
                 <p className="text-[13.5px] text-text truncate">{a.account}</p>
-                <p className="text-[11.5px] text-text-dim mt-0.5 flex items-center gap-2 flex-wrap">
+                <p className="text-[11.5px] text-text-dim mt-0.5 truncate">
                   <span className="tabular-nums font-semibold text-text-muted">{formatMXN(cycle.remainingToPay)}</span>
-                  {cycle.dueDate && <span>{t.wallet.due.on(shortDay(cycle.dueDate, locale))}</span>}
+                  {cycle.dueDate && <span> · {t.wallet.due.on(shortDay(cycle.dueDate, locale))}</span>}
                 </p>
+                <DueBadge cycle={cycle} className="mt-1.5" />
               </div>
-              <DueBadge cycle={cycle} />
               <button
                 type="button"
                 onClick={() => pay(payPrefill(a.account, cycle, balances))}
