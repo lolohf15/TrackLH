@@ -1,5 +1,6 @@
 import type { PeriodKind } from "@/services/period";
 import type { CreditCycleInfo } from "@/services/credit-cycle";
+import type { Frequency } from "@/services/recurrence";
 
 export type TransactionType = "Gasto" | "Ingreso" | "Transferencia";
 
@@ -62,6 +63,8 @@ export interface Transaction {
   notes: string | null;
   procesado: boolean;
   syncedAt: string;
+  /** Set when the movement was confirmed from a recurring rule. */
+  recurringRuleId: string | null;
 }
 
 export interface AccountBalance {
@@ -250,4 +253,43 @@ export interface NewTransactionInput {
   /** Local wall clock, `YYYY-MM-DDTHH:mm:ss`. */
   date: string;
   description?: string;
+}
+
+/** One row of `GET /api/recurring`. Days are `YYYY-MM-DD`. */
+export interface RecurringRuleView {
+  id: string;
+  type: TransactionType;
+  amount: number;
+  account: string;
+  toAccount: string | null;
+  category: string | null;
+  description: string | null;
+  frequency: Frequency;
+  interval: number;
+  /** The first occurrence. */
+  startDate: string;
+  endDate: string | null;
+  /** False while paused. */
+  active: boolean;
+  /** The next occurrence still to confirm or skip. Null once the rule has
+   *  run past its end date. */
+  nextDate: string | null;
+  /** What it comes to in an average month. */
+  monthlyAmount: number;
+}
+
+export interface RecurringList {
+  rules: RecurringRuleView[];
+  /** Monthly equivalents of the active rules: the "fixed" part of a month. */
+  fixedExpenses: number;
+  fixedIncome: number;
+}
+
+/** A rule with occurrences waiting, as `GET /api/recurring/pending` lists it. */
+export interface PendingOccurrence {
+  rule: RecurringRuleView;
+  /** The oldest one waiting, which is the one Confirm and Skip act on. */
+  occurrenceDate: string;
+  /** How many are waiting in all, this one included. */
+  count: number;
 }

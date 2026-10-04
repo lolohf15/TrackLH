@@ -5,6 +5,8 @@ import { computeAccountBalancesFromSums } from "@/services/finance";
 import type { AccountBalance, CategoryKind, Transaction } from "@/types";
 import { mapAccountConfig, mapBudget } from "@/lib/money";
 import { getCreditCardStatus, type CreditCardStatus } from "@/lib/credit-sums";
+import { listRules } from "@/lib/recurring";
+import type { RecurringList } from "@/types";
 
 export interface ExportCategory {
   name: string;
@@ -25,6 +27,8 @@ export interface ExportBundle {
   categories: ExportCategory[];
   /** Cards with a cut day: where each statement stands, by account. */
   cycles: Map<string, CreditCardStatus>;
+  /** Every recurring rule, paused and ended ones included. */
+  recurring: RecurringList;
 }
 
 /**
@@ -37,7 +41,7 @@ export interface ExportBundle {
  * file are the numbers on screen.
  */
 export async function collectExportData(userId: string, today: Date): Promise<ExportBundle> {
-  const [user, rows, accountConfigs, categories, budgets, sums] = await Promise.all([
+  const [user, rows, accountConfigs, categories, budgets, sums, recurring] = await Promise.all([
     prisma.user.findUniqueOrThrow({
       where: { id: userId },
       select: { email: true, name: true },
@@ -52,6 +56,7 @@ export async function collectExportData(userId: string, today: Date): Promise<Ex
     }),
     prisma.budgetConfig.findMany({ where: { userId } }).then((rows) => rows.map(mapBudget)),
     getAccountSums(userId),
+    listRules(userId),
   ]);
 
   const budgetMap = new Map(budgets.map((b) => [b.category, b.amount]));
@@ -81,6 +86,7 @@ export async function collectExportData(userId: string, today: Date): Promise<Ex
   return {
     user,
     cycles,
+    recurring,
     transactions: rows.map(mapTransaction),
     balances,
     categories: categories.map((c) => ({

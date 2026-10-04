@@ -81,6 +81,16 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
                 where: { userId, toAccount: existing.account },
                 data: { toAccount: nextName },
               }),
+              // Recurring rules name it the same way, and confirm the next
+              // occurrence against whatever they name.
+              prisma.recurringRule.updateMany({
+                where: { userId, account: existing.account },
+                data: { account: nextName },
+              }),
+              prisma.recurringRule.updateMany({
+                where: { userId, toAccount: existing.account },
+                data: { toAccount: nextName },
+              }),
             ]
           : []),
       ]);
@@ -122,6 +132,20 @@ export async function DELETE(_req: NextRequest, ctx: { params: Promise<{ id: str
     if (used > 0) {
       return NextResponse.json(
         { error: m.accountInUse(existing.account, used) },
+        { status: 409 }
+      );
+    }
+
+    // A rule naming a deleted account would refuse every Confirm from then on.
+    const rules = await prisma.recurringRule.count({
+      where: {
+        userId,
+        OR: [{ account: existing.account }, { toAccount: existing.account }],
+      },
+    });
+    if (rules > 0) {
+      return NextResponse.json(
+        { error: m.accountInRules(existing.account, rules) },
         { status: 409 }
       );
     }

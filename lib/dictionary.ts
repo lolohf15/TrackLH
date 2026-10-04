@@ -231,6 +231,58 @@ export const es = {
     setUpAccounts: "Configurar mis cuentas",
   },
 
+  recurring: {
+    title: "Recurrentes",
+    hint: "Suscripciones, renta y pagos fijos",
+    back: "Perfil",
+    pending: "Pendientes",
+    manage: "Administrar",
+    confirm: "Confirmar",
+    skip: "Omitir",
+    skipped: "Omitido",
+    /** "3 pendientes" beside a rule that piled up while the app sat closed. */
+    pendingCount: (n: number) => `${n} pendientes`,
+    weekly: "Semanal",
+    monthly: "Mensual",
+    yearly: "Anual",
+    /** "Cada 2 meses". Only used when the interval is over 1. */
+    every: (n: number, f: "weekly" | "monthly" | "yearly") =>
+      `Cada ${n} ${f === "weekly" ? "semanas" : f === "monthly" ? "meses" : "años"}`,
+    repeat: "Repetir",
+    noRepeat: "No se repite",
+    repeatHint: "Cada vez que toque, te aparece en Inicio para confirmarlo. Nunca se registra solo.",
+    next: (date: string) => `Próximo ${date}`,
+    pendingSince: (date: string) => `Pendiente desde ${date}`,
+    paused: "Pausada",
+    ended: "Terminada",
+    fixedExpenses: "Gasto fijo al mes",
+    fixedIncome: "Ingreso fijo al mes",
+    activeCount: (n: number) => (n === 1 ? "1 activa" : `${n} activas`),
+    newTitle: "Nueva recurrente",
+    editTitle: "Editar recurrente",
+    add: "Agregar recurrente",
+    name: "Nombre (opcional)",
+    namePlaceholder: "Ej. Spotify",
+    frequency: "Frecuencia",
+    interval: "Cada cuánto",
+    startDate: "Primera fecha",
+    endDate: "Termina (opcional)",
+    active: "Activa",
+    activeHint: "Pausada, no te aparece en pendientes ni cuenta en el gasto fijo.",
+    deleteHint: "Los movimientos que ya registró se quedan.",
+    holdToDelete: "Mantén presionado para eliminar",
+    created: "Recurrente creada",
+    deleted: "Recurrente eliminada",
+    saveFailed: "No se pudo guardar la recurrente",
+    createFailed: "Se registró el movimiento, pero no la recurrencia",
+    actionFailed: "No se pudo completar",
+    emptyTitle: "Sin recurrentes",
+    emptyHint: "Al registrar un movimiento, toca el ícono de repetir. O agrega uno aquí.",
+    editBeforeConfirm: "Revisar y confirmar",
+    /** After a monthly equivalent: "≈ $433/mes". */
+    monthShort: "mes",
+  },
+
   accountSheet: {
     newTitle: "Nueva cuenta",
     editTitle: "Editar cuenta",
@@ -426,6 +478,7 @@ export const es = {
       categories: "Categorías",
       monthly: "Mes a mes",
       byCategory: "Gasto por categoría",
+      recurring: "Recurrentes",
     },
 
     sheetHints: {
@@ -434,12 +487,14 @@ export const es = {
       categories: "Categorías con su presupuesto y lo que llevas gastado.",
       monthly: "Ingresos, gastos y ahorro mes por mes.",
       byCategory: "Tabla cruzada: categorías contra meses.",
+      recurring: "Pagos e ingresos fijos, con su frecuencia y próxima fecha.",
     },
 
     blocks: {
       networth: "Patrimonio",
       history: "Histórico",
       counts: "Tamaño del archivo",
+      recurring: "Recurrentes",
     },
 
     fields: {
@@ -452,6 +507,8 @@ export const es = {
       movementCount: "Movimientos",
       accountCount: "Cuentas",
       categoryCount: "Categorías",
+      fixedExpenses: "Gasto fijo mensual",
+      fixedIncome: "Ingreso fijo mensual",
     },
 
     headers: {
@@ -491,6 +548,14 @@ export const es = {
       net: "Neto",
       savingsRate: "Tasa de ahorro",
       total: "Total",
+      name: "Nombre",
+      frequency: "Frecuencia",
+      interval: "Cada",
+      startDate: "Primera fecha",
+      nextDate: "Próxima fecha",
+      endDate: "Termina",
+      status: "Estado",
+      monthlyEquivalent: "Equivalente mensual",
     },
   },
 
@@ -522,6 +587,18 @@ export const es = {
     categoryInUse: (name: string, count: number) =>
       `"${name}" tiene ${count} ${count === 1 ? "movimiento" : "movimientos"}. ` +
       `Cámbialos de categoría antes de eliminarla.`,
+
+    categoryInRules: (name: string, count: number) =>
+      `"${name}" está en ${count} ${count === 1 ? "recurrente" : "recurrentes"}. ` +
+      `Cámbialas o elimínalas antes de eliminarla.`,
+    accountInRules: (name: string, count: number) =>
+      `"${name}" está en ${count} ${count === 1 ? "recurrente" : "recurrentes"}. ` +
+      `Cámbialas o elimínalas antes de eliminarla.`,
+    ruleMissing: "Recurrente no encontrada",
+    frequencyInvalid: "Frecuencia inválida",
+    intervalInvalid: "El intervalo debe ser un número entre 1 y 52",
+    endBeforeStart: "La fecha de término no puede ser antes de la primera",
+    occurrenceNotDue: "Esa fecha ya no está pendiente",
 
     movementMissing: "Movimiento no encontrado",
     typeInvalid: "Tipo de movimiento inválido",
@@ -758,6 +835,55 @@ export const en: typeof es = {
     setUpAccounts: "Set up my accounts",
   },
 
+  recurring: {
+    title: "Recurring",
+    hint: "Subscriptions, rent and fixed payments",
+    back: "Profile",
+    pending: "Pending",
+    manage: "Manage",
+    confirm: "Confirm",
+    skip: "Skip",
+    skipped: "Skipped",
+    pendingCount: (n: number) => `${n} pending`,
+    weekly: "Weekly",
+    monthly: "Monthly",
+    yearly: "Yearly",
+    every: (n: number, f: "weekly" | "monthly" | "yearly") =>
+      `Every ${n} ${f === "weekly" ? "weeks" : f === "monthly" ? "months" : "years"}`,
+    repeat: "Repeat",
+    noRepeat: "Doesn't repeat",
+    repeatHint: "Each time it comes due, it shows on Home for you to confirm. It never logs itself.",
+    next: (date: string) => `Next ${date}`,
+    pendingSince: (date: string) => `Due since ${date}`,
+    paused: "Paused",
+    ended: "Ended",
+    fixedExpenses: "Fixed spend per month",
+    fixedIncome: "Fixed income per month",
+    activeCount: (n: number) => `${n} active`,
+    newTitle: "New recurring",
+    editTitle: "Edit recurring",
+    add: "Add recurring",
+    name: "Name (optional)",
+    namePlaceholder: "e.g. Spotify",
+    frequency: "Frequency",
+    interval: "How often",
+    startDate: "First date",
+    endDate: "Ends (optional)",
+    active: "Active",
+    activeHint: "While paused it doesn't show as pending or count toward fixed spend.",
+    deleteHint: "Movements it already logged stay.",
+    holdToDelete: "Press and hold to delete",
+    created: "Recurring created",
+    deleted: "Recurring deleted",
+    saveFailed: "Couldn't save the recurring movement",
+    createFailed: "The movement was saved, but not the recurrence",
+    actionFailed: "Couldn't finish that",
+    emptyTitle: "Nothing recurring yet",
+    emptyHint: "When you log a movement, tap the repeat icon. Or add one here.",
+    editBeforeConfirm: "Review and confirm",
+    monthShort: "mo",
+  },
+
   accountSheet: {
     newTitle: "New account",
     editTitle: "Edit account",
@@ -940,6 +1066,7 @@ export const en: typeof es = {
       categories: "Categories",
       monthly: "Month by month",
       byCategory: "Spending by category",
+      recurring: "Recurring",
     },
 
     sheetHints: {
@@ -948,12 +1075,14 @@ export const en: typeof es = {
       categories: "Categories with their budget and what you've spent.",
       monthly: "Income, spending and savings month by month.",
       byCategory: "Cross tab: categories against months.",
+      recurring: "Fixed payments and income, with how often and when next.",
     },
 
     blocks: {
       networth: "Net worth",
       history: "All time",
       counts: "File size",
+      recurring: "Recurring",
     },
 
     fields: {
@@ -966,6 +1095,8 @@ export const en: typeof es = {
       movementCount: "Movements",
       accountCount: "Accounts",
       categoryCount: "Categories",
+      fixedExpenses: "Fixed spend per month",
+      fixedIncome: "Fixed income per month",
     },
 
     headers: {
@@ -1005,6 +1136,14 @@ export const en: typeof es = {
       net: "Net",
       savingsRate: "Savings rate",
       total: "Total",
+      name: "Name",
+      frequency: "Frequency",
+      interval: "Every",
+      startDate: "First date",
+      nextDate: "Next date",
+      endDate: "Ends",
+      status: "Status",
+      monthlyEquivalent: "Monthly equivalent",
     },
   },
 
@@ -1031,6 +1170,18 @@ export const en: typeof es = {
     categoryInUse: (name: string, count: number) =>
       `"${name}" has ${count} ${count === 1 ? "movement" : "movements"}. ` +
       `Move them to another category before removing it.`,
+
+    categoryInRules: (name: string, count: number) =>
+      `"${name}" is used by ${count} recurring ${count === 1 ? "rule" : "rules"}. ` +
+      `Change or delete them before removing it.`,
+    accountInRules: (name: string, count: number) =>
+      `"${name}" is used by ${count} recurring ${count === 1 ? "rule" : "rules"}. ` +
+      `Change or delete them before removing it.`,
+    ruleMissing: "Recurring movement not found",
+    frequencyInvalid: "Invalid frequency",
+    intervalInvalid: "The interval must be a number from 1 to 52",
+    endBeforeStart: "The end date can't be before the first date",
+    occurrenceNotDue: "That date isn't pending anymore",
 
     movementMissing: "Movement not found",
     typeInvalid: "Invalid movement type",

@@ -25,28 +25,39 @@ model User {
   accountConfigs AccountConfig[]
   budgetConfigs  BudgetConfig[]
   categories     Category[]
+  recurringRules RecurringRule[]
 }
 
 model Transaction {
-  id          String   @id
+  id              String    @id
   /// Carries a database-level DEFAULT pointing at the owner, so the iOS
   /// shortcut can keep inserting rows without knowing about users.
-  userId      String
-  date        DateTime
-  amount      Decimal  @db.Decimal(14, 2)
-  type        String
-  category    String?
-  account     String
-  toAccount   String?
-  description String?
-  notes       String?
-  procesado   Boolean  @default(false)
-  syncedAt    DateTime @default(now())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  userId          String
+  date            DateTime
+  amount          Decimal   @db.Decimal(14, 2)
+  type            String
+  category        String?
+  account         String
+  toAccount       String?
+  description     String?
+  notes           String?
+  procesado       Boolean   @default(false)
+  syncedAt        DateTime  @default(now())
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  /// The recurring rule this movement was confirmed from. Null for anything
+  /// logged by hand or by the iOS shortcut, which never sends it. Deleting the
+  /// rule leaves the movement and clears this.
+  recurringRuleId String?
+  /// Which of the rule's occurrences this movement is, as a UTC-midnight day.
+  /// Paired with the rule in a unique index, so one occurrence can never be
+  /// logged twice however many times Confirm is tapped.
+  occurrenceDate  DateTime?
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recurringRule RecurringRule? @relation(fields: [recurringRuleId], references: [id], onDelete: SetNull)
 
+  @@unique([recurringRuleId, occurrenceDate])
   @@index([userId])
   @@index([userId, date])
 }
@@ -129,5 +140,44 @@ model Category {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, kind, name])
+  @@index([userId])
+}
+
+/// A movement that repeats: Spotify every month, the gym, rent, an allowance.
+/// It never writes to the ledger on its own. Each time it comes due it shows
+/// as pending, and only a Confirm turns it into a `Transaction`.
+model RecurringRule {
+  id          String    @id @default(cuid())
+  userId      String
+  /// "Gasto" | "Ingreso" | "Transferencia", the same stored values a movement uses.
+  type        String
+  amount      Decimal   @db.Decimal(14, 2)
+  account     String
+  toAccount   String?
+  category    String?
+  description String?
+  /// "weekly" | "monthly" | "yearly"
+  frequency   String
+  /// Every N weeks, months or years. 1 for the usual case.
+  interval    Int       @default(1)
+  /// The first occurrence, a UTC-midnight day. Every later one is counted from
+  /// here rather than from the one before it, so a day-31 rule that clamps to
+  /// 28 Feb lands back on the 31st in March.
+  anchorDate  DateTime
+  /// Monthly and yearly: the day of the month, 1–31, clamped to the last day
+  /// of a shorter month. Null for weekly, which follows the anchor's weekday.
+  dayOfMonth  Int?
+  /// The oldest occurrence not yet confirmed or skipped.
+  nextDueDate DateTime
+  /// Last day an occurrence may fall on. Null runs until it is paused or deleted.
+  endDate     DateTime?
+  /// False while paused: a paused rule never shows as pending.
+  active      Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @default(now()) @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+
   @@index([userId])
 }
