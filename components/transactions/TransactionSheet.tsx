@@ -371,6 +371,9 @@ export function TransactionSheet({
       }
 
       const id: string = payload.id;
+      // A confirm another phone (or a second tap) got to first: nothing here
+      // was created, so there's nothing to undo.
+      const changedNothing = payload.alreadyLogged === true;
 
       // The movement is in. Its rule rides on it as the first occurrence, so
       // a failure here leaves a logged movement and says so, rather than
@@ -399,6 +402,10 @@ export function TransactionSheet({
           toast({ message: t.recurring.createFailed, detail: text, tone: "error" });
           return;
         }
+        if (changedNothing) {
+          toast({ message: t.txSheet.registered, detail });
+          return;
+        }
         toast({
           message: t.txSheet.registered,
           detail,
@@ -410,6 +417,7 @@ export function TransactionSheet({
                   // Back to pending, with the movement it logged gone.
                   await postOccurrence(confirm.ruleId, "reopen", {
                     occurrenceDate: confirm.occurrenceDate,
+                    transactionId: id,
                   });
                 } else {
                   // The rule first: deleting the movement alone would leave

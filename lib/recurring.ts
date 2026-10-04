@@ -8,6 +8,7 @@ import {
   MAX_INTERVAL, dueOccurrences, firstOnOrAfter, isFrequency, monthlyEquivalent, parseDay,
   type Frequency, type Schedule,
 } from "@/services/recurrence";
+import { dayKey } from "@/services/period";
 import type { PendingOccurrence, RecurringList, RecurringRuleView, TransactionType } from "@/types";
 
 type RuleRow = {
@@ -27,9 +28,7 @@ type RuleRow = {
   active: boolean;
 };
 
-export function dayKey(d: Date): string {
-  return d.toISOString().slice(0, 10);
-}
+export { dayKey };
 
 export function scheduleOf(row: RuleRow): Schedule {
   return {
@@ -100,8 +99,14 @@ export async function pendingOccurrences(userId: string, today: Date): Promise<P
 
   // Occurrences that already have their movement — logged from the record
   // sheet, or confirmed in a request that didn't get to advance the rule.
+  // Only from the oldest unhandled day on: anything earlier can't be pending,
+  // and a rule years old would otherwise drag its whole history along.
   const logged = await prisma.transaction.findMany({
-    where: { userId, recurringRuleId: { in: rows.map((r) => r.id) }, occurrenceDate: { not: null } },
+    where: {
+      userId,
+      recurringRuleId: { in: rows.map((r) => r.id) },
+      occurrenceDate: { gte: rows[0].nextDueDate },
+    },
     select: { recurringRuleId: true, occurrenceDate: true },
   });
   const done = new Set(logged.map((t) => `${t.recurringRuleId}:${dayKey(t.occurrenceDate!)}`));

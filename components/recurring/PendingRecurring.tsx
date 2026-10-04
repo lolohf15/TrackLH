@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { mutate } from "swr";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Check } from "lucide-react";
 import { CategoryIcon } from "@/components/ui/CategoryIcon";
@@ -13,20 +12,12 @@ import { cn, formatMXN, formatMXNCents } from "@/lib/utils";
 import { hapticTap } from "@/lib/haptics";
 import { useLocale, useT } from "@/lib/i18n-react";
 import { useCategoryLookup } from "@/lib/use-category-icons";
-import { postOccurrence, ruleTitle, usePendingRecurring } from "./use-recurring";
-import type { PendingOccurrence, TransactionType } from "@/types";
-
-const AMOUNT_TONES: Record<TransactionType, string> = {
-  Gasto: "text-red-fg",
-  Ingreso: "text-green-fg",
-  Transferencia: "text-blue-fg",
-};
+import {
+  AMOUNT_TONES, postOccurrence, refreshAll, ruleTitle, usePendingRecurring, type OccurrenceResult,
+} from "./use-recurring";
+import type { PendingOccurrence } from "@/types";
 
 const EASE_OUT = [0.23, 1, 0.32, 1] as const;
-
-function refreshAll() {
-  return mutate((key) => typeof key === "string" && key.startsWith("/api/"));
-}
 
 /**
  * Recurring movements that came due and are waiting for a yes. One tap logs
@@ -59,8 +50,9 @@ export function PendingRecurring() {
     if (busy) return;
     const key = keyOf(p);
     setBusy(key);
+    let result: OccurrenceResult;
     try {
-      await postOccurrence(p.rule.id, action, { occurrenceDate: p.occurrenceDate });
+      result = await postOccurrence(p.rule.id, action, { occurrenceDate: p.occurrenceDate });
     } catch (err) {
       setBusy(null);
       toast({
@@ -73,15 +65,26 @@ export function PendingRecurring() {
     setBusy(null);
     setHandled((h) => new Set(h).add(key));
     refreshAll();
+    // Somebody beat this tap to it — another phone, a double tap. Nothing
+    // here changed, so there's nothing for an Undo to take back, and offering
+    // one would delete what they logged.
+    const message = action === "confirm" ? t.txSheet.registered : t.recurring.skipped;
+    if (result.alreadyLogged || result.alreadyHandled) {
+      toast({ message, detail: summary(p) });
+      return;
+    }
     // The next one in a catch-up comes back under a new key; this one stays gone.
     toast({
-      message: action === "confirm" ? t.txSheet.registered : t.recurring.skipped,
+      message,
       detail: summary(p),
       action: {
         label: t.txSheet.undo,
         onClick: async () => {
           try {
-            await postOccurrence(p.rule.id, "reopen", { occurrenceDate: p.occurrenceDate });
+            await postOccurrence(p.rule.id, "reopen", {
+              occurrenceDate: p.occurrenceDate,
+              transactionId: action === "confirm" ? result.id : undefined,
+            });
           } catch {
             toast({ message: t.txSheet.undoFailed, tone: "error" });
             return;

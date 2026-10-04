@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import useSWR from "swr";
+import useSWR, { mutate } from "swr";
 import { useT } from "@/lib/i18n-react";
 import { dayKey, todayAnchor } from "@/services/period";
 import type { Frequency } from "@/services/recurrence";
-import type { PendingOccurrence, RecurringList, RecurringRuleView } from "@/types";
+import type { PendingOccurrence, RecurringList, RecurringRuleView, TransactionType } from "@/types";
 
 const fetcher = (url: string) =>
   fetch(url).then((r) => {
@@ -39,12 +39,32 @@ export function ruleTitle(rule: Pick<RecurringRuleView, "description" | "categor
   return rule.description ?? rule.category ?? `${rule.account} → ${rule.toAccount ?? ""}`;
 }
 
+/** Refreshes every view that reads from the API. */
+export function refreshAll() {
+  return mutate((key) => typeof key === "string" && key.startsWith("/api/"));
+}
+
+/** The same three colours every amount in the app is written in. */
+export const AMOUNT_TONES: Record<TransactionType, string> = {
+  Gasto: "text-red-fg",
+  Ingreso: "text-green-fg",
+  Transferencia: "text-blue-fg",
+};
+
+export interface OccurrenceResult {
+  id?: string;
+  /** Confirm: someone already logged this occurrence; this tap changed nothing. */
+  alreadyLogged?: boolean;
+  /** Skip: it had already been confirmed or skipped. */
+  alreadyHandled?: boolean;
+}
+
 /** Sends an occurrence action and throws with the server's own message. */
 export async function postOccurrence(
   ruleId: string,
   action: "confirm" | "skip" | "reopen",
   body: Record<string, unknown>
-): Promise<{ id?: string }> {
+): Promise<OccurrenceResult> {
   const res = await fetch(
     `/api/recurring/${encodeURIComponent(ruleId)}/${action}?today=${dayKey(todayAnchor())}`,
     {
