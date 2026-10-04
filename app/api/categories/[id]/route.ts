@@ -58,6 +58,16 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
                 where: { userId, category: existing.name },
                 data: { category: nextName },
               }),
+              // And so do recurring rules — only the ones of this category's
+              // kind, since an expense and an income category can share a name.
+              prisma.recurringRule.updateMany({
+                where: {
+                  userId,
+                  category: existing.name,
+                  type: existing.kind === "income" ? "Ingreso" : "Gasto",
+                },
+                data: { category: nextName },
+              }),
             ]
           : []),
       ]);
@@ -108,6 +118,20 @@ export async function DELETE(_req: NextRequest, ctx: { params: Promise<{ id: str
     if (used > 0) {
       return NextResponse.json(
         { error: m.categoryInUse(existing.name, used) },
+        { status: 409 }
+      );
+    }
+
+    const rules = await prisma.recurringRule.count({
+      where: {
+        userId,
+        category: existing.name,
+        type: existing.kind === "income" ? "Ingreso" : "Gasto",
+      },
+    });
+    if (rules > 0) {
+      return NextResponse.json(
+        { error: m.categoryInRules(existing.name, rules) },
         { status: 409 }
       );
     }

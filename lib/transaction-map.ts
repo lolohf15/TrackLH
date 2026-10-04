@@ -14,6 +14,7 @@ type TransactionRow = {
   notes: string | null;
   procesado: boolean;
   syncedAt: Date;
+  recurringRuleId?: string | null;
 };
 
 /** The one place a Prisma `Transaction` row turns into the wire shape. */
@@ -30,5 +31,6 @@ export function mapTransaction(t: TransactionRow): Transaction {
     notes: t.notes,
     procesado: t.procesado,
     syncedAt: t.syncedAt.toISOString(),
+    recurringRuleId: t.recurringRuleId ?? null,
   };
 }

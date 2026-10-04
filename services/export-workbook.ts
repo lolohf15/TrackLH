@@ -8,10 +8,10 @@ import { UNCATEGORIZED, round2 } from "@/services/finance";
 /**
  * The Excel export.
  *
- * Six sheets, all built from the same bundle: a cover, the raw ledger, and
+ * Seven sheets, all built from the same bundle: a cover, the raw ledger,
  * four sheets that are already the shapes people rebuild by hand once they
  * open a finance export — balances, categories, a month-by-month, and a
- * category-against-month cross tab. Every figure is a real number with a
+ * category-against-month cross tab — and the recurring rules. Every figure is a real number with a
  * currency format rather than a pre-formatted string, so a pivot table or a
  * SUM over the file works the moment it opens.
  *
@@ -55,6 +55,7 @@ export async function buildWorkbook(
   buildCategories(wb, bundle, dict);
   buildMonthly(wb, bundle, dict);
   buildCategoryPivot(wb, bundle, dict);
+  buildRecurring(wb, bundle, dict, lang);
 
   return (await wb.xlsx.writeBuffer()) as ArrayBuffer;
 }
@@ -132,6 +133,12 @@ function buildSummary(
   ]);
 
   row += 1;
+  row = block(ws, row, x.blocks.recurring, [
+    [x.fields.fixedExpenses, bundle.recurring.fixedExpenses, MONEY],
+    [x.fields.fixedIncome, bundle.recurring.fixedIncome, MONEY],
+  ]);
+
+  row += 1;
   row = block(ws, row, x.blocks.counts, [
     [x.fields.movementCount, transactions.length],
     [x.fields.accountCount, balances.length],
@@ -147,6 +154,7 @@ function buildSummary(
     [x.sheets.categories, x.sheetHints.categories],
     [x.sheets.monthly, x.sheetHints.monthly],
     [x.sheets.byCategory, x.sheetHints.byCategory],
+    [x.sheets.recurring, x.sheetHints.recurring],
   ]) {
     const cell = ws.getCell(row, 1);
     cell.value = name;
@@ -443,6 +451,55 @@ function buildCategoryPivot(
   });
 
   band(ws, columns.length, 1);
+}
+
+function buildRecurring(
+  wb: ExcelJS.Workbook,
+  bundle: ExportBundle,
+  dict: Dictionary,
+  lang: Lang
+): void {
+  const h = dict.xlsx.headers;
+  const r = dict.recurring;
+
+  const columns: Column[] = [
+    { header: h.name, key: "name", width: 24 },
+    { header: h.type, key: "type", width: 15 },
+    { header: h.category, key: "category", width: 20 },
+    { header: h.account, key: "account", width: 18 },
+    { header: h.toAccount, key: "toAccount", width: 18 },
+    { header: h.amount, key: "amount", width: 14, numFmt: MONEY },
+    { header: h.frequency, key: "frequency", width: 13 },
+    { header: h.interval, key: "interval", width: 9 },
+    { header: h.startDate, key: "start", width: 14, numFmt: DATE_FORMAT[lang] },
+    { header: h.nextDate, key: "next", width: 14, numFmt: DATE_FORMAT[lang] },
+    { header: h.endDate, key: "end", width: 14, numFmt: DATE_FORMAT[lang] },
+    { header: h.status, key: "status", width: 12 },
+    { header: h.monthlyEquivalent, key: "monthly", width: 18, numFmt: MONEY },
+  ];
+
+  const ws = table(wb, dict.xlsx.sheets.recurring, columns);
+  const day = (key: string | null) => (key ? new Date(`${key}T00:00:00Z`) : null);
+
+  for (const rule of bundle.recurring.rules) {
+    ws.addRow({
+      name: rule.description ?? "",
+      type: dict.txType[rule.type],
+      category: rule.category ?? "",
+      account: rule.account,
+      toAccount: rule.toAccount ?? "",
+      amount: rule.amount,
+      frequency: r[rule.frequency],
+      interval: rule.interval,
+      start: day(rule.startDate),
+      next: rule.active ? day(rule.nextDate) : null,
+      end: day(rule.endDate),
+      status: !rule.active ? r.paused : rule.nextDate === null ? r.ended : r.active,
+      monthly: rule.monthlyAmount,
+    });
+  }
+
+  band(ws, columns.length);
 }
 
 // ------------------------------------------------------------ aggregates

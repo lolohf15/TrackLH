@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { Prisma } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 import { requireUser, errorResponse } from "@/lib/auth";
 import { apiMessages } from "@/lib/api-lang";
 import { validateTransactionInput } from "@/lib/transaction-input";
 import { mapTransaction } from "@/lib/transaction-map";
+import { buildTransactionId, isUniqueViolation } from "@/lib/transaction-id";
 import { isPeriodKind, parseAnchor, resolvePeriod } from "@/services/period";
 import { cycleContaining, parseCycleDay } from "@/services/credit-cycle";
 
@@ -70,15 +71,6 @@ export async function GET(req: NextRequest) {
   }
 }
 
-/** Same id shape the shortcut generates: `2026-08-25-09-3339 - 5803`. */
-function buildId(at: Date): string {
-  const p = (n: number, len = 2) => String(n).padStart(len, "0");
-  const stamp =
-    `${at.getUTCFullYear()}-${p(at.getUTCMonth() + 1)}-${p(at.getUTCDate())}` +
-    `-${p(at.getUTCHours())}-${p(at.getUTCMinutes())}${p(at.getUTCSeconds())}`;
-  return `${stamp} - ${p(Math.floor(Math.random() * 10000), 4)}`;
-}
-
 /** Log a transaction into the signed-in user's ledger. */
 export async function POST(req: NextRequest) {
   try {
@@ -103,13 +95,11 @@ export async function POST(req: NextRequest) {
     for (let attempt = 0; ; attempt++) {
       try {
         const created = await prisma.transaction.create({
-          data: { id: buildId(when), ...data },
+          data: { id: buildTransactionId(when), ...data },
         });
         return NextResponse.json({ success: true, id: created.id }, { status: 201 });
       } catch (err) {
-        const isCollision =
-          err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002";
-        if (!isCollision || attempt >= 4) throw err;
+        if (!isUniqueViolation(err) || attempt >= 4) throw err;
       }
     }
   } catch (err) {
