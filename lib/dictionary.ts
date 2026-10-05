@@ -454,6 +454,11 @@ export const es = {
     signInLink: "Entrar",
     badCredentials: "Correo o contraseña incorrectos",
     signUpFailed: "No se pudo crear la cuenta",
+    continueGoogle: "Continuar con Google",
+    or: "o",
+    oauthEmailNotVerified: "Google no ha verificado ese correo, así que no podemos entrar con él. Verifícalo en tu cuenta de Google o entra con tu contraseña.",
+    oauthNoEmail: "Google no nos compartió un correo. Entra con tu correo y contraseña.",
+    oauthFailed: "No pudimos entrar con Google. Inténtalo de nuevo.",
   },
 
   onboarding: {
@@ -1095,6 +1100,11 @@ export const en: typeof es = {
     signInLink: "Sign in",
     badCredentials: "Wrong email or password",
     signUpFailed: "Couldn't create the account",
+    continueGoogle: "Continue with Google",
+    or: "or",
+    oauthEmailNotVerified: "Google hasn't verified that email, so we can't sign you in with it. Verify it in your Google account or sign in with your password.",
+    oauthNoEmail: "Google didn't share an email with us. Sign in with your email and password.",
+    oauthFailed: "We couldn't sign you in with Google. Please try again.",
   },
 
   onboarding: {

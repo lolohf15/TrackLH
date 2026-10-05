@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/Button";
 import { AuthShell, AuthField, AuthError } from "@/components/auth/AuthForm";
+import { OAuthButtons } from "@/components/auth/OAuthButtons";
 import { useT } from "@/lib/i18n-react";
 
 export default function LoginPage() {
@@ -53,6 +54,8 @@ export default function LoginPage() {
         </>
       }
     >
+      <OAuthButtons />
+
       <form onSubmit={onSubmit} className="space-y-4">
         <AuthField
           label={t.auth.email}

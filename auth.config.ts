@@ -12,7 +12,8 @@ const PUBLIC_APIS = ["/api/register"];
  * credentials provider lives in `auth.ts` alongside the database.
  */
 export const authConfig = {
-  pages: { signIn: "/login" },
+  // Failed OAuth attempts land on /login?error=… and the page explains them.
+  pages: { signIn: "/login", error: "/login" },
   providers: [],
   callbacks: {
     authorized({ auth, request }) {
