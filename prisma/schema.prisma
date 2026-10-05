@@ -26,6 +26,25 @@ model User {
   budgetConfigs  BudgetConfig[]
   categories     Category[]
   recurringRules RecurringRule[]
+  oauthAccounts  OAuthAccount[]
+}
+
+/// One row per outside identity (Google, later maybe Apple) tied to a user.
+/// Matching on the provider's own stable id, not the email, means a later
+/// email change at Google does not create a second user.
+model OAuthAccount {
+  id                String   @id @default(cuid())
+  userId            String
+  provider          String
+  providerAccountId String
+  /// The email the provider reported when the link was made; informational only.
+  email             String?
+  createdAt         DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
 }
 
 model Transaction {

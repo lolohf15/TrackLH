@@ -1,13 +1,17 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import Google from "next-auth/providers/google";
 import { compare } from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { resolveOAuthUser } from "@/lib/oauth-link";
 import { authConfig } from "./auth.config";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
   session: { strategy: "jwt" },
   providers: [
+    // Reads AUTH_GOOGLE_ID / AUTH_GOOGLE_SECRET from the environment.
+    Google,
     Credentials({
       credentials: {
         email: { label: "Correo", type: "email" },
@@ -32,8 +36,27 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
   callbacks: {
     ...authConfig.callbacks,
-    jwt({ token, user }) {
-      if (user?.id) token.uid = user.id;
+    signIn({ account, profile }) {
+      if (account?.provider !== "google") return true;
+      // Both linking to an existing user and creating a new one trust the
+      // email to belong to the person, so an unverified one is turned away.
+      if (!profile?.email) return "/login?error=NoEmail";
+      if (profile.email_verified !== true) return "/login?error=EmailNotVerified";
+      return true;
+    },
+    async jwt({ token, user, account, profile }) {
+      if (account?.provider === "google" && profile?.email) {
+        // First step of an outside sign-in: swap the provider's identity for
+        // our own User.id, so everything downstream reads `uid` as before.
+        token.uid = await resolveOAuthUser(prisma, {
+          provider: account.provider,
+          providerAccountId: account.providerAccountId,
+          email: profile.email,
+          name: profile.name,
+        });
+      } else if (user?.id) {
+        token.uid = user.id;
+      }
       return token;
     },
     session({ session, token }) {
