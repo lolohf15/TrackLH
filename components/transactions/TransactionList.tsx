@@ -25,6 +25,8 @@ interface Props {
   /** Shown when there is nothing to list. Defaults to the filtered-view copy. */
   emptyTitle?: string;
   emptyHint?: string;
+  /** The one thing to do about an empty list, shown under the hint. */
+  emptyAction?: React.ReactNode;
   /** Off for a preview of the first few, where paging would lead nowhere —
    *  Inicio's recent activity has "ver todo" for that. */
   paginate?: boolean;
@@ -75,6 +77,7 @@ export function TransactionList({
   data, loading, page, onPageChange,
   emptyTitle,
   emptyHint,
+  emptyAction,
   paginate = true,
 }: Props) {
   const t = useT();
@@ -94,9 +97,9 @@ export function TransactionList({
   if (!data || data.data.length === 0) {
     return (
       <EmptyState
-        icon="—"
         title={emptyTitle ?? t.movements.emptyTitle}
         description={emptyHint ?? t.movements.emptyHint}
+        action={emptyAction}
       />
     );
   }

@@ -11,15 +11,18 @@ datasource db {
 /// One person's whole ledger. Sessions are JWTs, so there is no adapter
 /// table here; adding an OAuth provider later would add its own.
 model User {
-  id           String    @id @default(cuid())
-  email        String    @unique
-  name         String?
+  id                    String    @id @default(cuid())
+  email                 String    @unique
+  name                  String?
   /// Null until the owner runs `npm run seed:owner`, or until signup sets it.
-  passwordHash String?
+  passwordHash          String?
   /// Null means the welcome wizard has not been completed yet.
-  onboardedAt  DateTime?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @default(now()) @updatedAt
+  onboardedAt           DateTime?
+  /// When the "Primeros pasos" card on Inicio was closed, by hand or by
+  /// finishing it. Null keeps it showing while any step is left.
+  firstStepsDismissedAt DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @default(now()) @updatedAt
 
   transactions   Transaction[]
   accountConfigs AccountConfig[]

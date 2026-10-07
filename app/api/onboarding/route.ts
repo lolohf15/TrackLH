@@ -8,6 +8,8 @@ import { suggestCategoryIcon } from "@/lib/category-icons";
 interface IncomingAccount {
   account: string;
   isCredit: boolean;
+  /** "cash" or "other" for what isn't a card; anything else reads as a card. */
+  kind?: string | null;
   color?: string;
 }
 
@@ -49,6 +51,7 @@ export async function POST(req: NextRequest) {
       .map((a, i) => ({
         account: a.account.trim().slice(0, 60),
         isCredit: !!a.isCredit,
+        kind: !a.isCredit && (a.kind === "cash" || a.kind === "other") ? a.kind : null,
         color: a.color ?? CUSTOM_COLOR_CYCLE[i % CUSTOM_COLOR_CYCLE.length],
       }));
 
@@ -70,7 +73,9 @@ export async function POST(req: NextRequest) {
       ...cleanAccounts.map((a) =>
         prisma.accountConfig.upsert({
           where: { userId_account: { userId, account: a.account } },
-          create: { userId, account: a.account, initialBalance: 0, isCredit: a.isCredit, color: a.color },
+          create: {
+            userId, account: a.account, initialBalance: 0, isCredit: a.isCredit, kind: a.kind, color: a.color,
+          },
           // Someone re-running the wizard keeps whatever balance they set.
           update: { isCredit: a.isCredit, color: a.color },
         })

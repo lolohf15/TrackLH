@@ -8,6 +8,8 @@ import { CategoryRow } from "@/components/dashboard/CategoryRow";
 import { PeriodNav } from "@/components/dashboard/PeriodNav";
 import { SpendChart } from "@/components/dashboard/SpendChart";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { Button } from "@/components/ui/Button";
+import { useAddRecord } from "@/components/transactions/AddRecordProvider";
 import { MetricTile } from "@/components/ui/MetricTile";
 import { Ring } from "@/components/ui/Ring";
 import { ChartSkeleton } from "@/components/ui/Skeleton";
@@ -21,6 +23,7 @@ const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 export default function Analytics() {
   const t = useT();
+  const openAddRecord = useAddRecord();
   const locale = useLocale();
   const [kind, setKind] = useState<PeriodKind>("month");
   const [anchor, setAnchor] = useState(todayAnchor);
@@ -115,7 +118,15 @@ export default function Analytics() {
         <ChartSkeleton height="h-96" />
       ) : empty ? (
         <div className="panel mt-3">
-          <EmptyState title={t.analytics.emptyTitle} description={t.analytics.emptyHint} />
+          <EmptyState
+            title={t.analytics.emptyTitle}
+            description={t.analytics.emptyHint}
+            action={
+              <Button size="sm" onClick={() => openAddRecord({ type: "Gasto" })}>
+                {t.emptyActions.logMovement}
+              </Button>
+            }
+          />
         </div>
       ) : (
         <div
