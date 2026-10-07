@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { TransactionSheet } from "./TransactionSheet";
+import { useAddRecord } from "./AddRecordProvider";
 import { PlusIcon } from "@/components/shell/icons";
 import { useT } from "@/lib/i18n-react";
 
@@ -17,29 +16,19 @@ import { useT } from "@/lib/i18n-react";
  */
 export function AddRecordButton() {
   const t = useT();
-  const [open, setOpen] = useState(false);
-  // Bumped on every open so the sheet remounts with an empty form — a reset
-  // driven by the tap rather than by an effect watching `open`.
-  const [session, setSession] = useState(0);
+  const openAddRecord = useAddRecord();
 
   return (
-    <>
-      <button
-        type="button"
-        onClick={() => {
-          setSession((s) => s + 1);
-          setOpen(true);
-        }}
-        aria-label={t.addRecord}
-        className="glass-accent press fixed z-40 w-14 h-14 rounded-full flex items-center justify-center
-                   text-accent-ink
-                   left-[calc(50%-1.75rem)] bottom-[calc(env(safe-area-inset-bottom)+2.5rem)]
-                   md:left-auto md:right-6 md:bottom-6"
-      >
-        <PlusIcon className="w-6 h-6" />
-      </button>
-
-      <TransactionSheet key={session} open={open} onClose={() => setOpen(false)} />
-    </>
+    <button
+      type="button"
+      onClick={() => openAddRecord()}
+      aria-label={t.addRecord}
+      className="glass-accent press fixed z-40 w-14 h-14 rounded-full flex items-center justify-center
+                 text-accent-ink
+                 left-[calc(50%-1.75rem)] bottom-[calc(env(safe-area-inset-bottom)+2.5rem)]
+                 md:left-auto md:right-6 md:bottom-6"
+    >
+      <PlusIcon className="w-6 h-6" />
+    </button>
   );
 }

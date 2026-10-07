@@ -11,6 +11,9 @@ import { BudgetTracker } from "@/components/dashboard/BudgetTracker";
 import { MonthPickerSheet } from "@/components/dashboard/MonthPickerSheet";
 import { SpendChart } from "@/components/dashboard/SpendChart";
 import { TransactionList } from "@/components/transactions/TransactionList";
+import { FirstSteps } from "@/components/onboarding/FirstSteps";
+import { useAddRecord } from "@/components/transactions/AddRecordProvider";
+import { Button } from "@/components/ui/Button";
 import { ChartSkeleton } from "@/components/ui/Skeleton";
 import { MetricTile } from "@/components/ui/MetricTile";
 import { useLocale, useT } from "@/lib/i18n-react";
@@ -30,6 +33,7 @@ const fetcher = (url: string) => fetch(url).then((r) => r.json());
 export default function Home() {
   const t = useT();
   const locale = useLocale();
+  const openAddRecord = useAddRecord();
   // The day being looked at — the month around it is what Inicio shows.
   const [anchor, setAnchor] = useState(todayAnchor);
   // Captured once rather than read during render: reading the clock while
@@ -93,6 +97,12 @@ export default function Home() {
   const netWorth = dashboard?.netWorth ?? 0;
   const hasDebt = (dashboard?.totalAvailable ?? 0) !== netWorth;
 
+  // A pace chart with nothing on either line is a flat rule taking half the
+  // screen; it waits until there's a month to draw.
+  const hasPace =
+    !!analytics &&
+    (analytics.expenses > 0 || analytics.previousExpenses.some((v) => v > 0));
+
   const totalAvailableDisplay = useCountUp(dashboard?.totalAvailable ?? 0, formatMXN);
   const incomeDisplay = useCountUp(income, formatMXN);
   const expensesDisplay = useCountUp(expenses, formatMXN);
@@ -135,6 +145,9 @@ export default function Home() {
 
       <div className="md:grid md:grid-cols-[1fr_360px] md:gap-8 md:items-start">
         <div className="px-4 md:px-0 space-y-3">
+
+          {/* Only for someone who just arrived; it hides itself when done. */}
+          <FirstSteps />
 
           {/* This month, as one group: the total and how it split. */}
           <div className="tint tint-gold">
@@ -200,7 +213,7 @@ export default function Home() {
           <PendingRecurring />
           <UpcomingPayments balances={dashboard?.accountBalances ?? []} />
 
-          {analytics && (
+          {analytics && hasPace && (
             <SpendChart
               buckets={analytics.buckets}
               previousExpenses={analytics.previousExpenses}
@@ -226,6 +239,11 @@ export default function Home() {
                 paginate={false}
                 emptyTitle={t.home.emptyTitle}
                 emptyHint={t.home.emptyHint}
+                emptyAction={
+                  <Button size="sm" onClick={() => openAddRecord({ type: "Gasto" })}>
+                    {t.emptyActions.logMovement}
+                  </Button>
+                }
               />
             </div>
           </section>

@@ -7,12 +7,14 @@
 export interface AccountPreset {
   account: string;
   isCredit: boolean;
+  /** Drawn as a bill ("cash") or a plain card ("other") in the Wallet. */
+  kind?: "cash" | "other";
   color: string;
 }
 
 /** Common Mexican banks, plus the two everyone has regardless. */
 export const ACCOUNT_PRESETS: AccountPreset[] = [
-  { account: "Efectivo",        isCredit: false, color: "#6b7075" },
+  { account: "Efectivo",        isCredit: false, kind: "cash", color: "#6b7075" },
   { account: "BBVA Débito",     isCredit: false, color: "#5b7fb5" },
   { account: "Nu Débito",       isCredit: false, color: "#d99a15" },
   { account: "Santander",       isCredit: false, color: "#e5484d" },
@@ -21,7 +23,7 @@ export const ACCOUNT_PRESETS: AccountPreset[] = [
   { account: "Banamex",         isCredit: false, color: "#3a8f95" },
   { account: "Revolut Débito",  isCredit: false, color: "#3a8f95" },
   { account: "Mercado Pago",    isCredit: false, color: "#5b7fb5" },
-  { account: "Inversiones",     isCredit: false, color: "#4f9d5f" },
+  { account: "Inversiones",     isCredit: false, kind: "other", color: "#4f9d5f" },
   { account: "Nu Crédito",      isCredit: true,  color: "#8b5cd9" },
   { account: "BBVA Crédito",    isCredit: true,  color: "#5b7fb5" },
   { account: "Revolut",         isCredit: true,  color: "#e5484d" },
@@ -56,10 +58,10 @@ export const INCOME_CATEGORY_PRESETS: CategoryPreset[] = [
   { name: "Otro",       color: "#6b7075", budget: 0 },
 ];
 
-/** What the "usar sugerencias" shortcut applies. */
+/** Preselected on the welcome screen; the categories are created as-is. */
 export const SUGGESTED_ACCOUNTS = ["Efectivo", "BBVA Débito", "Nu Crédito"];
 export const SUGGESTED_EXPENSE_CATEGORIES = [
-  "Alimentos", "Transporte", "Salidas", "Servicios", "Esenciales", "Otro",
+  "Alimentos", "Transporte", "Salidas", "Servicios", "Esenciales", "Suscripciones", "Otro",
 ];
 export const SUGGESTED_INCOME_CATEGORIES = ["Sueldo", "Otro"];
 

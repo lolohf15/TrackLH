@@ -16,6 +16,7 @@ import { CreditDetails } from "@/components/wallet/CreditDetails";
 import { Pocket } from "@/components/wallet/Pocket";
 import { Eye, EyeOff, LayoutGrid, WalletCards } from "lucide-react";
 import { AccountGrid } from "@/components/wallet/AccountGrid";
+import { BalancesPrompt } from "@/components/onboarding/BalancesPrompt";
 import { shortDay } from "@/components/wallet/DueBadge";
 import { payPrefill, usePaySheet } from "@/components/wallet/PayCard";
 import { useAccounts } from "@/lib/use-accounts";
@@ -325,6 +326,7 @@ function WalletScreen({
               {formatMXN(dashboard?.totalAvailable ?? 0)}
             </p>
             <p className="text-[11.5px] text-text-dim mt-1.5">{t.home.debitAccounts(debit.length)}</p>
+            <BalancesPrompt />
           </section>
 
           {view === "grid" ? (
