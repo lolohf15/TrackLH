@@ -1,35 +1,68 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { mutate } from "swr";
 import { Button } from "@/components/ui/Button";
+import { BudgetSheet } from "@/components/onboarding/BudgetSheet";
 import { useCountUp } from "@/lib/useCountUp";
 import { formatMXN, cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n-react";
 import type { LeftToSpend } from "@/types";
 
+/** Everything that depends on budgets or movements, refetched after a budget save. */
+function refresh() {
+  mutate((key) => typeof key === "string" && (key.startsWith("/api/left-to-spend") || key.startsWith("/api/analytics")));
+}
+
 /**
  * "Te quedan $X · $Y por día": the question people actually open a money app
- * to ask. Expected income less what's gone and the fixed charges still to
- * come, spread over the days left in the month.
+ * to ask. With a budget, it's the plan: what's budgeted less what those
+ * categories have spent. Without one, what the month brings in less what's
+ * gone and the fixed charges still to come. Either way, spread over the days
+ * left in the month.
  */
 export function LeftToSpendCard({ left }: { left: LeftToSpend | null }) {
   const t = useT();
   const router = useRouter();
+  const [budgetOpen, setBudgetOpen] = useState(false);
   const value = useCountUp(Math.abs(left?.left ?? 0), formatMXN);
+
+  const sheet = (
+    <BudgetSheet
+      open={budgetOpen}
+      onClose={() => {
+        setBudgetOpen(false);
+        refresh();
+      }}
+    />
+  );
 
   if (!left) {
     return (
       <section className="panel px-4 py-3.5">
         <h2 className="text-[15px] font-semibold text-text">{t.overview.leftEmptyTitle}</h2>
         <p className="text-[13px] text-text-muted leading-relaxed mt-1 max-w-[46ch]">{t.overview.leftEmptyHint}</p>
-        <Button size="sm" variant="secondary" className="mt-3" onClick={() => router.push("/perfil/recurrentes")}>
-          {t.overview.leftEmptyAction}
-        </Button>
+        <div className="flex flex-wrap gap-2 mt-3">
+          <Button size="sm" onClick={() => setBudgetOpen(true)}>
+            {t.overview.setBudget}
+          </Button>
+          <Button size="sm" variant="secondary" onClick={() => router.push("/perfil/recurrentes")}>
+            {t.overview.leftEmptyAction}
+          </Button>
+        </div>
+        {sheet}
       </section>
     );
   }
 
   const over = left.left < 0;
+  const notes = [
+    t.overview.leftSource[left.source],
+    left.committed > 0 ? t.overview.committed(formatMXN(left.committed)) : null,
+    left.outsideBudget > 0 ? t.overview.outsideBudget(formatMXN(left.outsideBudget)) : null,
+  ].filter(Boolean);
+
   return (
     <section className="panel px-4 pt-3.5 pb-3.5" aria-labelledby="left-title">
       <div className="flex items-baseline justify-between gap-3">
@@ -61,10 +94,19 @@ export function LeftToSpendCard({ left }: { left: LeftToSpend | null }) {
           style={{ width: `${left.usedPercent}%`, background: over ? "var(--color-red)" : "var(--color-accent)" }}
         />
       </div>
-      <p className="mt-2 text-[11.5px] text-text-dim">
-        {t.overview.leftSource[left.source]}
-        {left.committed > 0 && ` · ${t.overview.committed(formatMXN(left.committed))}`}
-      </p>
+      <p className="mt-2 text-[11.5px] text-text-dim">{notes.join(" · ")}</p>
+
+      {/* Counting on income is the fallback; the budget is the plan. */}
+      {left.source !== "budget" && (
+        <button
+          type="button"
+          onClick={() => setBudgetOpen(true)}
+          className="press mt-1 -mb-1.5 min-h-[32px] text-[11.5px] font-medium text-accent hover:brightness-125"
+        >
+          {t.overview.useBudgetHint} →
+        </button>
+      )}
+      {sheet}
     </section>
   );
 }

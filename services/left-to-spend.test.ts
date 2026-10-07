@@ -12,6 +12,9 @@ const base = {
   pendingFixed: 0,
   hasIncomeRules: false,
   averageIncome: 0,
+  budgets: [] as Array<{ category: string; amount: number }>,
+  spentByCategory: new Map<string, number>(),
+  pendingByCategory: new Map<string, number>(),
 };
 
 describe("leftToSpend", () => {
@@ -45,6 +48,37 @@ describe("leftToSpend", () => {
 
   it("has nothing to say with no income at all", () => {
     expect(leftToSpend(base)).toBeNull();
+  });
+});
+
+describe("leftToSpend with budgets", () => {
+  const withBudgets = {
+    ...base,
+    hasIncomeRules: true,
+    pendingIncome: 29000,
+    budgets: [{ category: "Alimentos", amount: 4000 }, { category: "Salidas", amount: 2000 }, { category: "Renta", amount: 0 }],
+    spentByCategory: new Map([["Alimentos", 1500], ["Salidas", 500], ["Renta", 6500], ["Gustos", 300]]),
+    pendingByCategory: new Map([["Salidas", 200], ["Suscripciones", 219]]),
+  };
+
+  it("takes the budget over income, counting only budgeted categories", () => {
+    const r = leftToSpend(withBudgets)!;
+    expect(r.source).toBe("budget");
+    expect(r.expected).toBe(6000);
+    expect(r.spent).toBe(2000);
+    expect(r.committed).toBe(200);
+    expect(r.left).toBe(3800);
+    expect(r.perDay).toBe(152);
+  });
+
+  it("keeps what was spent outside the budget visible but out of the figure", () => {
+    expect(leftToSpend(withBudgets)!.outsideBudget).toBe(6800);
+  });
+
+  it("falls back to income when every budget is zero", () => {
+    const r = leftToSpend({ ...withBudgets, budgets: [{ category: "Renta", amount: 0 }] })!;
+    expect(r.source).toBe("rules");
+    expect(r.outsideBudget).toBe(0);
   });
 });
 

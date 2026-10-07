@@ -3,21 +3,23 @@ import { toNumber } from "@/lib/money";
 import { scheduleOf } from "@/lib/recurring";
 import { dueOccurrences } from "@/services/recurrence";
 import { leftToSpend, unmatchedOccurrences, type LeftToSpend } from "@/services/left-to-spend";
+import { UNCATEGORIZED } from "@/services/finance";
 import { dayKey, resolvePeriod } from "@/services/period";
 
 const DAY = 86_400_000;
 
 /**
- * Gathers what `leftToSpend` needs for the month holding `today`: what came
- * in and went out so far, the recurring occurrences still due before the
- * month ends, and the income of the three months before as a fallback.
+ * Gathers what `leftToSpend` needs for the month holding `today`: the
+ * budgets, what came in and went out so far (by category too), the recurring
+ * occurrences still due before the month ends, and the income of the three
+ * months before as a fallback for anyone with no budget.
  */
 export async function getLeftToSpend(userId: string, today: Date): Promise<LeftToSpend | null> {
   const month = resolvePeriod("month", today).range;
   const lastDay = new Date(month.to.getTime() - DAY);
   const historyFrom = new Date(Date.UTC(month.from.getUTCFullYear(), month.from.getUTCMonth() - 3, 1));
 
-  const [rows, rules, history] = await Promise.all([
+  const [rows, rules, history, budgets] = await Promise.all([
     prisma.transaction.findMany({
       where: { userId, date: { gte: month.from, lt: month.to }, type: { in: ["Gasto", "Ingreso"] } },
       select: { type: true, amount: true, category: true, account: true, recurringRuleId: true, occurrenceDate: true },
@@ -30,6 +32,7 @@ export async function getLeftToSpend(userId: string, today: Date): Promise<LeftT
       where: { userId, type: "Ingreso", date: { gte: historyFrom, lt: month.from } },
       _sum: { amount: true },
     }),
+    prisma.budgetConfig.findMany({ where: { userId }, select: { category: true, amount: true } }),
   ]);
 
   const movements = rows.map((r) => ({ ...r, amount: toNumber(r.amount) }));
@@ -48,6 +51,16 @@ export async function getLeftToSpend(userId: string, today: Date): Promise<LeftT
   });
   const pending = unmatchedOccurrences(occurrences, movements);
   const pendingOf = (type: string) => pending.filter((o) => o.type === type).reduce((s, o) => s + o.amount, 0);
+
+  const byCategory = (items: Array<{ type: string; category: string | null; amount: number }>) => {
+    const out = new Map<string, number>();
+    for (const m of items) {
+      if (m.type !== "Gasto") continue;
+      const key = m.category ?? UNCATEGORIZED;
+      out.set(key, (out.get(key) ?? 0) + m.amount);
+    }
+    return out;
+  };
 
   // Average over the months that had any income, so a month before the
   // first payday doesn't drag it down.
@@ -68,5 +81,8 @@ export async function getLeftToSpend(userId: string, today: Date): Promise<LeftT
     pendingFixed: pendingOf("Gasto"),
     hasIncomeRules: rules.some((r) => r.type === "Ingreso"),
     averageIncome,
+    budgets: budgets.map((b) => ({ category: b.category, amount: toNumber(b.amount) })),
+    spentByCategory: byCategory(movements),
+    pendingByCategory: byCategory(pending),
   });
 }

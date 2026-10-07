@@ -1,7 +1,10 @@
 /**
- * "Te quedan $X · $Y por día": what this month can still take, given what
- * it's expected to bring in, what's gone out, and the fixed charges still
- * to come. Pure arithmetic; `lib/left-to-spend.ts` gathers the inputs.
+ * "Te quedan $X · $Y por día": what this month can still take. With budgets
+ * set, that's the plan: what's budgeted less what those categories have
+ * spent and the fixed charges still due in them. Without any, it falls back
+ * to what the month is expected to bring in, less everything spent and every
+ * fixed charge to come. Pure arithmetic; `lib/left-to-spend.ts` gathers the
+ * inputs.
  */
 import { round2 } from "./finance";
 import type { DateRange } from "./period";
@@ -19,6 +22,12 @@ export interface LeftToSpendInput {
   hasIncomeRules: boolean;
   /** Mean income of the last complete months with any; 0 when there are none. */
   averageIncome: number;
+  /** Monthly budgets above zero. Any at all switches to the budget. */
+  budgets: Array<{ category: string; amount: number }>;
+  /** This month's spending so far, by category (uncategorized under its display name). */
+  spentByCategory: Map<string, number>;
+  /** Recurring expenses still due this month and not logged yet, by category. */
+  pendingByCategory: Map<string, number>;
 }
 
 export interface LeftToSpend {
@@ -35,13 +44,34 @@ export interface LeftToSpend {
   /** Spent and committed, as a share of expected, capped at 100. */
   usedPercent: number;
   /** Where `expected` came from, so the card can say so. */
-  source: "rules" | "average" | "received";
+  source: "budget" | "rules" | "average" | "received";
+  /** Budget only: spent this month in categories with no budget, kept out of `left`. */
+  outsideBudget: number;
 }
 
 const DAY = 86_400_000;
 
 export function leftToSpend(input: LeftToSpendInput): LeftToSpend | null {
-  const { today, month, incomeSoFar, spentSoFar, pendingIncome, pendingFixed, hasIncomeRules, averageIncome } = input;
+  const { incomeSoFar, spentSoFar, pendingIncome, pendingFixed, hasIncomeRules, averageIncome } = input;
+
+  const budgets = input.budgets.filter((b) => b.amount > 0);
+  if (budgets.length > 0) {
+    // Only the budgeted categories count against the budget: rent or a
+    // one-off with no budget would otherwise eat a number it was never in.
+    const budgeted = new Set(budgets.map((b) => b.category));
+    const total = budgets.reduce((s, b) => s + b.amount, 0);
+    let spent = 0;
+    let outside = 0;
+    for (const [category, amount] of input.spentByCategory) {
+      if (budgeted.has(category)) spent += amount;
+      else outside += amount;
+    }
+    let committed = 0;
+    for (const [category, amount] of input.pendingByCategory) {
+      if (budgeted.has(category)) committed += amount;
+    }
+    return finish(input, total, spent, committed, "budget", outside);
+  }
 
   let expected: number;
   let source: LeftToSpend["source"];
@@ -57,7 +87,17 @@ export function leftToSpend(input: LeftToSpendInput): LeftToSpend | null {
   }
   // Nothing coming in and nothing known about it: there's no "left" to tell.
   if (expected <= 0) return null;
+  return finish(input, expected, spentSoFar, pendingFixed, source, 0);
+}
 
+function finish(
+  { today, month }: LeftToSpendInput,
+  expected: number,
+  spentSoFar: number,
+  pendingFixed: number,
+  source: LeftToSpend["source"],
+  outsideBudget: number
+): LeftToSpend {
   const left = round2(expected - spentSoFar - pendingFixed);
   const start = Math.max(today.getTime(), month.from.getTime());
   const daysLeft = Math.max(1, Math.round((month.to.getTime() - start) / DAY));
@@ -72,6 +112,7 @@ export function leftToSpend(input: LeftToSpendInput): LeftToSpend | null {
     daysLeft,
     usedPercent: Math.min(100, Math.max(0, Math.round(used))),
     source,
+    outsideBudget: round2(outsideBudget),
   };
 }
 
