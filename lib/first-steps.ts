@@ -10,11 +10,7 @@ export interface FirstStepsProgress {
   hasMovement: boolean;
   /** Any account carries a starting balance or a balance adjustment. */
   hasBalance: boolean;
-  creditAccounts: number;
-  /** Every credit card has its statement and due day. */
-  creditConfigured: boolean;
   hasBudget: boolean;
-  hasRecurring: boolean;
 }
 
 /** What only the device knows. */
@@ -30,9 +26,7 @@ export type FirstStepId =
   | "movement"
   | "install"
   | "balances"
-  | "card"
-  | "budget"
-  | "recurring";
+  | "budget";
 
 export interface FirstStep {
   id: FirstStepId;
@@ -44,6 +38,8 @@ export interface FirstStep {
  * come first (and are usually already done by the time the card shows, which
  * is the point: a list that starts underway gets finished more often).
  * Steps that don't apply to this person are left out, not shown as done.
+ * Card days and fixed expenses are deliberately not here: they're tips in
+ * Perfil, for whoever has a use for them, not setup everyone must clear.
  */
 export function buildFirstSteps(p: FirstStepsProgress, d: FirstStepsDevice): FirstStep[] {
   const steps: FirstStep[] = [
@@ -54,9 +50,7 @@ export function buildFirstSteps(p: FirstStepsProgress, d: FirstStepsDevice): Fir
   // there's nothing left to say.
   if (d.ios || d.standalone) steps.push({ id: "install", done: d.standalone });
   steps.push({ id: "balances", done: p.hasBalance });
-  if (p.creditAccounts > 0) steps.push({ id: "card", done: p.creditConfigured });
   steps.push({ id: "budget", done: p.hasBudget });
-  steps.push({ id: "recurring", done: p.hasRecurring });
   return steps;
 }
 

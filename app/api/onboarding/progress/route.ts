@@ -13,29 +13,21 @@ export async function GET() {
   try {
     const userId = await requireUser();
 
-    const [user, movement, balance, credit, unconfigured, budget, recurring] = await Promise.all([
+    const [user, movement, balance, budget] = await Promise.all([
       prisma.user.findUnique({ where: { id: userId }, select: { firstStepsDismissedAt: true } }),
       prisma.transaction.findFirst({ where: { userId }, select: { id: true } }),
       prisma.accountConfig.findFirst({
         where: { userId, OR: [{ initialBalance: { not: 0 } }, { balanceAdjustment: { not: 0 } }] },
         select: { id: true },
       }),
-      prisma.accountConfig.count({ where: { userId, isCredit: true } }),
-      prisma.accountConfig.count({
-        where: { userId, isCredit: true, OR: [{ statementDay: null }, { dueDay: null }] },
-      }),
       prisma.budgetConfig.findFirst({ where: { userId, amount: { gt: 0 } }, select: { id: true } }),
-      prisma.recurringRule.findFirst({ where: { userId }, select: { id: true } }),
     ]);
 
     const progress: FirstStepsProgress = {
       dismissed: user?.firstStepsDismissedAt != null,
       hasMovement: movement !== null,
       hasBalance: balance !== null,
-      creditAccounts: credit,
-      creditConfigured: credit > 0 && unconfigured === 0,
       hasBudget: budget !== null,
-      hasRecurring: recurring !== null,
     };
     return NextResponse.json(progress);
   } catch (err) {

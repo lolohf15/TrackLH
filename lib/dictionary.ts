@@ -499,10 +499,17 @@ export const es = {
       movement: { title: "Registra tu primer movimiento", hint: "Lo último que pagaste. Toma diez segundos.", action: "Registrar" },
       install: { title: "Ponla en tu pantalla de inicio", hint: "Se abre como una app, sin la barra de Safari.", action: "Ver cómo" },
       balances: { title: "¿Cuánto tienes hoy?", hint: "Pon el saldo de cada cuenta para que el Wallet cuadre con tu banco.", action: "Poner saldos" },
-      card: { title: "Configura tu tarjeta", hint: "Con el día de corte y de pago te avisamos antes de que venza.", action: "Configurar" },
       budget: { title: "Ponte un presupuesto", hint: "Un tope al mes por categoría. Puedes usar los sugeridos.", action: "Definir" },
-      recurring: { title: "Agrega un gasto fijo", hint: "Renta, Netflix, el gym: te recordamos cuando toca.", action: "Agregar" },
     },
+  },
+
+  tips: {
+    title: "Consejos",
+    cards: { title: "Configura tus tarjetas", text: "Con el día de corte y de pago, el Wallet te dice cuánto pagar y te avisa antes de que venza.", action: "Ir al Wallet" },
+    recurring: { title: "Agrega tus gastos fijos", text: "Renta, Netflix, el gym: regístralos una vez y te recordamos cuando toca confirmarlos.", action: "Ver recurrentes" },
+    math: { title: "Haz cuentas en el monto", text: "Escribe 120+45 en el teclado del registro y TrackLH hace la suma por ti.", action: "" },
+    repeat: { title: "Repite un movimiento", text: "Al registrar, toca el ícono de repetir y se vuelve un gasto fijo.", action: "" },
+    install: { title: "Instálala en tu iPhone", text: "Desde Safari, en tu pantalla de inicio: se abre como una app.", action: "Ver cómo" },
   },
 
   installGuide: {
@@ -1204,10 +1211,17 @@ export const en: typeof es = {
       movement: { title: "Log your first movement", hint: "The last thing you paid for. Takes ten seconds.", action: "Log it" },
       install: { title: "Add it to your home screen", hint: "It opens like an app, without Safari's bar.", action: "Show me" },
       balances: { title: "How much do you have today?", hint: "Set each account's balance so the Wallet matches your bank.", action: "Set balances" },
-      card: { title: "Set up your card", hint: "With the statement and due day we remind you before it's due.", action: "Set up" },
       budget: { title: "Set a budget", hint: "A monthly cap per category. You can use the suggested ones.", action: "Set it" },
-      recurring: { title: "Add a fixed expense", hint: "Rent, Netflix, the gym: we remind you when it's due.", action: "Add" },
     },
+  },
+
+  tips: {
+    title: "Tips",
+    cards: { title: "Set up your cards", text: "With the statement and due day, the Wallet tells you how much to pay and reminds you before it's due.", action: "Go to Wallet" },
+    recurring: { title: "Add your fixed expenses", text: "Rent, Netflix, the gym: log them once and we remind you when they're due to confirm.", action: "See recurring" },
+    math: { title: "Do the math in the amount", text: "Type 120+45 on the record keypad and TrackLH adds it up for you.", action: "" },
+    repeat: { title: "Repeat a movement", text: "When logging, tap the repeat icon and it becomes a fixed expense.", action: "" },
+    install: { title: "Install it on your iPhone", text: "From Safari, on your home screen: it opens like an app.", action: "Show me" },
   },
 
   installGuide: {

@@ -7,6 +7,7 @@ import { AccountPanel } from "@/components/auth/AccountPanel";
 import { ThemeToggle } from "@/components/settings/ThemeToggle";
 import { LanguageToggle } from "@/components/settings/LanguageToggle";
 import { DataExport } from "@/components/settings/DataExport";
+import { TipsPanel } from "@/components/settings/TipsPanel";
 import { AccountEditSheet, type EditableAccount } from "@/components/settings/AccountEditSheet";
 import { CategoryEditSheet, type EditableCategory } from "@/components/settings/CategoryEditSheet";
 import { ChevronDownIcon, PlusIcon } from "@/components/shell/icons";
@@ -111,6 +112,8 @@ export default function Perfil() {
           </Link>
         </div>
       </section>
+
+      <TipsPanel />
 
       <DataExport />
 

@@ -9,12 +9,9 @@ import { ProgressBar } from "@/components/ui/ProgressBar";
 import { SuccessCheck } from "@/components/ui/SuccessCheck";
 import { useToast } from "@/components/ui/Toast";
 import { useAddRecord } from "@/components/transactions/AddRecordProvider";
-import { AccountEditSheet } from "@/components/settings/AccountEditSheet";
-import { RecurringEditSheet } from "@/components/recurring/RecurringEditSheet";
 import { InstallGuideSheet } from "./InstallGuideSheet";
 import { BalancesSheet } from "./BalancesSheet";
 import { BudgetSheet } from "./BudgetSheet";
-import { useAccounts } from "@/lib/use-accounts";
 import {
   buildFirstSteps,
   detectDevice,
@@ -68,9 +65,6 @@ export function FirstSteps() {
   const device = useDevice();
   const { data: progress } = useSWR<FirstStepsProgress>(PROGRESS_KEY, fetcher);
   const [sheet, setSheet] = useState<SheetId | null>(null);
-  // Bumped per open so each edit sheet starts from a clean form.
-  const [session, setSession] = useState(0);
-  const { data: accounts } = useAccounts();
 
   if (!progress || !device || progress.dismissed) return null;
 
@@ -79,17 +73,12 @@ export function FirstSteps() {
   const doneCount = steps.filter((s) => s.done).length;
   const copy = t.firstSteps.steps;
 
-  const unsetCard = (accounts ?? []).find(
-    (a) => a.isCredit && (a.statementDay === null || a.dueDay === null)
-  );
-
   function open(id: FirstStepId) {
     if (id === "account") return;
     if (id === "movement") {
       openAddRecord({ type: "Gasto" });
       return;
     }
-    setSession((s) => s + 1);
     setSheet(id);
   }
 
@@ -219,18 +208,6 @@ export function FirstSteps() {
       <InstallGuideSheet open={sheet === "install"} onClose={() => setSheet(null)} />
       <BalancesSheet open={sheet === "balances"} onClose={() => setSheet(null)} />
       <BudgetSheet open={sheet === "budget"} onClose={() => setSheet(null)} />
-      <AccountEditSheet
-        key={`card-${session}`}
-        account={sheet === "card" ? unsetCard ?? null : null}
-        open={sheet === "card" && !!unsetCard}
-        onClose={() => setSheet(null)}
-      />
-      <RecurringEditSheet
-        key={`rule-${session}`}
-        rule={null}
-        open={sheet === "recurring"}
-        onClose={() => setSheet(null)}
-      />
     </>
   );
 }

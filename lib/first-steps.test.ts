@@ -5,10 +5,7 @@ const fresh: FirstStepsProgress = {
   dismissed: false,
   hasMovement: false,
   hasBalance: false,
-  creditAccounts: 0,
-  creditConfigured: false,
   hasBudget: false,
-  hasRecurring: false,
 };
 const desktop = { ios: false, standalone: false };
 
@@ -21,7 +18,7 @@ describe("buildFirstSteps", () => {
 
   it("leaves out what doesn't apply instead of ticking it", () => {
     const ids = buildFirstSteps(fresh, desktop).map((s) => s.id);
-    expect(ids).toEqual(["account", "movement", "balances", "budget", "recurring"]);
+    expect(ids).toEqual(["account", "movement", "balances", "budget"]);
   });
 
   it("asks to install only on iOS, and counts the home screen as done", () => {
@@ -31,13 +28,8 @@ describe("buildFirstSteps", () => {
       .toEqual({ id: "install", done: true });
   });
 
-  it("adds the card step only for someone with a credit card", () => {
-    const steps = buildFirstSteps({ ...fresh, creditAccounts: 2, creditConfigured: false }, desktop);
-    expect(steps.find((s) => s.id === "card")).toEqual({ id: "card", done: false });
-  });
-
   it("has nothing next once everything exists", () => {
-    const all = { ...fresh, hasMovement: true, hasBalance: true, creditAccounts: 1, creditConfigured: true, hasBudget: true, hasRecurring: true };
+    const all = { ...fresh, hasMovement: true, hasBalance: true, hasBudget: true };
     expect(nextStep(buildFirstSteps(all, { ios: true, standalone: true }))).toBeNull();
   });
 });
