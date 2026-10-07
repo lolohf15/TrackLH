@@ -3,239 +3,106 @@
 import { useState } from "react";
 import Link from "next/link";
 import useSWR from "swr";
-import { CategoryRanking } from "@/components/dashboard/CategoryRanking";
 import { AccountBalances } from "@/components/dashboard/AccountBalances";
 import { UpcomingPayments } from "@/components/dashboard/UpcomingPayments";
 import { PendingRecurring } from "@/components/recurring/PendingRecurring";
-import { BudgetTracker } from "@/components/dashboard/BudgetTracker";
-import { MonthPickerSheet } from "@/components/dashboard/MonthPickerSheet";
-import { SpendChart } from "@/components/dashboard/SpendChart";
 import { TransactionList } from "@/components/transactions/TransactionList";
 import { FirstSteps } from "@/components/onboarding/FirstSteps";
 import { useAddRecord } from "@/components/transactions/AddRecordProvider";
+import { BalanceHero } from "@/components/home/BalanceHero";
+import { LeftToSpendCard } from "@/components/home/LeftToSpendCard";
+import { PaceCard } from "@/components/home/PaceCard";
+import { InsightList } from "@/components/charts/InsightList";
 import { Button } from "@/components/ui/Button";
 import { ChartSkeleton } from "@/components/ui/Skeleton";
-import { MetricTile } from "@/components/ui/MetricTile";
-import { useLocale, useT } from "@/lib/i18n-react";
-import { ProgressBar } from "@/components/ui/ProgressBar";
-import { dayKey, formatPeriodLabel, monthKey, resolvePeriod, todayAnchor, wallClockNow } from "@/services/period";
-import { formatMXN, cn } from "@/lib/utils";
-import { useCountUp } from "@/lib/useCountUp";
-import type {
-  AnalyticsData,
-  DashboardData,
-  PaginatedTransactions,
-  YearlyDashboardData,
-} from "@/types";
+import { useT } from "@/lib/i18n-react";
+import { dayKey, todayAnchor } from "@/services/period";
+import type { AnalyticsData, DashboardData, LeftToSpend, PaginatedTransactions } from "@/types";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
+/**
+ * Inicio answers "how am I doing today": what there is, what's left to spend
+ * this month and per day, the month's pace against last month's, anything
+ * waiting on a decision, one thing worth knowing, and the latest movements.
+ * Where the money went is Analytics' question.
+ */
 export default function Home() {
   const t = useT();
-  const locale = useLocale();
   const openAddRecord = useAddRecord();
-  // The day being looked at — the month around it is what Inicio shows.
-  const [anchor, setAnchor] = useState(todayAnchor);
-  // Captured once rather than read during render: reading the clock while
-  // rendering makes the component non-deterministic, and a dashboard left
-  // open across midnight is not worth that.
-  const [openedAt] = useState(() => wallClockNow().getTime());
-  const [pickerOpen, setPickerOpen] = useState(false);
-  const [pickerYear, setPickerYear] = useState(() => todayAnchor().getUTCFullYear());
-
-  const period = resolvePeriod("month", anchor);
+  // Captured once: a dashboard left open across midnight isn't worth a
+  // component that reads the clock on every render.
+  const [today] = useState(() => dayKey(todayAnchor()));
 
   const { data: dashboard, isLoading: dashLoading } = useSWR<DashboardData>(
-    `/api/dashboard?period=month&anchor=${dayKey(anchor)}&today=${dayKey(todayAnchor())}`,
+    `/api/dashboard?period=month&anchor=${today}&today=${today}`,
+    fetcher
+  );
+  const { data: analytics } = useSWR<AnalyticsData>(
+    `/api/analytics?period=month&anchor=${today}&today=${today}`,
+    fetcher
+  );
+  const { data: left } = useSWR<{ left: LeftToSpend | null }>(`/api/left-to-spend?today=${today}`, fetcher);
+  const { data: recent, isLoading: recentLoading } = useSWR<PaginatedTransactions>(
+    "/api/transactions?limit=5&page=1",
     fetcher
   );
 
-  // The month's pace, drawn by the same card Analytics uses. Kept in its own
-  // request: Inicio needs balances and budgets that this doesn't carry, and
-  // the other three tabs have no use for a bucket per day.
-  const { data: analytics } = useSWR<AnalyticsData>(
-    `/api/analytics?period=month&anchor=${dayKey(anchor)}&today=${dayKey(todayAnchor())}`,
-    fetcher,
-    { keepPreviousData: true }
-  );
-
-  const { data: recent, isLoading: recentLoading } =
-    useSWR<PaginatedTransactions>(`/api/transactions?limit=5&page=1`, fetcher);
-
-  const { data: yearly, isLoading: yearlyLoading } =
-    useSWR<YearlyDashboardData>(pickerOpen ? `/api/dashboard/yearly?year=${pickerYear}` : null, fetcher);
-
-  function navigate(dir: -1 | 1) {
-    const next = new Date(anchor);
-    next.setUTCMonth(next.getUTCMonth() + dir);
-    setAnchor(next);
-  }
-
-  function openPicker() {
-    setPickerYear(anchor.getUTCFullYear());
-    setPickerOpen(true);
-  }
-
-  // A period that already contains today has no "next" to walk into.
-  const atLatest = period.range.to.getTime() > openedAt;
-
-  const income = dashboard?.periodIncome ?? 0;
-  const expenses = dashboard?.periodExpenses ?? 0;
-  const net = dashboard?.netBalance ?? 0;
-  // A span with no activity at all is not "100% spent" — it has nothing to
-  // split, so the bar stays an empty track rather than going fully red.
-  const hasActivity = income + expenses > 0;
-  const incomePct = hasActivity ? Math.round((income / (income + expenses)) * 100) : 0;
-
-  const prevExpenses = dashboard?.prevPeriodExpenses ?? 0;
-  const prevIncome = dashboard?.prevPeriodIncome ?? 0;
-  const expensesTrend = prevExpenses > 0 ? Math.round(((expenses - prevExpenses) / prevExpenses) * 100) : null;
-  const incomeTrend = prevIncome > 0 ? Math.round(((income - prevIncome) / prevIncome) * 100) : null;
-
-  // Only worth its own figure when there's a card balance pulling it away
-  // from the total — otherwise it's the same number twice.
-  const netWorth = dashboard?.netWorth ?? 0;
-  const hasDebt = (dashboard?.totalAvailable ?? 0) !== netWorth;
-
-  // A pace chart with nothing on either line is a flat rule taking half the
-  // screen; it waits until there's a month to draw.
-  const hasPace =
-    !!analytics &&
-    (analytics.expenses > 0 || analytics.previousExpenses.some((v) => v > 0));
-
-  const totalAvailableDisplay = useCountUp(dashboard?.totalAvailable ?? 0, formatMXN);
-  const incomeDisplay = useCountUp(income, formatMXN);
-  const expensesDisplay = useCountUp(expenses, formatMXN);
-  const netDisplay = useCountUp(net, formatMXN);
-
-  if (dashLoading) {
+  if (dashLoading || !dashboard) {
     return (
-      <div className="max-w-6xl mx-auto px-4 md:px-8 pt-2 pb-6">
+      <div className="max-w-6xl mx-auto px-4 md:px-8 pt-6 pb-6">
         <ChartSkeleton height="h-[420px]" />
       </div>
     );
   }
 
+  const balances = dashboard.accountBalances ?? [];
+  // Only worth naming when card debt pulls it away from the total.
+  const hasDebt = dashboard.totalAvailable !== dashboard.netWorth;
+  // A pace line needs something on either side of it.
+  const hasPace = !!analytics && (analytics.expenses > 0 || analytics.previousExpenses.some((v) => v > 0));
+  const previousMonthStart = new Date(Date.UTC(Number(today.slice(0, 4)), Number(today.slice(5, 7)) - 2, 1)).toISOString();
+
   return (
-    <div className="max-w-6xl mx-auto md:px-8">
+    <div className="max-w-6xl mx-auto px-4 md:px-8 pb-6">
+      <BalanceHero
+        total={dashboard.totalAvailable}
+        netWorth={hasDebt ? dashboard.netWorth : null}
+        accounts={balances.filter((a) => !a.isCredit).length}
+      />
 
-      {/* Inicio is the overview of a month. Slicing by week or year is a
-          question you go to Analytics to ask. */}
-      <div className="flex items-center justify-between px-4 md:px-0 pt-3 pb-2.5">
-        <span className="text-[15px] font-semibold text-text">{t.home.title}</span>
-        <div className="flex items-center -my-2 -mr-2">
-          <MonthNavButton label={t.home.prevMonth} onClick={() => navigate(-1)}>
-            ‹
-          </MonthNavButton>
-          <button
-            onClick={openPicker}
-            className="press font-mono text-[10px] text-text-muted min-w-[70px] text-center uppercase tracking-wide hover:text-text transition-colors duration-150 ease-out"
-          >
-            {formatPeriodLabel(period, locale)}
-          </button>
-          <MonthNavButton
-            label={t.home.nextMonth}
-            onClick={() => navigate(1)}
-            disabled={atLatest}
-          >
-            ›
-          </MonthNavButton>
-        </div>
-      </div>
-
-      <div className="md:grid md:grid-cols-[1fr_360px] md:gap-8 md:items-start">
-        <div className="px-4 md:px-0 space-y-3">
-
+      <div className="mt-4 md:mt-6 md:grid md:grid-cols-[1fr_380px] md:gap-6 md:items-start">
+        <div className="flex flex-col gap-3">
           {/* Only for someone who just arrived; it hides itself when done. */}
           <FirstSteps />
-
-          {/* This month, as one group: the total and how it split. */}
-          <div className="tint tint-gold">
-            <div className="flex items-start justify-between gap-4 px-4 pt-3.5 pb-3.5">
-              <MetricTile
-                label={t.home.totalBalance}
-                value={totalAvailableDisplay}
-                size="lg"
-                hint={t.home.accountsCount((dashboard?.accountBalances ?? []).filter((a) => !a.isCredit).length)}
-              />
-              {hasDebt && (
-                <div className="text-right shrink-0">
-                  <p className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em]">
-                    {t.home.netWorth}
-                  </p>
-                  <p className="text-[17px] font-semibold text-text tabular-nums mt-1">
-                    {formatMXN(netWorth)}
-                  </p>
-                </div>
-              )}
-            </div>
-
-            <div className="grid grid-cols-2 border-t border-border">
-              <MetricTile
-                label={t.home.income}
-                value={incomeDisplay}
-                trend={incomeTrend}
-                className="px-4 py-3 border-r border-border"
-              />
-              <MetricTile
-                label={t.home.expenses}
-                value={expensesDisplay}
-                trend={expensesTrend}
-                trendPolarity="down-good"
-                className="px-4 py-3"
-              />
-            </div>
-
-            <div className="px-4 py-3 border-t border-border">
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em]">{t.home.monthlySavings}</span>
-                {/* Before the month's first income, spending is all there is to
-                    subtract from: that's a month waiting on payday, not a loss. */}
-                {income === 0 && net < 0 ? (
-                  <span className="text-[12px] text-text-dim">{t.home.noIncomeYet}</span>
-                ) : (
-                  <span className={cn("text-[13px] font-semibold tabular-nums", net >= 0 ? "text-green-fg" : "text-red-fg")}>
-                    {netDisplay}
-                  </span>
-                )}
-              </div>
-              <ProgressBar
-                height={6}
-                gradient={false}
-                segments={
-                  hasActivity && income > 0
-                    ? [
-                        { percent: incomePct, color: "var(--color-green-fg)" },
-                        { percent: 100 - incomePct, color: "var(--color-red-fg)" },
-                      ]
-                    : []
-                }
-              />
-            </div>
-          </div>
-
-          {/* What's waiting on a decision sits right under the month's figures:
-              recurring movements to confirm, then cards coming due. */}
+          {left && <LeftToSpendCard left={left.left} />}
+          {/* Waiting on a decision: recurring movements to confirm, cards due. */}
           <PendingRecurring />
-          <UpcomingPayments balances={dashboard?.accountBalances ?? []} />
-
+          <UpcomingPayments balances={balances} />
           {analytics && hasPace && (
-            <SpendChart
+            <PaceCard
               buckets={analytics.buckets}
               previousExpenses={analytics.previousExpenses}
-              granularity={analytics.granularity}
-              title={t.home.monthPace}
+              todayKey={today}
+              previousMonthStart={previousMonthStart}
             />
           )}
+          {analytics && <InsightList insights={analytics.insights.slice(0, 1)} />}
+        </div>
 
-          {/* Recent activity — the group label sits above its group, not inside it */}
+        <div className="flex flex-col gap-3 mt-3 md:mt-0">
           <section>
-            <SectionLabel>
-              {t.home.recentActivity}
-              <Link href={`/wallet?period=month&anchor=${dayKey(anchor)}`} className="font-mono text-[10px] font-medium text-accent hover:brightness-125 tracking-wide normal-case">
+            <div className="flex items-baseline justify-between px-1 pt-1 pb-2">
+              <h2 className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em]">
+                {t.overview.recent}
+              </h2>
+              <Link
+                href="/wallet"
+                className="font-mono text-[10px] font-medium text-accent hover:brightness-125 tracking-wide min-h-[28px] flex items-center"
+              >
                 {t.home.seeAll} →
               </Link>
-            </SectionLabel>
+            </div>
             <div className="panel px-4 pb-2">
               <TransactionList
                 data={recent ?? null}
@@ -253,76 +120,11 @@ export default function Home() {
               />
             </div>
           </section>
-
-          {/* Mobile: budget + ranking continue the same stack */}
-          <section className="md:hidden">
-            <SectionLabel>{t.home.budget}</SectionLabel>
-            <div className="panel px-4 py-4">
-              <BudgetTracker data={(dashboard?.budgetItems ?? []).slice(0, 4)} bare />
-            </div>
-          </section>
-
-          <div className="md:hidden">
-            <CategoryRanking data={dashboard?.categoryExpenses ?? []} limit={5} />
+          <div className="hidden md:block">
+            <AccountBalances data={balances} />
           </div>
         </div>
-
-        {/* Desktop right rail */}
-        <div className="hidden md:flex flex-col gap-3">
-          <BudgetTracker data={dashboard?.budgetItems ?? []} />
-          <CategoryRanking data={dashboard?.categoryExpenses ?? []} limit={7} />
-          <AccountBalances data={dashboard?.accountBalances ?? []} />
-        </div>
       </div>
-
-      <MonthPickerSheet
-        open={pickerOpen}
-        onClose={() => setPickerOpen(false)}
-        year={pickerYear}
-        onYearChange={setPickerYear}
-        data={yearly}
-        loading={yearlyLoading}
-        selectedMonth={monthKey(period.range.from)}
-        onSelect={(month) => {
-          const [y, m] = month.split("-").map(Number);
-          setAnchor(new Date(Date.UTC(y, m - 1, 1)));
-          setPickerOpen(false);
-        }}
-      />
-    </div>
-  );
-}
-
-/** 36px hit area around a 22px glyph box — the target grows, the chrome doesn't. */
-function MonthNavButton({
-  label, onClick, disabled, children,
-}: {
-  label: string;
-  onClick: () => void;
-  disabled?: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      aria-label={label}
-      disabled={disabled}
-      className="press w-9 h-9 flex items-center justify-center group disabled:opacity-30 disabled:cursor-not-allowed disabled:active:scale-100"
-    >
-      <span className="w-[22px] h-[22px] rounded-full flex items-center justify-center bg-surface-2 text-text-muted text-[11px] transition-colors duration-150 ease-out group-hover:bg-surface-3 group-hover:text-text">
-        {children}
-      </span>
-    </button>
-  );
-}
-
-/** Grouped-list caption: it names the panel below it and sits outside it. */
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="flex items-baseline justify-between px-1 pt-1 pb-2">
-      <span className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em] flex-1 flex items-baseline justify-between gap-2">
-        {children}
-      </span>
     </div>
   );
 }

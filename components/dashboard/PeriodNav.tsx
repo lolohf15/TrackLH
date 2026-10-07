@@ -17,7 +17,10 @@ export function PeriodNav({
   /** Captured by the caller so nothing reads the clock mid-render. */
   now,
   onLabelClick,
+  kinds = ["week", "month", "year", "all"],
 }: {
+  /** Which spans the selector offers. */
+  kinds?: PeriodKind[];
   kind: PeriodKind;
   anchor: Date;
   onKindChange: (kind: PeriodKind) => void;
@@ -41,12 +44,10 @@ export function PeriodNav({
   return (
     <div className="flex items-center gap-2">
       <SegmentedControl
-        options={[
-          { value: "week", label: t.home.periodWeek },
-          { value: "month", label: t.home.periodMonth },
-          { value: "year", label: t.home.periodYear },
-          { value: "all", label: t.home.periodAll },
-        ]}
+        options={kinds.map((k) => ({
+          value: k,
+          label: { week: t.home.periodWeek, month: t.home.periodMonth, year: t.home.periodYear, all: t.home.periodAll }[k],
+        }))}
         value={kind}
         onChange={onKindChange}
         label={t.home.title}

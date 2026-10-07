@@ -3,7 +3,6 @@ import { prisma } from "@/lib/prisma";
 import { ts } from "@/lib/sql";
 import { getAccountSums } from "@/lib/account-sums";
 import { mapAccountConfig, toNumber } from "@/lib/money";
-import { listRules } from "@/lib/recurring";
 import { computeAccountBalancesFromSums, round2 } from "@/services/finance";
 import type { DateRange } from "@/services/period";
 import type { TrendsData } from "@/types";
@@ -36,7 +35,7 @@ export async function getTrends(
 ): Promise<TrendsData> {
   const { range } = window;
 
-  const [monthRows, flowRows, inRows, configs, sums, recurring] = await Promise.all([
+  const [monthRows, flowRows, inRows, configs, sums] = await Promise.all([
     prisma.$queryRaw<MonthRow[]>`
       SELECT to_char(date_trunc('month', date), 'YYYY-MM') AS month,
         SUM(amount) FILTER (WHERE type = 'Ingreso') AS income,
@@ -72,7 +71,6 @@ export async function getTrends(
     `,
     prisma.accountConfig.findMany({ where: { userId } }).then((rows) => rows.map(mapAccountConfig)),
     getAccountSums(userId),
-    listRules(userId),
   ]);
 
   const byMonth = new Map(monthRows.map((r) => [r.month, r]));
@@ -122,21 +120,5 @@ export async function getTrends(
     };
   });
 
-  const cards = balances
-    .filter((b) => b.isCredit && b.creditLimit !== null && b.creditLimit > 0)
-    .map((b) => ({
-      account: b.account,
-      color: b.color,
-      limit: b.creditLimit!,
-      points: endOf.get(b.account)!.map((value, i) => {
-        const owed = round2(Math.max(0, -value));
-        return { key: window.months[i], debt: owed, utilization: round2((owed / b.creditLimit!) * 100) };
-      }),
-    }));
-
-  return {
-    months,
-    cards,
-    fixedCommitment: recurring.fixedExpenses,
-  };
+  return { months };
 }
