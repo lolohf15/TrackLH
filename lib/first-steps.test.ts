@@ -13,12 +13,12 @@ describe("buildFirstSteps", () => {
   it("starts underway: the account is always done", () => {
     const steps = buildFirstSteps(fresh, desktop);
     expect(steps[0]).toEqual({ id: "account", done: true });
-    expect(nextStep(steps)?.id).toBe("movement");
+    expect(nextStep(steps)?.id).toBe("balances");
   });
 
   it("leaves out what doesn't apply instead of ticking it", () => {
     const ids = buildFirstSteps(fresh, desktop).map((s) => s.id);
-    expect(ids).toEqual(["account", "movement", "balances", "budget"]);
+    expect(ids).toEqual(["account", "balances", "movement", "budget"]);
   });
 
   it("asks to install only on iOS, and counts the home screen as done", () => {
