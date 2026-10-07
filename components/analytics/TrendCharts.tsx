@@ -3,14 +3,13 @@
 import { useState } from "react";
 import { ChartCard, ReadoutFigure } from "./ChartCard";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { ColumnChart } from "@/components/ui/ColumnChart";
 import { LineChart } from "@/components/ui/LineChart";
-import { StackedBarChart } from "@/components/ui/StackedBarChart";
-import { Sparkline } from "@/components/ui/Sparkline";
 import { TrendBadge } from "@/components/ui/TrendBadge";
-import { cn, formatMXN } from "@/lib/utils";
+import { formatMXN } from "@/lib/utils";
 import { useLocale, useT } from "@/lib/i18n-react";
-import type { CardTrend, TrendMonth, TrendsData } from "@/types";
+import type { TrendMonth, TrendsData } from "@/types";
 
 /**
  * Income sits at a lighter step of its green so a pair of columns still reads
@@ -21,8 +20,6 @@ import type { CardTrend, TrendMonth, TrendsData } from "@/types";
  */
 const INCOME = "color-mix(in srgb, var(--color-green) 55%, var(--color-surface))";
 const EXPENSE = "var(--color-red)";
-const FIXED = "var(--color-red)";
-const VARIABLE = "color-mix(in srgb, var(--color-red) 50%, var(--color-surface))";
 const NET = "var(--color-text)";
 
 function monthDate(key: string): Date {
@@ -52,7 +49,9 @@ function axisLabel(index: number, count: number, text: string): string | null {
   return index % step === (count - 1) % step ? text : null;
 }
 
-export function IncomeExpenseChart({ months }: { months: TrendMonth[] }) {
+export function IncomeExpenseChart({
+  months, partialKey, toolbar, title,
+}: { months: TrendMonth[]; partialKey?: string | null; toolbar?: React.ReactNode; title?: string }) {
   const t = useT();
   const a = t.analytics;
   const labels = useMonthLabels();
@@ -70,20 +69,14 @@ export function IncomeExpenseChart({ months }: { months: TrendMonth[] }) {
 
   return (
     <ChartCard
-      title={a.incomeVsExpenses}
+      title={title ?? a.incomeVsExpenses}
+      toolbar={toolbar}
       legend={[
         { label: a.income, color: INCOME },
         { label: t.home.expenses, color: EXPENSE },
         { label: a.net, color: NET, shape: "line" },
       ]}
       summary={a.incomeVsExpensesSummary(formatMXN(income), formatMXN(expenses), positive, active)}
-      table={{
-        headers: [a.month, a.income, t.home.expenses, a.net],
-        rows: months.map((x) => ({
-          key: x.key,
-          cells: [labels.long(x.key), formatMXN(x.income), formatMXN(x.expenses), formatMXN(net(x))],
-        })),
-      }}
       readout={
         m && (
           <div>
@@ -106,6 +99,8 @@ export function IncomeExpenseChart({ months }: { months: TrendMonth[] }) {
           key: x.key,
           label: axisLabel(i, months.length, labels.short(x.key)),
           columns: [[{ value: x.income, color: INCOME }], [{ value: x.expenses, color: EXPENSE }]],
+          // The month still running: its payday may not have landed yet.
+          partial: x.key === partialKey,
         }))}
         line={{ values: months.map(net), color: NET }}
         selectedKey={selected}
@@ -116,71 +111,9 @@ export function IncomeExpenseChart({ months }: { months: TrendMonth[] }) {
   );
 }
 
-export function FixedVariableChart({ months, commitment }: { months: TrendMonth[]; commitment: number }) {
-  const t = useT();
-  const a = t.analytics;
-  const labels = useMonthLabels();
-  const [picked, setPicked] = useState<string | null>(null);
-  // A month picked under another period may not be in this one; then the
-  // readout falls back rather than going blank.
-  const selected = picked !== null && months.some((x) => x.key === picked) ? picked : lastActive(months);
-  const m = months.find((x) => x.key === selected) ?? null;
-  const variable = (x: TrendMonth) => Math.max(0, Math.round((x.expenses - x.fixed) * 100) / 100);
-  const share = (x: TrendMonth) => (x.expenses > 0 ? Math.round((x.fixed / x.expenses) * 100) : 0);
-
-  const anyFixed = months.some((x) => x.fixed > 0);
-
-  return (
-    <ChartCard
-      title={a.fixedVsVariable}
-      hint={anyFixed ? a.fixedHint : a.fixedEmptyHint}
-      legend={[
-        { label: a.fixed, color: FIXED },
-        { label: a.variable, color: VARIABLE },
-        ...(commitment > 0 ? [{ label: a.fixedNow, color: "var(--color-border-strong)", shape: "dashed" as const }] : []),
-      ]}
-      summary={a.fixedVsVariableSummary(
-        formatMXN(months.reduce((s, x) => s + x.fixed, 0)),
-        formatMXN(months.reduce((s, x) => s + variable(x), 0)),
-        formatMXN(commitment)
-      )}
-      table={{
-        headers: [a.month, a.fixed, a.variable, a.fixedShare],
-        rows: months.map((x) => ({
-          key: x.key,
-          cells: [labels.long(x.key), formatMXN(x.fixed), formatMXN(variable(x)), `${share(x)}%`],
-        })),
-      }}
-      readout={
-        m && (
-          <div>
-            <p className="font-mono text-[10.5px] text-text-muted uppercase tracking-wide mb-2">{labels.long(m.key)}</p>
-            <div className="grid grid-cols-3 gap-3">
-              <ReadoutFigure label={a.fixed} value={formatMXN(m.fixed)} swatch={FIXED} />
-              <ReadoutFigure label={a.variable} value={formatMXN(variable(m))} swatch={VARIABLE} />
-              <ReadoutFigure label={a.fixedShare} value={`${share(m)}%`} />
-            </div>
-          </div>
-        )
-      }
-    >
-      <ColumnChart
-        groups={months.map((x, i) => ({
-          key: x.key,
-          label: axisLabel(i, months.length, labels.short(x.key)),
-          // Fixed on the baseline: it's the floor the month is built on.
-          columns: [[{ value: x.fixed, color: FIXED }, { value: variable(x), color: VARIABLE }]],
-        }))}
-        reference={commitment > 0 ? { value: commitment, label: a.fixedNow } : null}
-        selectedKey={selected}
-        onSelect={setPicked}
-        label={labels.long}
-      />
-    </ChartCard>
-  );
-}
-
-export function NetWorthChart({ months }: { months: TrendMonth[] }) {
+export function NetWorthChart({
+  months, toolbar, title,
+}: { months: TrendMonth[]; toolbar?: React.ReactNode; title?: string }) {
   const t = useT();
   const a = t.analytics;
   const labels = useMonthLabels();
@@ -196,20 +129,9 @@ export function NetWorthChart({ months }: { months: TrendMonth[] }) {
 
   return (
     <ChartCard
-      title={a.netWorthTrend}
+      title={title ?? a.netWorthTrend}
+      toolbar={toolbar}
       summary={a.netWorthSummary(formatMXN(first?.netWorth ?? 0), formatMXN(last?.netWorth ?? 0), months.length)}
-      table={{
-        headers: [a.month, a.available, a.cardDebt, a.netWorth],
-        rows: months.map((x) => ({
-          key: x.key,
-          cells: [
-            labels.long(x.key),
-            formatMXN(x.available),
-            formatMXN(Math.round((x.available - x.netWorth) * 100) / 100),
-            formatMXN(x.netWorth),
-          ],
-        })),
-      }}
       readout={
         m && (
           <div>
@@ -251,147 +173,40 @@ export function NetWorthChart({ months }: { months: TrendMonth[] }) {
   );
 }
 
-/** The same bands the Wallet reads a card's line by. */
-function usageTone(pct: number): { color: string; text: string } {
-  if (pct >= 70) return { color: "var(--color-red)", text: "text-red-fg" };
-  if (pct >= 30) return { color: "var(--color-amber)", text: "text-amber-fg" };
-  return { color: "var(--color-green)", text: "text-green-fg" };
-}
-
-export function CardUsageChart({ cards }: { cards: CardTrend[] }) {
+/**
+ * The long view, one card: income against spending, or net worth, month by
+ * month, switched in place rather than stacked as two more cards.
+ */
+export function TrendsPanel({ data, partialKey }: { data: TrendsData; partialKey?: string | null }) {
   const t = useT();
-  const a = t.analytics;
-  const labels = useMonthLabels();
-  if (cards.length === 0) return null;
-
-  return (
-    <ChartCard
-      title={a.cardUsage}
-      hint={a.cardUsageHint}
-      legend={[{ label: a.limitLine, color: "var(--color-border-strong)", shape: "dashed" }]}
-      summary={cards
-        .map((c) => a.cardUsageSummary(c.account, Math.round(c.points[c.points.length - 1]?.utilization ?? 0)))
-        .join(" ")}
-      table={{
-        headers: [a.month, ...cards.map((c) => c.account)],
-        rows: (cards[0]?.points ?? []).map((p, i) => ({
-          key: p.key,
-          cells: [labels.long(p.key), ...cards.map((c) => `${Math.round(c.points[i]?.utilization ?? 0)}%`)],
-        })),
-      }}
-    >
-      <ul className="divide-y divide-divider">
-        {cards.map((card) => {
-          const now = card.points[card.points.length - 1];
-          const pct = Math.round(now?.utilization ?? 0);
-          const tone = usageTone(pct);
-          return (
-            <li key={card.account} className="flex items-center gap-3 py-2.5">
-              <div className="min-w-0 flex-1">
-                <p className="flex items-center gap-2 text-[13.5px] text-text">
-                  <span aria-hidden="true" className="w-[7px] h-[7px] rounded-full shrink-0" style={{ background: card.color }} />
-                  <span className="truncate">{card.account}</span>
-                </p>
-                <p className="text-[11.5px] text-text-dim mt-0.5 truncate tabular-nums">
-                  <span className={cn("font-semibold", tone.text)}>{pct}%</span>
-                  {" · "}
-                  {a.ofLimit(formatMXN(now?.debt ?? 0), formatMXN(card.limit))}
-                </p>
-              </div>
-              <Sparkline
-                className="w-[112px] shrink-0"
-                values={card.points.map((p) => p.utilization)}
-                color={tone.color}
-                reference={100}
-                floorMax={100}
-                height={40}
-                label={card.points.map((p) => `${labels.short(p.key)} ${Math.round(p.utilization)}%`).join(", ")}
-              />
-            </li>
-          );
-        })}
-      </ul>
-    </ChartCard>
-  );
-}
-
-export function WeekdayChart({ weekdays, counts }: { weekdays: number[]; counts: number[] }) {
-  const t = useT();
-  const a = t.analytics;
-  const locale = useLocale();
-  // 5 Jan 2026 was a Monday, so day i of that week names weekday i.
-  const name = (i: number, style: "short" | "long") =>
-    new Intl.DateTimeFormat(locale, { weekday: style, timeZone: "UTC" })
-      .format(new Date(Date.UTC(2026, 0, 5 + i)))
-      .replace(".", "");
-
-  const averages = weekdays.map((total, i) => (counts[i] > 0 ? Math.round(total / counts[i]) : 0));
-  const top = averages.reduce((best, v, i) => (v > averages[best] ? i : best), 0);
-  const [picked, setPicked] = useState<number | null>(null);
-  const selected = picked ?? top;
-  const days = counts.reduce((s, c) => s + c, 0);
-  const overall = days > 0 ? Math.round(weekdays.reduce((s, v) => s + v, 0) / days) : 0;
-
-  if (weekdays.every((v) => v === 0)) return null;
-
-  return (
-    <ChartCard
-      title={a.byWeekday}
-      hint={a.byWeekdayHint}
-      summary={a.byWeekdaySummary(name(top, "long"), formatMXN(averages[top]), formatMXN(overall))}
-      table={{
-        headers: [a.weekday, a.avgPerDay, a.periodTotal],
-        rows: weekdays.map((total, i) => ({
-          key: String(i),
-          cells: [name(i, "long"), formatMXN(averages[i]), formatMXN(total)],
-        })),
-      }}
-      readout={
-        <div className="grid grid-cols-3 gap-3">
-          <ReadoutFigure label={name(selected, "long")} value={formatMXN(averages[selected])} />
-          <ReadoutFigure label={a.periodTotal} value={formatMXN(weekdays[selected])} />
-          <ReadoutFigure label={a.dailyAverage} value={formatMXN(overall)} />
-        </div>
-      }
-    >
-      <StackedBarChart
-        bars={averages.map((v, i) => ({
-          key: String(i),
-          label: name(i, "short"),
-          total: v,
-          segments: [{ value: v, color: "var(--color-red)" }],
-        }))}
-        reference={{ value: overall, label: a.average }}
-        highlightKey={String(selected)}
-        onSelect={(key) => setPicked(Number(key))}
-        height={110}
-        // Room for the cap that floats over the lit bar when it's the tallest.
-        className="pt-3"
-      />
-    </ChartCard>
-  );
-}
-
-/** Everything under the breakdown on Analytics, in the order it's read. */
-export function TrendCharts({ data }: { data: TrendsData }) {
-  const t = useT();
-  const empty =
-    data.months.every((m) => m.income === 0 && m.expenses === 0) && data.weekdays.every((v) => v === 0);
+  const [view, setView] = useState<"flow" | "worth">("flow");
+  const empty = data.months.every((m) => m.income === 0 && m.expenses === 0);
   if (empty) {
     return (
-      <div className="panel mt-3 md:col-span-2">
+      <div className="panel">
         <EmptyState title={t.analytics.noTrendsTitle} description={t.analytics.noTrendsHint} />
       </div>
     );
   }
 
-  return (
-    <>
-      <IncomeExpenseChart months={data.months} />
-      <FixedVariableChart months={data.months} commitment={data.fixedCommitment} />
-      <NetWorthChart months={data.months} />
-      <CardUsageChart cards={data.cards} />
-      <WeekdayChart weekdays={data.weekdays} counts={data.weekdayCounts} />
-    </>
+  const title = `${t.charts.trends} · ${t.analytics.lastMonths(data.months.length)}`;
+  const toolbar = (
+    <SegmentedControl
+      options={[
+        { value: "flow", label: t.charts.trendsIncome },
+        { value: "worth", label: t.charts.trendsNetWorth },
+      ]}
+      value={view}
+      onChange={setView}
+      label={t.charts.trends}
+      size="sm"
+      className="mt-1 mb-2"
+    />
+  );
+
+  return view === "flow" ? (
+    <IncomeExpenseChart months={data.months} partialKey={partialKey} toolbar={toolbar} title={title} />
+  ) : (
+    <NetWorthChart months={data.months} toolbar={toolbar} title={title} />
   );
 }

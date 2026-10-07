@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser, errorResponse } from "@/lib/auth";
 import { buildDashboardData, computeAccountBalancesFromSums } from "@/services/finance";
-import { isPeriodKind, parseAnchor, resolvePeriod } from "@/services/period";
+import { comparablePrevious, isInProgress, isPeriodKind, parseAnchor, resolvePeriod } from "@/services/period";
+import { readToday } from "@/lib/request-today";
 import { getAccountSums } from "@/lib/account-sums";
 import { mapTransaction } from "@/lib/transaction-map";
 import { mapAccountConfig, mapBudget } from "@/lib/money";
@@ -54,9 +55,12 @@ export async function GET(req: NextRequest) {
     const colors = new Map(categories.map((c) => [c.name, c.color]));
     const accountBalances = computeAccountBalancesFromSums(accountSums, accountConfigs);
 
+    // The trend arrows compare against the same point of the span before,
+    // not all of it, while this one is still running.
+    const today = readToday(req);
     const data = buildDashboardData(
       transactions,
-      period,
+      { ...period, previous: comparablePrevious(period, today) },
       accountBalances,
       budgetConfigs,
       budgetPeriod.range,
@@ -64,7 +68,7 @@ export async function GET(req: NextRequest) {
       colors
     );
 
-    return NextResponse.json(data);
+    return NextResponse.json({ ...data, inProgress: isInProgress(period, today) });
   } catch (err) {
     return errorResponse(err, "GET /api/dashboard");
   }

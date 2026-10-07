@@ -14,6 +14,8 @@ export interface ColumnGroup {
   label: string | null;
   /** Side by side within the group, each one stacked from the baseline up. */
   columns: ColumnSegment[][];
+  /** Still running, so drawn faint and reached by a dashed line. */
+  partial?: boolean;
 }
 
 const EASE_OUT = [0.23, 1, 0.32, 1] as const;
@@ -67,9 +69,14 @@ export function ColumnChart({
   const zero = at(0);
 
   const x = (i: number) => ((i + 0.5) / n) * 100;
-  const linePath = lineValues
-    .map((v, i) => `${i === 0 ? "M" : "L"} ${x(i)} ${100 - at(v)}`)
-    .join(" ");
+  // The line runs solid through the finished groups and dashed into the
+  // first partial one, so a half-done month can't drag it down unremarked.
+  const firstPartial = groups.findIndex((g) => g.partial);
+  const solidUntil = firstPartial > 0 ? firstPartial - 1 : firstPartial === 0 ? 0 : lineValues.length - 1;
+  const toPath = (values: number[], offset: number) =>
+    values.map((v, i) => `${i === 0 ? "M" : "L"} ${x(i + offset)} ${100 - at(v)}`).join(" ");
+  const linePath = toPath(lineValues.slice(0, solidUntil + 1), 0);
+  const dashedPath = firstPartial >= 0 ? toPath(lineValues.slice(solidUntil), solidUntil) : null;
 
   return (
     <div className={className}>
@@ -121,7 +128,7 @@ export function ColumnChart({
                           style={{
                             bottom: `${zero}%`,
                             height: `${(total / span) * 100}%`,
-                            opacity: dim ? 0.55 : 1,
+                            opacity: (dim ? 0.55 : 1) * (group.partial ? 0.45 : 1),
                           }}
                           initial={reduceMotion ? false : { scaleY: 0 }}
                           animate={{ scaleY: 1 }}
@@ -183,6 +190,18 @@ export function ColumnChart({
                 strokeLinecap="round"
                 vectorEffect="non-scaling-stroke"
               />
+              {dashedPath && (
+                <path
+                  d={dashedPath}
+                  fill="none"
+                  stroke={line.color}
+                  strokeWidth="1.5"
+                  strokeDasharray="3 4"
+                  strokeLinecap="round"
+                  opacity={0.6}
+                  vectorEffect="non-scaling-stroke"
+                />
+              )}
             </motion.svg>
             {lineValues.map((v, i) => (
               <span
@@ -195,7 +214,9 @@ export function ColumnChart({
                   background: line.color,
                   // The surface ring keeps a dot legible where it sits on a column.
                   boxShadow: "0 0 0 2px var(--color-surface)",
-                  opacity: selectedKey != null && groups[i]?.key !== selectedKey ? 0.5 : 1,
+                  opacity:
+                    (selectedKey != null && groups[i]?.key !== selectedKey ? 0.5 : 1) *
+                    (groups[i]?.partial ? 0.6 : 1),
                 }}
               />
             ))}

@@ -247,6 +247,16 @@
   /* Safe-area padding for the mobile tab bar */
   .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
   .pt-safe { padding-top: env(safe-area-inset-top); }
+  .status-scrim {
+    position: fixed;
+    inset: 0 0 auto 0;
+    z-index: 30;
+    height: env(safe-area-inset-top);
+    background: color-mix(in srgb, var(--color-bg) 82%, transparent);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    pointer-events: none;
+  }
 }
 
 @keyframes fadeInUp {

@@ -30,10 +30,13 @@ export function ChartCard({
   summary,
   table,
   readout,
+  toolbar,
   children,
   className,
 }: {
   title: string;
+  /** Controls under the title line, such as a view switch. */
+  toolbar?: React.ReactNode;
   hint?: string;
   legend?: LegendItem[];
   /** One or two sentences that say what the chart shows. */
@@ -48,7 +51,7 @@ export function ChartCard({
   const [showTable, setShowTable] = useState(false);
 
   return (
-    <section className={cn("panel px-4 py-3.5 mt-3", className)} aria-labelledby={`${id}-title`}>
+    <section className={cn("panel px-4 py-3.5", className)} aria-labelledby={`${id}-title`}>
       <div className="flex items-baseline justify-between gap-3 flex-wrap mb-1">
         <h3 id={`${id}-title`} className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em]">
           {title}
@@ -64,6 +67,7 @@ export function ChartCard({
           </ul>
         )}
       </div>
+      {toolbar}
       {hint && <p className="text-[11.5px] text-text-dim leading-relaxed mb-1">{hint}</p>}
 
       <p className="sr-only">{summary}</p>

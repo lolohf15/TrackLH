@@ -118,6 +118,9 @@ export interface DashboardData {
   /** Zero for all-time, which has no previous span to compare against. */
   prevPeriodExpenses: number;
   prevPeriodIncome: number;
+  /** Today falls inside the period, so the previous figures are cut to the
+   *  same point of the span before. Set by the route, not the builder. */
+  inProgress?: boolean;
   budgetUsed: number;
   budgetTotal: number;
   budgetUsedPercent: number;
@@ -140,6 +143,8 @@ export interface BucketBreakdown {
   key: string;
   expenses: number;
   income: number;
+  /** How many expenses the slice holds. */
+  count: number;
   /** The expense categories inside the slice, largest first. */
   slices: BucketSlice[];
 }
@@ -167,8 +172,33 @@ export interface AnalyticsData {
   /** Both zero for all-time, which has no span before it to compare against. */
   prevExpenses: number;
   prevIncome: number;
+  /** Today falls inside the period: `prevExpenses` and `prevIncome` cover the
+   *  span before only up to the same point. */
+  inProgress: boolean;
   /** Gasto rows in the period — the "across N movements" line. */
   expenseCount: number;
+  /** Sentences about the period, most telling first; see services/insights. */
+  insights: Insight[];
+  /** Income to categories and savings; null without income. */
+  flow: MoneyFlow | null;
+  /** Monthly budgets with what's been spent; empty outside a month. */
+  budgets: BudgetPace[];
+  /** How far through the month today is, 0–100; null outside a month. */
+  monthProgress: number | null;
+}
+
+export type { Insight } from "@/services/insights";
+export type { MoneyFlow, FlowNode } from "@/services/money-flow";
+export type { LeftToSpend } from "@/services/left-to-spend";
+import type { Insight } from "@/services/insights";
+import type { MoneyFlow } from "@/services/money-flow";
+
+/** A budget set for a category, against what the month has spent on it. */
+export interface BudgetPace {
+  category: string;
+  color: string;
+  budget: number;
+  spent: number;
 }
 
 export interface CategoryTrendPoint {
@@ -232,6 +262,8 @@ export interface TransactionFilters {
   category: string;
   account: string;
   type: string;
+  /** Free text over description, category and account; searches all time. */
+  q?: string;
   page: number;
   limit: number;
 }
@@ -242,6 +274,12 @@ export interface PaginatedTransactions {
   page: number;
   limit: number;
   totalPages: number;
+  /**
+   * Each day on this page, summed over every movement of that day the filters
+   * match, not only the ones on the page, so a day split across two pages
+   * still heads with its whole total. Keyed `YYYY-MM-DD`.
+   */
+  dayTotals?: Record<string, { income: number; expenses: number }>;
 }
 
 export interface NewTransactionInput {
@@ -308,22 +346,27 @@ export interface TrendMonth {
   netWorth: number;
 }
 
-export interface CardTrend {
-  account: string;
-  color: string;
-  limit: number;
-  points: Array<{ key: string; debt: number; utilization: number }>;
-}
-
 /** What the trend charts on Analytics draw. */
 export interface TrendsData {
   months: TrendMonth[];
-  /** Cards with a limit on file, each month's end against it. */
-  cards: CardTrend[];
-  /** Spending in the period on screen, Monday first. */
-  weekdays: number[];
-  /** How many of each weekday the period has had so far, Monday first. */
-  weekdayCounts: number[];
-  /** What the active recurring expenses come to a month, from the rules. */
-  fixedCommitment: number;
+}
+
+/** `GET /api/categories/detail`: one category over a period. */
+export interface CategoryDetailData {
+  category: string;
+  color: string;
+  period: "week" | "month" | "year";
+  from: string;
+  to: string;
+  inProgress: boolean;
+  total: number;
+  /** The same point of the period before. */
+  previous: number;
+  /** Monthly budget, for a month; null otherwise or when none is set. */
+  budget: number | null;
+  monthProgress: number | null;
+  /** The six calendar months ending with the period's. */
+  months: Array<{ month: string; amount: number }>;
+  /** Descriptions it repeats most in the period, by amount. */
+  top: Array<{ description: string; count: number; amount: number }>;
 }

@@ -1,6 +1,5 @@
 /**
- * Which months the trend charts on Analytics cover, and how many of each
- * weekday a span holds. Pure date math on the UTC wall-clock convention of
+ * Which months the trend charts on Analytics cover. Pure date math on the UTC wall-clock convention of
  * `services/period.ts`.
  */
 import { monthKey, type DateRange, type PeriodKind } from "./period";
@@ -26,20 +25,4 @@ export function trendWindow(kind: PeriodKind, anchor: Date): { months: string[];
     months,
     range: { from: first, to: utcMonth(first.getUTCFullYear(), first.getUTCMonth() + count) },
   };
-}
-
-/** How many Mondays, Tuesdays… a span holds, so a weekday's total can be averaged. */
-export function countWeekdays(range: DateRange): number[] {
-  const counts = [0, 0, 0, 0, 0, 0, 0];
-  const days = Math.round((range.to.getTime() - range.from.getTime()) / 86_400_000);
-  // All-time starts at 1970; past ten years the counts are even enough to
-  // compute in one step rather than walk every day.
-  if (days > 3660) {
-    const weeks = Math.floor(days / 7);
-    return counts.map(() => weeks);
-  }
-  for (let d = new Date(range.from); d < range.to; d.setUTCDate(d.getUTCDate() + 1)) {
-    counts[(d.getUTCDay() + 6) % 7] += 1;
-  }
-  return counts;
 }

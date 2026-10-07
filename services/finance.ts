@@ -157,6 +157,7 @@ export function computeBucketBreakdowns(
   const totals = buckets.map(() => ({
     income: 0,
     expenses: 0,
+    count: 0,
     byCategory: new Map<string, number>(),
   }));
 
@@ -175,6 +176,7 @@ export function computeBucketBreakdowns(
     }
 
     slot.expenses += t.amount;
+    slot.count += 1;
     const category = t.category ?? UNCATEGORIZED;
     slot.byCategory.set(category, (slot.byCategory.get(category) ?? 0) + t.amount);
   }
@@ -183,6 +185,7 @@ export function computeBucketBreakdowns(
     key: bucket.key,
     income: round2(totals[i].income),
     expenses: round2(totals[i].expenses),
+    count: totals[i].count,
     slices: Array.from(totals[i].byCategory.entries())
       .sort((a, b) => b[1] - a[1])
       .map(([category, amount]) => ({
