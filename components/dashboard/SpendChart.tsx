@@ -4,6 +4,7 @@ import { useState } from "react";
 import { LineChart } from "@/components/ui/LineChart";
 import { formatMXN } from "@/lib/utils";
 import { useLocale, useT } from "@/lib/i18n-react";
+import { dayKey, todayAnchor } from "@/services/period";
 import type { BucketBreakdown } from "@/types";
 
 /** `YYYY-MM-DD` or `YYYY-MM`, both stored UTC-pinned. */
@@ -86,11 +87,17 @@ export function SpendChart({
   const cumulative = runningTotal(buckets.map((b) => b.expenses));
   const previous = runningTotal(previousExpenses);
 
+  // Where the line stops: today, while the period is still running. Past it
+  // the running total would hold flat, which reads as "nothing more to come".
+  const todayKey = dayKey(todayAnchor()).slice(0, granularity === "month" ? 7 : 10);
+  const todayIndex = buckets.findIndex((b) => b.key === todayKey);
+  const endIndex = todayIndex >= 0 ? todayIndex : undefined;
+
   // Called out by default: the last slice that actually saw spending. Its
   // running total is the period's total, and it has categories to list —
   // the true last day of a month usually has neither.
   const lastSpending = buckets.reduce(
-    (found, b, i) => (b.expenses > 0 ? i : found),
+    (found, b, i) => (b.expenses > 0 && (endIndex === undefined || i <= endIndex) ? i : found),
     -1
   );
   const activeKey = picked ?? buckets[lastSpending]?.key ?? null;
@@ -120,8 +127,13 @@ export function SpendChart({
         comparison={previous.length > 1 ? previous : null}
         color="var(--color-accent)"
         selectedKey={activeKey}
-        onSelect={setPicked}
+        // Days still ahead have nothing to call out yet.
+        onSelect={(key) => {
+          const i = buckets.findIndex((b) => b.key === key);
+          if (endIndex === undefined || i <= endIndex) setPicked(key);
+        }}
         format={formatMXN}
+        endIndex={endIndex}
       />
 
       {active && (

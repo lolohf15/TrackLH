@@ -34,7 +34,7 @@ export default function Analytics() {
   // Everything on this screen but the sparkline comes from one request, so
   // changing the period redraws the whole tab at once.
   const { data, isLoading } = useSWR<AnalyticsData>(
-    `/api/analytics?period=${kind}&anchor=${dayKey(anchor)}`,
+    `/api/analytics?period=${kind}&anchor=${dayKey(anchor)}&today=${dayKey(todayAnchor())}`,
     fetcher,
     // Stepping to another period keeps the one on screen until its
     // replacement lands, instead of blanking the tab to a skeleton on every
@@ -42,7 +42,7 @@ export default function Analytics() {
     { keepPreviousData: true }
   );
 
-  // Months either side of the period, and its weekdays. Its own request so
+  // Months either side of the period. Its own request so
   // the period's figures above don't wait on a walk through balance history.
   const { data: trends, isLoading: trendsLoading } = useSWR<TrendsData>(
     `/api/analytics/trends?period=${kind}&anchor=${dayKey(anchor)}&today=${dayKey(todayAnchor())}`,
@@ -84,11 +84,11 @@ export default function Analytics() {
       : null;
   // Off `data`, like the heading: which span the comparison is against has to
   // describe the figures on screen, not the button just pressed.
-  const vsPrevious =
-    data?.period === "week" ? t.analytics.vsPrevWeek
-    : data?.period === "month" ? t.analytics.vsPrevMonth
-    : data?.period === "year" ? t.analytics.vsPrevYear
-    : undefined;
+  // A running period is compared up to the same point, and says so.
+  const vs = data?.inProgress
+    ? { week: t.analytics.vsSameDayWeek, month: t.analytics.vsSameDayMonth, year: t.analytics.vsSameDayYear }
+    : { week: t.analytics.vsPrevWeek, month: t.analytics.vsPrevMonth, year: t.analytics.vsPrevYear };
+  const vsPrevious = data && data.period !== "all" ? vs[data.period] : undefined;
 
   // The span on screen, as Wallet reads it — so "see movements" lands on
   // exactly the rows these figures were added up from.
@@ -234,9 +234,8 @@ export default function Analytics() {
         </div>
       )}
 
-      {/* The longer view: how the months around this one went, and which
-          days of it cost the most. Shown even for an empty period, since the
-          months before it may not be. */}
+      {/* The longer view: how the months around this one went. Shown even
+          for an empty period, since the months before it may not be. */}
       {!trends ? (
         data && <ChartSkeleton height="h-72" />
       ) : (
@@ -253,7 +252,7 @@ export default function Analytics() {
               : t.analytics.lastMonths(trends.months.length)}
           </p>
           <div className="md:grid md:grid-cols-2 md:gap-x-6 md:items-start">
-            <TrendCharts data={trends} />
+            <TrendCharts data={trends} partialKey={dayKey(todayAnchor()).slice(0, 7)} />
           </div>
         </div>
       )}

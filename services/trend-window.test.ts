@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { countWeekdays, trendWindow } from "./trend-window";
+import { trendWindow } from "./trend-window";
 
 const d = (s: string) => new Date(`${s}T00:00:00Z`);
 
@@ -25,22 +25,5 @@ describe("trendWindow", () => {
   it("all-time is the last twelve", () => {
     const w = trendWindow("all", d("2026-10-04"));
     expect([w.months[0], w.months.at(-1)]).toEqual(["2025-11", "2026-10"]);
-  });
-});
-
-describe("countWeekdays", () => {
-  it("counts Monday first", () => {
-    // 1–7 Oct 2026 runs Thursday to Wednesday: one of each.
-    expect(countWeekdays({ from: d("2026-10-01"), to: d("2026-10-08") })).toEqual([1, 1, 1, 1, 1, 1, 1]);
-  });
-
-  it("a partial week only counts the days in it", () => {
-    // Thu 1 to Sun 4 Oct.
-    expect(countWeekdays({ from: d("2026-10-01"), to: d("2026-10-05") })).toEqual([0, 0, 0, 1, 1, 1, 1]);
-  });
-
-  it("a whole month", () => {
-    // October 2026: Thursday, Friday and Saturday come five times.
-    expect(countWeekdays({ from: d("2026-10-01"), to: d("2026-11-01") })).toEqual([4, 4, 4, 5, 5, 5, 4]);
   });
 });

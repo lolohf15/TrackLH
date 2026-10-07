@@ -5,7 +5,6 @@ import { ChartCard, ReadoutFigure } from "./ChartCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ColumnChart } from "@/components/ui/ColumnChart";
 import { LineChart } from "@/components/ui/LineChart";
-import { StackedBarChart } from "@/components/ui/StackedBarChart";
 import { Sparkline } from "@/components/ui/Sparkline";
 import { TrendBadge } from "@/components/ui/TrendBadge";
 import { cn, formatMXN } from "@/lib/utils";
@@ -52,7 +51,7 @@ function axisLabel(index: number, count: number, text: string): string | null {
   return index % step === (count - 1) % step ? text : null;
 }
 
-export function IncomeExpenseChart({ months }: { months: TrendMonth[] }) {
+export function IncomeExpenseChart({ months, partialKey }: { months: TrendMonth[]; partialKey?: string | null }) {
   const t = useT();
   const a = t.analytics;
   const labels = useMonthLabels();
@@ -106,6 +105,8 @@ export function IncomeExpenseChart({ months }: { months: TrendMonth[] }) {
           key: x.key,
           label: axisLabel(i, months.length, labels.short(x.key)),
           columns: [[{ value: x.income, color: INCOME }], [{ value: x.expenses, color: EXPENSE }]],
+          // The month still running: its payday may not have landed yet.
+          partial: x.key === partialKey,
         }))}
         line={{ values: months.map(net), color: NET }}
         selectedKey={selected}
@@ -315,68 +316,10 @@ export function CardUsageChart({ cards }: { cards: CardTrend[] }) {
   );
 }
 
-export function WeekdayChart({ weekdays, counts }: { weekdays: number[]; counts: number[] }) {
-  const t = useT();
-  const a = t.analytics;
-  const locale = useLocale();
-  // 5 Jan 2026 was a Monday, so day i of that week names weekday i.
-  const name = (i: number, style: "short" | "long") =>
-    new Intl.DateTimeFormat(locale, { weekday: style, timeZone: "UTC" })
-      .format(new Date(Date.UTC(2026, 0, 5 + i)))
-      .replace(".", "");
-
-  const averages = weekdays.map((total, i) => (counts[i] > 0 ? Math.round(total / counts[i]) : 0));
-  const top = averages.reduce((best, v, i) => (v > averages[best] ? i : best), 0);
-  const [picked, setPicked] = useState<number | null>(null);
-  const selected = picked ?? top;
-  const days = counts.reduce((s, c) => s + c, 0);
-  const overall = days > 0 ? Math.round(weekdays.reduce((s, v) => s + v, 0) / days) : 0;
-
-  if (weekdays.every((v) => v === 0)) return null;
-
-  return (
-    <ChartCard
-      title={a.byWeekday}
-      hint={a.byWeekdayHint}
-      summary={a.byWeekdaySummary(name(top, "long"), formatMXN(averages[top]), formatMXN(overall))}
-      table={{
-        headers: [a.weekday, a.avgPerDay, a.periodTotal],
-        rows: weekdays.map((total, i) => ({
-          key: String(i),
-          cells: [name(i, "long"), formatMXN(averages[i]), formatMXN(total)],
-        })),
-      }}
-      readout={
-        <div className="grid grid-cols-3 gap-3">
-          <ReadoutFigure label={name(selected, "long")} value={formatMXN(averages[selected])} />
-          <ReadoutFigure label={a.periodTotal} value={formatMXN(weekdays[selected])} />
-          <ReadoutFigure label={a.dailyAverage} value={formatMXN(overall)} />
-        </div>
-      }
-    >
-      <StackedBarChart
-        bars={averages.map((v, i) => ({
-          key: String(i),
-          label: name(i, "short"),
-          total: v,
-          segments: [{ value: v, color: "var(--color-red)" }],
-        }))}
-        reference={{ value: overall, label: a.average }}
-        highlightKey={String(selected)}
-        onSelect={(key) => setPicked(Number(key))}
-        height={110}
-        // Room for the cap that floats over the lit bar when it's the tallest.
-        className="pt-3"
-      />
-    </ChartCard>
-  );
-}
-
 /** Everything under the breakdown on Analytics, in the order it's read. */
-export function TrendCharts({ data }: { data: TrendsData }) {
+export function TrendCharts({ data, partialKey }: { data: TrendsData; partialKey?: string | null }) {
   const t = useT();
-  const empty =
-    data.months.every((m) => m.income === 0 && m.expenses === 0) && data.weekdays.every((v) => v === 0);
+  const empty = data.months.every((m) => m.income === 0 && m.expenses === 0);
   if (empty) {
     return (
       <div className="panel mt-3 md:col-span-2">
@@ -387,11 +330,10 @@ export function TrendCharts({ data }: { data: TrendsData }) {
 
   return (
     <>
-      <IncomeExpenseChart months={data.months} />
+      <IncomeExpenseChart months={data.months} partialKey={partialKey} />
       <FixedVariableChart months={data.months} commitment={data.fixedCommitment} />
       <NetWorthChart months={data.months} />
       <CardUsageChart cards={data.cards} />
-      <WeekdayChart weekdays={data.weekdays} counts={data.weekdayCounts} />
     </>
   );
 }

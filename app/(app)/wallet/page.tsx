@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useSearchParams } from "next/navigation";
 import useSWR, { mutate } from "swr";
@@ -14,7 +14,7 @@ import { ChartSkeleton } from "@/components/ui/Skeleton";
 import { CardStack, type StackCard } from "@/components/wallet/CardStack";
 import { CreditDetails } from "@/components/wallet/CreditDetails";
 import { Pocket } from "@/components/wallet/Pocket";
-import { Eye, EyeOff, LayoutGrid, WalletCards } from "lucide-react";
+import { Eye, EyeOff, LayoutGrid, Search, WalletCards } from "lucide-react";
 import { AccountGrid } from "@/components/wallet/AccountGrid";
 import { BalancesPrompt } from "@/components/onboarding/BalancesPrompt";
 import { shortDay } from "@/components/wallet/DueBadge";
@@ -63,8 +63,12 @@ function saveView(view: WalletView) {
 
 function buildTxUrl(f: TransactionFilters): string {
   const p = new URLSearchParams();
-  p.set("period", f.period);
-  if (f.period !== "all") p.set("anchor", f.anchor);
+  // A search looks through everything: "where did I pay Netflix" doesn't
+  // know which month to ask about.
+  const period = f.q ? "all" : f.period;
+  p.set("period", period);
+  if (period !== "all") p.set("anchor", f.anchor);
+  if (f.q) p.set("q", f.q);
   if (f.period === "cycle" && f.cut) p.set("cut", String(f.cut));
   if (f.category) p.set("category", f.category);
   if (f.account) p.set("account", f.account);
@@ -160,6 +164,19 @@ function WalletScreen({
     fetcher
   );
   const listRef = useRef<HTMLElement>(null);
+
+  // What's typed, and what's been asked for: the list waits for a pause in
+  // the typing rather than fetching on every key.
+  const [query, setQuery] = useState("");
+  useEffect(() => {
+    const q = query.trim();
+    const id = setTimeout(() => {
+      setFiltersState((f) => (f.q === q ? f : { ...f, q, page: 1 }));
+      setExpanded(false);
+    }, 250);
+    return () => clearTimeout(id);
+  }, [query]);
+  const searching = !!filters.q;
 
   const { data: transactions, isLoading: txLoading } =
     useSWR<PaginatedTransactions>(buildTxUrl(filters), fetcher);
@@ -325,7 +342,7 @@ function WalletScreen({
             <p className="text-[30px] font-semibold text-text tabular-nums tracking-[-0.03em] leading-none mt-1.5">
               {formatMXN(dashboard?.totalAvailable ?? 0)}
             </p>
-            <p className="text-[11.5px] text-text-dim mt-1.5">{t.home.debitAccounts(debit.length)}</p>
+            <p className="text-[11.5px] text-text-dim mt-1.5">{t.home.accountsCount(debit.length)}</p>
             <BalancesPrompt />
           </section>
 
@@ -420,9 +437,39 @@ function WalletScreen({
             )}
           </div>
 
+          <label className="panel flex items-center gap-2.5 px-3.5 mb-2.5 min-h-[44px] focus-within:ring-1 focus-within:ring-accent/50">
+            <Search className="w-4 h-4 text-text-faint shrink-0" aria-hidden />
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={t.movements.searchPlaceholder}
+              aria-label={t.movements.search}
+              enterKeyHint="search"
+              autoComplete="off"
+              className="flex-1 min-w-0 bg-transparent text-[14px] text-text placeholder:text-text-faint outline-none py-2.5 [&::-webkit-search-cancel-button]:hidden"
+            />
+            {query && (
+              <button
+                type="button"
+                onClick={() => setQuery("")}
+                aria-label={t.movements.clearSearch}
+                className="press w-7 h-7 -mr-1.5 flex items-center justify-center text-text-dim hover:text-text"
+              >
+                <CloseIcon className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </label>
+
           {/* Which span the list covers, stepped like Inicio's month. The
               label opens the month picker — also the way back from all-time,
-              which has nothing to step through. */}
+              which has nothing to step through. A search covers all of it,
+              so the stepper says so instead. */}
+          {searching ? (
+            <p className="font-mono text-[10px] text-text-dim uppercase tracking-wide px-1 mb-2.5">
+              {t.movements.searchingAll}
+            </p>
+          ) : (
           <div className="flex items-center justify-between panel px-1 py-0.5 mb-2.5">
             <StepButton
               label={t.home.prevPeriod}
@@ -445,6 +492,7 @@ function WalletScreen({
               ›
             </StepButton>
           </div>
+          )}
 
           <div className="mb-3">
             <TransactionFiltersPanel

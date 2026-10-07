@@ -31,9 +31,15 @@ export function LineChart({
   selectedKey,
   onSelect,
   format,
+  endIndex,
   className,
 }: {
   points: LinePoint[];
+  /**
+   * The last point the line reaches. The axis still spans every point, so a
+   * month in progress stops at today instead of running flat to its end.
+   */
+  endIndex?: number;
   /** A second series, dashed and muted — the same span a period earlier. */
   comparison?: number[] | null;
   color?: string;
@@ -57,8 +63,9 @@ export function LineChart({
   const path = (values: number[]) =>
     values.map((v, i) => `${i === 0 ? "M" : "L"} ${x(i)} ${y(v)}`).join(" ");
 
-  const line = path(points.map((p) => p.value));
-  const area = `${line} L ${x(n - 1)} 100 L ${x(0)} 100 Z`;
+  const last = endIndex === undefined ? n - 1 : Math.max(0, Math.min(endIndex, n - 1));
+  const line = path(points.slice(0, last + 1).map((p) => p.value));
+  const area = `${line} L ${x(last)} 100 L ${x(0)} 100 Z`;
 
   const selected = Math.max(points.findIndex((p) => p.key === selectedKey), -1);
   const active = selected >= 0 ? points[selected] : null;
@@ -81,7 +88,7 @@ export function LineChart({
             </linearGradient>
           </defs>
 
-          {n > 1 && <path d={area} fill={`url(#${id}-fill)`} />}
+          {last > 0 && <path d={area} fill={`url(#${id}-fill)`} />}
 
           {comparison && comparison.length > 1 && (
             <path

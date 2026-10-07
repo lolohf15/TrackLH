@@ -114,6 +114,39 @@ export function resolvePeriod(kind: PeriodKind, anchor: Date = new Date()): Peri
   }
 }
 
+/**
+ * The span before, cut to the same point the current one has reached. On the
+ * 7th, "this month" is seven days of spending; laid against all thirty of
+ * the last one it reads as a 75% drop that is only the calendar. A period
+ * that is over (or hasn't started) compares whole, as before.
+ */
+export function comparablePrevious(period: Period, today: Date): DateRange | null {
+  const prev = period.previous;
+  if (!prev) return null;
+  // Through the end of today, so today's movements count on both sides.
+  const end = addDays(startOfUTCDay(today), 1);
+  if (end.getTime() <= period.range.from.getTime() || end.getTime() >= period.range.to.getTime()) {
+    return prev;
+  }
+
+  let to: Date;
+  if (period.kind === "week") {
+    to = addDays(prev.from, Math.round((end.getTime() - period.range.from.getTime()) / 86_400_000));
+  } else if (period.kind === "month") {
+    // The same date last month; the 31st after a 30-day month is all of it.
+    to = utc(prev.from.getUTCFullYear(), prev.from.getUTCMonth(), today.getUTCDate() + 1);
+  } else {
+    to = utc(prev.from.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() + 1);
+  }
+  return { from: prev.from, to: to.getTime() > prev.to.getTime() ? prev.to : to };
+}
+
+/** True while today falls inside the period, so its figures are still running. */
+export function isInProgress(period: Period, today: Date): boolean {
+  const end = addDays(startOfUTCDay(today), 1).getTime();
+  return end > period.range.from.getTime() && end < period.range.to.getTime();
+}
+
 export interface Bucket {
   /** `YYYY-MM-DD` for day buckets, `YYYY-MM` for month buckets. */
   key: string;

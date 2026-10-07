@@ -9,7 +9,8 @@ import {
   filterByRange,
   round2,
 } from "@/services/finance";
-import { bucketsFor, isPeriodKind, parseAnchor, resolvePeriod } from "@/services/period";
+import { bucketsFor, comparablePrevious, isInProgress, isPeriodKind, parseAnchor, resolvePeriod } from "@/services/period";
+import { readToday } from "@/lib/request-today";
 import { mapTransaction } from "@/lib/transaction-map";
 import type { AnalyticsData } from "@/types";
 
@@ -66,6 +67,11 @@ export async function GET(req: NextRequest) {
     const transactions = rows.map(mapTransaction);
     const colors = new Map(categoryRows.map((c) => [c.name, c.color]));
 
+    // The headline compares against the same point of the span before; the
+    // pace line still carries all of it, to show where that month ended up.
+    const today = readToday(req);
+    const samePoint = comparablePrevious(period, today);
+
     const expenses = computeExpenses(transactions, period.range);
     const income = computeIncome(transactions, period.range);
 
@@ -82,8 +88,9 @@ export async function GET(req: NextRequest) {
       expenses,
       income,
       net: round2(income - expenses),
-      prevExpenses: period.previous ? computeExpenses(transactions, period.previous) : 0,
-      prevIncome: period.previous ? computeIncome(transactions, period.previous) : 0,
+      prevExpenses: samePoint ? computeExpenses(transactions, samePoint) : 0,
+      prevIncome: samePoint ? computeIncome(transactions, samePoint) : 0,
+      inProgress: isInProgress(period, today),
       expenseCount: filterByRange(transactions, period.range).filter((t) => t.type === "Gasto").length,
     };
 

@@ -47,7 +47,8 @@ export const es = {
     netWorth: "Patrimonio neto",
     monthPace: "Ritmo del mes",
     /** Takes the count, because plural and word order aren't the same twice. */
-    debitAccounts: (n: number) => `${n} ${n === 1 ? "cuenta" : "cuentas"} de débito`,
+    accountsCount: (n: number) => `${n} ${n === 1 ? "cuenta" : "cuentas"}`,
+    noIncomeYet: "Sin ingresos aún",
     income: "Ingresos",
     expenses: "Gastos",
     monthlySavings: "Ahorro del mes",
@@ -174,6 +175,9 @@ export const es = {
     vsPrevWeek: "vs. semana anterior",
     vsPrevMonth: "vs. mes anterior",
     vsPrevYear: "vs. año anterior",
+    vsSameDayWeek: "vs. mismo día de la semana pasada",
+    vsSameDayMonth: "vs. mismo día del mes pasado",
+    vsSameDayYear: "vs. misma fecha del año pasado",
     trends: "Tendencias",
     /** The months the trend charts cover: "Últimos 6 meses" or "2026, mes a mes". */
     lastMonths: (n: number) => (n === 1 ? "Este mes" : `Últimos ${n} meses`),
@@ -208,14 +212,6 @@ export const es = {
     limitLine: "Límite",
     ofLimit: (debt: string, limit: string) => `${debt} de ${limit}`,
     cardUsageSummary: (card: string, pct: number) => `${card} usa ${pct}% de su límite.`,
-    byWeekday: "Gasto por día de la semana",
-    byWeekdayHint: "Promedio por día en el periodo que estás viendo.",
-    byWeekdaySummary: (day: string, avg: string, overall: string) =>
-      `El ${day} es el día que más gastas: ${avg} en promedio, contra ${overall} de un día cualquiera.`,
-    weekday: "Día",
-    avgPerDay: "Promedio",
-    periodTotal: "Total",
-    dailyAverage: "Día promedio",
   },
 
   movements: {
@@ -236,6 +232,10 @@ export const es = {
     typeShort: { Gasto: "Gasto", Ingreso: "Ingreso", Transferencia: "Transf." },
     showAll: (n: number) => `Ver los ${n} movimientos`,
     showLess: "Ver menos",
+    search: "Buscar movimientos",
+    searchPlaceholder: "Buscar por descripción, categoría o cuenta",
+    clearSearch: "Borrar búsqueda",
+    searchingAll: "Buscando en todo el histórico",
   },
 
   txSheet: {
@@ -771,7 +771,8 @@ export const en: typeof es = {
     totalBalance: "Total balance",
     netWorth: "Net worth",
     monthPace: "This month's pace",
-    debitAccounts: (n: number) => `${n} debit ${n === 1 ? "account" : "accounts"}`,
+    accountsCount: (n: number) => `${n} ${n === 1 ? "account" : "accounts"}`,
+    noIncomeYet: "No income yet",
     income: "Income",
     expenses: "Expenses",
     monthlySavings: "Saved this month",
@@ -893,6 +894,9 @@ export const en: typeof es = {
     vsPrevWeek: "vs. last week",
     vsPrevMonth: "vs. last month",
     vsPrevYear: "vs. last year",
+    vsSameDayWeek: "vs. same day last week",
+    vsSameDayMonth: "vs. same day last month",
+    vsSameDayYear: "vs. same date last year",
     trends: "Trends",
     lastMonths: (n: number) => (n === 1 ? "This month" : `Last ${n} months`),
     yearByMonth: (year: string) => `${year}, month by month`,
@@ -926,14 +930,6 @@ export const en: typeof es = {
     limitLine: "Limit",
     ofLimit: (debt: string, limit: string) => `${debt} of ${limit}`,
     cardUsageSummary: (card: string, pct: number) => `${card} is using ${pct}% of its limit.`,
-    byWeekday: "Spending by weekday",
-    byWeekdayHint: "Average per day over the period you're looking at.",
-    byWeekdaySummary: (day: string, avg: string, overall: string) =>
-      `${day} is when you spend most: ${avg} on average, against ${overall} on a typical day.`,
-    weekday: "Day",
-    avgPerDay: "Average",
-    periodTotal: "Total",
-    dailyAverage: "Typical day",
   },
 
   movements: {
@@ -953,6 +949,10 @@ export const en: typeof es = {
     typeShort: { Gasto: "Expense", Ingreso: "Income", Transferencia: "Transfer" },
     showAll: (n: number) => `See all ${n} movements`,
     showLess: "Show less",
+    search: "Search movements",
+    searchPlaceholder: "Search by description, category or account",
+    clearSearch: "Clear search",
+    searchingAll: "Searching all history",
   },
 
   txSheet: {

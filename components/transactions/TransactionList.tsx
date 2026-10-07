@@ -118,20 +118,31 @@ export function TransactionList({
     setEditing(tx);
   }
 
-  const groups: Array<{ label: string; items: Transaction[] }> = [];
+  const groups: Array<{ day: string; label: string; items: Transaction[] }> = [];
   for (const tx of data.data) {
-    const label = dayLabel(tx.date, t);
+    const day = tx.date.slice(0, 10);
     const last = groups[groups.length - 1];
-    if (last && last.label === label) last.items.push(tx);
-    else groups.push({ label, items: [tx] });
+    if (last && last.day === day) last.items.push(tx);
+    else groups.push({ day, label: dayLabel(tx.date, t), items: [tx] });
+  }
+
+  // The whole day from the server when it sent one; otherwise what's listed.
+  function dayNet(group: (typeof groups)[number]): number {
+    const sent = data!.dayTotals?.[group.day];
+    if (sent) return Math.round((sent.income - sent.expenses) * 100) / 100;
+    return group.items.reduce(
+      (sum, tx) => (tx.type === "Ingreso" ? sum + tx.amount : tx.type === "Gasto" ? sum - tx.amount : sum),
+      0
+    );
   }
 
   return (
     <div>
       {groups.map((group) => (
-        <div key={group.label}>
-          <p className="font-mono text-[9px] font-semibold text-text-faint uppercase tracking-[0.1em] pt-3.5 pb-1">
-            {group.label}
+        <div key={group.day}>
+          <p className="flex items-baseline justify-between gap-3 font-mono text-[9px] font-semibold text-text-faint uppercase tracking-[0.1em] pt-3.5 pb-1">
+            <span className="truncate">{group.label}</span>
+            <DayTotal net={dayNet(group)} />
           </p>
           {group.items.map((tx) => (
             <Row
@@ -302,6 +313,17 @@ function Row({
         </span>
       </motion.div>
     </div>
+  );
+}
+
+/** What the day came to, net of income; a day of only transfers says nothing. */
+function DayTotal({ net }: { net: number }) {
+  if (net === 0) return null;
+  return (
+    <span className={cn("shrink-0 tabular-nums normal-case tracking-normal text-[10.5px] font-medium", net > 0 ? "text-green-fg" : "text-text-dim")}>
+      {net > 0 ? "+" : "−"}
+      {formatMXN(Math.abs(net))}
+    </span>
   );
 }
 

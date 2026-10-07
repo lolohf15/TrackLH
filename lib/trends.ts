@@ -7,7 +7,6 @@ import { listRules } from "@/lib/recurring";
 import { computeAccountBalancesFromSums, round2 } from "@/services/finance";
 import type { DateRange } from "@/services/period";
 import type { TrendsData } from "@/types";
-import { countWeekdays } from "@/services/trend-window";
 
 
 type MonthRow = {
@@ -19,15 +18,12 @@ type MonthRow = {
 
 type FlowRow = { month: string; account: string; flow: Prisma.Decimal | null };
 
-type WeekdayRow = { dow: number; amount: Prisma.Decimal | null };
-
 const n = (v: Prisma.Decimal | null | undefined) => round2(toNumber(v ?? 0));
 
 /**
  * Everything the trend charts draw, summed in SQL: per month, what came in,
  * what went out and how much of that was a confirmed recurring charge; each
- * account's balance at the end of every month; and spending by weekday over
- * the period on screen.
+ * account's balance at the end of every month.
  *
  * Balances run backwards from today's: an account at the end of a month is
  * what it holds now less everything that moved after. That lands on exactly
@@ -36,12 +32,11 @@ const n = (v: Prisma.Decimal | null | undefined) => round2(toNumber(v ?? 0));
  */
 export async function getTrends(
   userId: string,
-  window: { months: string[]; range: DateRange },
-  period: DateRange
+  window: { months: string[]; range: DateRange }
 ): Promise<TrendsData> {
   const { range } = window;
 
-  const [monthRows, flowRows, inRows, weekdayRows, configs, sums, recurring] = await Promise.all([
+  const [monthRows, flowRows, inRows, configs, sums, recurring] = await Promise.all([
     prisma.$queryRaw<MonthRow[]>`
       SELECT to_char(date_trunc('month', date), 'YYYY-MM') AS month,
         SUM(amount) FILTER (WHERE type = 'Ingreso') AS income,
@@ -74,13 +69,6 @@ export async function getTrends(
       WHERE "userId" = ${userId} AND type = 'Transferencia' AND "toAccount" IS NOT NULL
         AND date >= ${ts(range.from)}
       GROUP BY 1, 2
-    `,
-    prisma.$queryRaw<WeekdayRow[]>`
-      SELECT EXTRACT(ISODOW FROM date)::int AS dow, SUM(amount) AS amount
-      FROM "Transaction"
-      WHERE "userId" = ${userId} AND type = 'Gasto'
-        AND date >= ${ts(period.from)} AND date < ${ts(period.to)}
-      GROUP BY 1
     `,
     prisma.accountConfig.findMany({ where: { userId } }).then((rows) => rows.map(mapAccountConfig)),
     getAccountSums(userId),
@@ -146,15 +134,9 @@ export async function getTrends(
       }),
     }));
 
-  const weekdays = Array.from({ length: 7 }, (_, i) =>
-    n(weekdayRows.find((r) => r.dow === i + 1)?.amount)
-  );
-
   return {
     months,
     cards,
-    weekdays,
-    weekdayCounts: countWeekdays(period),
     fixedCommitment: recurring.fixedExpenses,
   };
 }

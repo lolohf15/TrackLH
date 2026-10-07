@@ -14,7 +14,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     where: { id: session.user.id },
     select: { onboardedAt: true },
   });
-  if (!user?.onboardedAt) redirect("/bienvenida");
+  // A cookie that outlived its user would otherwise land on the wizard and
+  // fail on every save; it ends the session instead.
+  if (!user) redirect("/api/session/end");
+  if (!user.onboardedAt) redirect("/bienvenida");
 
   return <AppShell>{children}</AppShell>;
 }

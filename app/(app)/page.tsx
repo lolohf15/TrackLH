@@ -46,7 +46,7 @@ export default function Home() {
   const period = resolvePeriod("month", anchor);
 
   const { data: dashboard, isLoading: dashLoading } = useSWR<DashboardData>(
-    `/api/dashboard?period=month&anchor=${dayKey(anchor)}`,
+    `/api/dashboard?period=month&anchor=${dayKey(anchor)}&today=${dayKey(todayAnchor())}`,
     fetcher
   );
 
@@ -54,7 +54,7 @@ export default function Home() {
   // request: Inicio needs balances and budgets that this doesn't carry, and
   // the other three tabs have no use for a bucket per day.
   const { data: analytics } = useSWR<AnalyticsData>(
-    `/api/analytics?period=month&anchor=${dayKey(anchor)}`,
+    `/api/analytics?period=month&anchor=${dayKey(anchor)}&today=${dayKey(todayAnchor())}`,
     fetcher,
     { keepPreviousData: true }
   );
@@ -156,7 +156,7 @@ export default function Home() {
                 label={t.home.totalBalance}
                 value={totalAvailableDisplay}
                 size="lg"
-                hint={t.home.debitAccounts((dashboard?.accountBalances ?? []).filter((a) => !a.isCredit).length)}
+                hint={t.home.accountsCount((dashboard?.accountBalances ?? []).filter((a) => !a.isCredit).length)}
               />
               {hasDebt && (
                 <div className="text-right shrink-0">
@@ -189,15 +189,21 @@ export default function Home() {
             <div className="px-4 py-3 border-t border-border">
               <div className="flex items-center justify-between mb-1.5">
                 <span className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em]">{t.home.monthlySavings}</span>
-                <span className={cn("text-[13px] font-semibold tabular-nums", net >= 0 ? "text-green-fg" : "text-red-fg")}>
-                  {netDisplay}
-                </span>
+                {/* Before the month's first income, spending is all there is to
+                    subtract from: that's a month waiting on payday, not a loss. */}
+                {income === 0 && net < 0 ? (
+                  <span className="text-[12px] text-text-dim">{t.home.noIncomeYet}</span>
+                ) : (
+                  <span className={cn("text-[13px] font-semibold tabular-nums", net >= 0 ? "text-green-fg" : "text-red-fg")}>
+                    {netDisplay}
+                  </span>
+                )}
               </div>
               <ProgressBar
                 height={6}
                 gradient={false}
                 segments={
-                  hasActivity
+                  hasActivity && income > 0
                     ? [
                         { percent: incomePct, color: "var(--color-green-fg)" },
                         { percent: 100 - incomePct, color: "var(--color-red-fg)" },

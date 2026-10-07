@@ -118,6 +118,9 @@ export interface DashboardData {
   /** Zero for all-time, which has no previous span to compare against. */
   prevPeriodExpenses: number;
   prevPeriodIncome: number;
+  /** Today falls inside the period, so the previous figures are cut to the
+   *  same point of the span before. Set by the route, not the builder. */
+  inProgress?: boolean;
   budgetUsed: number;
   budgetTotal: number;
   budgetUsedPercent: number;
@@ -167,6 +170,9 @@ export interface AnalyticsData {
   /** Both zero for all-time, which has no span before it to compare against. */
   prevExpenses: number;
   prevIncome: number;
+  /** Today falls inside the period: `prevExpenses` and `prevIncome` cover the
+   *  span before only up to the same point. */
+  inProgress: boolean;
   /** Gasto rows in the period — the "across N movements" line. */
   expenseCount: number;
 }
@@ -232,6 +238,8 @@ export interface TransactionFilters {
   category: string;
   account: string;
   type: string;
+  /** Free text over description, category and account; searches all time. */
+  q?: string;
   page: number;
   limit: number;
 }
@@ -242,6 +250,12 @@ export interface PaginatedTransactions {
   page: number;
   limit: number;
   totalPages: number;
+  /**
+   * Each day on this page, summed over every movement of that day the filters
+   * match, not only the ones on the page, so a day split across two pages
+   * still heads with its whole total. Keyed `YYYY-MM-DD`.
+   */
+  dayTotals?: Record<string, { income: number; expenses: number }>;
 }
 
 export interface NewTransactionInput {
@@ -320,10 +334,6 @@ export interface TrendsData {
   months: TrendMonth[];
   /** Cards with a limit on file, each month's end against it. */
   cards: CardTrend[];
-  /** Spending in the period on screen, Monday first. */
-  weekdays: number[];
-  /** How many of each weekday the period has had so far, Monday first. */
-  weekdayCounts: number[];
   /** What the active recurring expenses come to a month, from the rules. */
   fixedCommitment: number;
 }
