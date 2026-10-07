@@ -34,22 +34,24 @@ export interface FirstStep {
 }
 
 /**
- * The steps in the order they pay off: the account and the first movement
- * come first (and are usually already done by the time the card shows, which
- * is the point: a list that starts underway gets finished more often).
+ * The steps in the order they pay off. The account is always done by the
+ * time the card shows, which is the point: a list that starts underway gets
+ * finished more often.
  * Steps that don't apply to this person are left out, not shown as done.
  * Card days and fixed expenses are deliberately not here: they're tips in
  * Perfil, for whoever has a use for them, not setup everyone must clear.
  */
 export function buildFirstSteps(p: FirstStepsProgress, d: FirstStepsDevice): FirstStep[] {
+  // Balances before the first movement, so that movement lands on a real
+  // figure instead of taking the account below zero.
   const steps: FirstStep[] = [
     { id: "account", done: true },
+    { id: "balances", done: p.hasBalance },
     { id: "movement", done: p.hasMovement },
   ];
   // Only iOS needs walking through it, and once it runs from the home screen
   // there's nothing left to say.
   if (d.ios || d.standalone) steps.push({ id: "install", done: d.standalone });
-  steps.push({ id: "balances", done: p.hasBalance });
   steps.push({ id: "budget", done: p.hasBudget });
   return steps;
 }
