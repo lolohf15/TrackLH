@@ -3,8 +3,8 @@
 import { useState, useSyncExternalStore } from "react";
 import useSWR, { mutate } from "swr";
 import {
-  CalendarDays, ChartPie, Download, Languages, Lightbulb, LogOut, Moon, PenLine, Repeat, Shield, Sun, Tags,
-  Trash2, UserRound, WalletCards,
+  CalendarDays, ChartPie, Download, Languages, Layers, Lightbulb, LogOut, Moon, PenLine, Repeat, Shield, Sun,
+  Tags, Trash2, UserRound, WalletCards,
 } from "lucide-react";
 import { Avatar } from "@/components/profile/Avatar";
 import { ProfileSheet } from "@/components/profile/ProfileSheet";
@@ -13,6 +13,7 @@ import { SettingsGroup, SettingsRow } from "@/components/settings/SettingsList";
 import { useExport } from "@/components/settings/DataExport";
 import { useToast } from "@/components/ui/Toast";
 import { applyTheme, currentTheme, serverTheme, subscribeToTheme } from "@/lib/theme";
+import { applyGlass, currentGlass, serverGlass, subscribeToGlass } from "@/lib/glass";
 import { applyLang } from "@/lib/i18n";
 import { useLang, useT } from "@/lib/i18n-react";
 import { saveProfile, useProfile } from "@/lib/use-profile";
@@ -22,7 +23,7 @@ import type { ProfileView } from "@/types";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
-type Picker = "theme" | "language" | "week" | "analytics" | null;
+type Picker = "theme" | "glass" | "language" | "week" | "analytics" | null;
 
 /**
  * Perfil as a phone's settings: who you are at the top, then short groups
@@ -35,6 +36,7 @@ export default function Perfil() {
   const toast = useToast();
   const lang = useLang();
   const theme = useSyncExternalStore(subscribeToTheme, currentTheme, serverTheme);
+  const glass = useSyncExternalStore(subscribeToGlass, currentGlass, serverGlass);
   const { data: profile } = useProfile();
   const { data: accounts } = useAccounts();
   const { data: categories } = useSWR<unknown[]>("/api/categories", fetcher);
@@ -96,6 +98,13 @@ export default function Perfil() {
           label={t.profile.appearance}
           value={theme === "light" ? t.profile.light : t.profile.dark}
           onClick={() => setPicker("theme")}
+        />
+        <SettingsRow
+          icon={Layers}
+          tile="graphite"
+          label={t.profile.glass}
+          value={glass === "solid" ? t.profile.glassSolid : t.profile.glassClear}
+          onClick={() => setPicker("glass")}
         />
         <SettingsRow
           icon={Languages}
@@ -195,6 +204,18 @@ export default function Perfil() {
           applyTheme(v);
           save({ theme: v });
         }}
+      />
+      {/* This device only, like the iOS setting it stands in for. */}
+      <OptionSheet
+        open={picker === "glass"}
+        onClose={() => setPicker(null)}
+        title={t.profile.glass}
+        options={[
+          { value: "clear", label: t.profile.glassClear, detail: t.profile.glassClearHint },
+          { value: "solid", label: t.profile.glassSolid, detail: t.profile.glassSolidHint },
+        ]}
+        value={glass}
+        onChange={applyGlass}
       />
       <OptionSheet
         open={picker === "language"}

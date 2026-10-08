@@ -81,10 +81,11 @@
   --shadow-float:  0 6px 14px -4px rgba(0,0,0,0.55), 0 18px 40px -12px rgba(0,0,0,0.5);
   --shadow-sheet:  0 -12px 48px -12px rgba(0,0,0,0.7);
 
-  /* Glass — a brighter edge than --shadow-panel (a pane catches more light
-     than a flat surface) plus the same lift as --shadow-float, since glass
-     chrome always floats. */
-  --shadow-glass:  inset 0 1px 0 rgba(255,255,255,0.09), inset 0 0 0 1px rgba(255,255,255,0.05), 0 8px 24px -8px rgba(0,0,0,0.65), 0 1px 2px rgba(0,0,0,0.5);
+  /* Glass — the lift of floating chrome. Its edge is drawn by --glass-rim,
+     not by an inset shadow. --shadow-depth is the extra cast the tab bar
+     takes while content runs underneath it. */
+  --shadow-glass:  0 8px 24px -8px rgba(0,0,0,0.65), 0 1px 2px rgba(0,0,0,0.5);
+  --shadow-depth:  0 16px 36px -10px rgba(0,0,0,0.7);
 
   /* Motion — strong custom curves; the built-ins are punchless */
   --ease-out:              cubic-bezier(0.23, 1, 0.32, 1);
@@ -107,8 +108,21 @@
      (see the rules in the utilities layer). */
   --glass-fill:            color-mix(in srgb, var(--color-surface) 58%, transparent);
   --glass-filter:          blur(20px) saturate(160%);
+  /* Thicker glass for the big panes (sheets): Apple's "regular" variant,
+     denser and blurrier, because a sheet carries text and fields. */
+  --glass-fill-thick:      color-mix(in srgb, var(--color-surface) 78%, transparent);
+  --glass-filter-thick:    blur(32px) saturate(170%);
+  --glass-accent-fill:     color-mix(in srgb, var(--color-accent) 80%, transparent);
   /* The light catching the pane: a top-down sheen over the fill. */
   --glass-sheen:           linear-gradient(to bottom, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0) 45%);
+  /* The rim: light from the top left catching the edge, a fainter bounce on
+     the opposite corner, never quite gone along the sides. */
+  --glass-rim:             linear-gradient(155deg, rgba(255, 255, 255, 0.30) 0%, rgba(255, 255, 255, 0.08) 30%, rgba(255, 255, 255, 0.05) 65%, rgba(255, 255, 255, 0.14) 100%);
+  /* The glow under a finger on a glass control. */
+  --touch-light:           rgba(255, 255, 255, 0.22);
+  /* Under the status bar and behind the tab bar. */
+  --status-fill:           color-mix(in srgb, var(--color-bg-top) 72%, transparent);
+  --fade-fill:             color-mix(in srgb, var(--color-bg) 72%, transparent);
 
   /* Press — every pressable shrinks the same amount at the same speed. */
   --press-scale:           0.97;
@@ -171,7 +185,8 @@
   --shadow-panel:  0 1px 2px rgba(60, 50, 30, 0.06), 0 1px 1px rgba(60, 50, 30, 0.04);
   --shadow-float:  0 6px 14px -4px rgba(60, 50, 30, 0.14), 0 18px 40px -12px rgba(60, 50, 30, 0.12);
   --shadow-sheet:  0 -12px 48px -12px rgba(60, 50, 30, 0.18);
-  --shadow-glass:  inset 0 1px 0 rgba(255,255,255,0.7), inset 0 0 0 1px rgba(60,50,30,0.06), 0 8px 24px -8px rgba(60,50,30,0.16), 0 1px 2px rgba(60,50,30,0.06);
+  --shadow-glass:  0 8px 24px -8px rgba(60,50,30,0.16), 0 1px 2px rgba(60,50,30,0.06);
+  --shadow-depth:  0 16px 36px -12px rgba(60,50,30,0.22);
 
   /* Background B on paper: sand at the top fading into warm paper. Same
      idea as the dark ground, not its inversion. */
@@ -179,12 +194,44 @@
   --color-bg-top:          #efe2c8;
   --scrim:                 rgba(46, 36, 20, 0.28);
   --glass-fill:            color-mix(in srgb, var(--color-surface) 62%, transparent);
+  --glass-fill-thick:      color-mix(in srgb, var(--color-surface) 82%, transparent);
   --glass-sheen:           linear-gradient(to bottom, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0) 50%);
+  /* On paper the far edge darkens instead of catching a second light. */
+  --glass-rim:             linear-gradient(155deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.5) 30%, rgba(60, 50, 30, 0.07) 65%, rgba(60, 50, 30, 0.11) 100%);
+  --touch-light:           rgba(255, 255, 255, 0.75);
 
   --tint-ground:           #ffffff;
   --tint-strength:         16%;
   --tint-edge:             20%;
   --tint-sheen:            0.5;
+}
+
+/* ─── Solid glass ─────────────────────────────────────────────────────────
+   Every pane turns opaque: Perfil → Vidrio (`data-glass="solid"`, which is
+   how iOS Safari gets it, since it doesn't report Reduce Transparency), or
+   the OS setting where the browser does report it. Same tokens both ways;
+   after the light theme so it wins over its fills. */
+:root[data-glass="solid"] {
+  --glass-fill:            var(--color-surface);
+  --glass-fill-thick:      var(--color-surface);
+  --glass-filter:          none;
+  --glass-filter-thick:    none;
+  --glass-sheen:           none;
+  --glass-accent-fill:     var(--color-accent);
+  --status-fill:           var(--color-bg-top);
+  --fade-fill:             var(--color-bg);
+}
+@media (prefers-reduced-transparency: reduce) {
+  :root, :root[data-theme="light"] {
+    --glass-fill:            var(--color-surface);
+    --glass-fill-thick:      var(--color-surface);
+    --glass-filter:          none;
+    --glass-filter-thick:    none;
+    --glass-sheen:           none;
+    --glass-accent-fill:     var(--color-accent);
+    --status-fill:           var(--color-bg-top);
+    --fade-fill:             var(--color-bg);
+  }
 }
 
 @layer base {
@@ -284,7 +331,7 @@
     inset: 0 0 auto 0;
     z-index: 30;
     height: env(safe-area-inset-top);
-    background: color-mix(in srgb, var(--color-bg-top) 72%, transparent);
+    background: var(--status-fill);
     -webkit-backdrop-filter: var(--glass-filter);
     backdrop-filter: var(--glass-filter);
     pointer-events: none;
@@ -309,7 +356,7 @@
     inset: auto 0 0 0;
     z-index: 20;
     height: calc(env(safe-area-inset-bottom) + 96px);
-    background: linear-gradient(to bottom, transparent, color-mix(in srgb, var(--color-bg) 72%, transparent) 70%);
+    background: linear-gradient(to bottom, transparent, var(--fade-fill) 70%);
     pointer-events: none;
   }
 }
@@ -416,12 +463,18 @@
         charts, fields. Never glass on glass; each pane is a backdrop-filter
         layer the phone has to composite on every scrolled frame.
      3. Every pane is the same material: --glass-fill, --glass-filter, the
-        --glass-sheen catching the top and --shadow-glass's bright top edge.
-        Only the accent pane (+) swaps the fill for the brass.
-     4. Every pressable gives the same feedback: .press, --press-scale over
-        --press-duration with --ease-out.
-     Reduced transparency turns panes solid, more contrast outlines them
-     (end of file). */
+        --glass-sheen over the top and the --glass-rim catching the edge.
+        Thickness follows size: the big panes that carry text (sheets) add
+        .glass-thick; the small chrome stays thin. Only the accent pane (+)
+        swaps the fill for the brass.
+     4. Content pressables shrink: .press, --press-scale over
+        --press-duration with --ease-out. Glass controls answer the way the
+        material does instead: they light up under the finger (.glass-touch)
+        and the + swells (.glass-swell).
+     A glass element must be positioned (relative, fixed…): the rim and the
+     touch light are drawn on its pseudo-elements.
+     Solid glass (top of file) turns panes opaque, more contrast outlines
+     them (end of file). */
   .glass {
     background-color: var(--glass-fill);
     background-image: var(--glass-sheen);
@@ -430,13 +483,35 @@
     box-shadow: var(--shadow-glass);
   }
 
+  /* The rim, as a 1px ring cut out of a gradient: a border can't take a
+     gradient and keep the pane's rounded corners. */
+  .glass::before,
+  .glass-accent::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: var(--glass-rim);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  .glass-thick {
+    background-color: var(--glass-fill-thick);
+    -webkit-backdrop-filter: var(--glass-filter-thick);
+    backdrop-filter: var(--glass-filter-thick);
+  }
+
   /* A pane that floats free of any edge (toasts): the same glass, lifted. */
   .glass-float { box-shadow: var(--shadow-glass), var(--shadow-float); }
 
   /* Same pane, tinted with the accent instead of the surface — the + is
      the app's one coloured affordance, and glass shouldn't wash that out. */
   .glass-accent {
-    background-color: color-mix(in srgb, var(--color-accent) 80%, transparent);
+    background-color: var(--glass-accent-fill);
     background-image: var(--glass-sheen);
     -webkit-backdrop-filter: var(--glass-filter);
     backdrop-filter: var(--glass-filter);
@@ -452,7 +527,31 @@
     .glass-refract {
       backdrop-filter: blur(8px) url(#app-glass-distortion) saturate(160%);
     }
+    :root[data-glass="solid"] .glass-refract { backdrop-filter: none; }
   }
+
+  /* Light under the finger, from where it landed (lightAt sets the point),
+     lingering a beat after release the way a lit pane cools. */
+  .glass-touch::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(circle at var(--touch-x, 50%) var(--touch-y, 50%), var(--touch-light), transparent 70%);
+    opacity: 0;
+    transition: opacity 450ms var(--ease-out);
+    pointer-events: none;
+  }
+  .glass-touch:active::after { opacity: 1; transition-duration: 60ms; }
+
+  /* A glass button grows under the finger rather than sinking into the
+     page: it's the layer above the content, and it lifts toward you. */
+  .glass-swell { transition: transform 220ms var(--ease-out); }
+  .glass-swell:active { transform: scale(1.06); }
+
+  /* The tab bar's cast while content runs beneath it; it settles as the
+     page's last row clears the bar (see the scroll edges below). */
+  .tabbar-depth { box-shadow: var(--shadow-depth); }
 
   /* The pill marking the current tab: a small pane of brass-tinted glass
      inside the bar, sliding between tabs with the transform alone. */
@@ -460,7 +559,10 @@
     background-color: color-mix(in srgb, var(--color-accent) 16%, transparent);
     background-image: var(--glass-sheen);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 0 0 1px color-mix(in srgb, var(--color-accent) 22%, transparent);
-    transition: transform 300ms var(--ease-out), opacity 150ms var(--ease-out);
+    /* The move itself is a WAAPI animation in TabBar (it stretches on
+       the way), so only the fade is a transition here: a CSS transition on
+       transform would outrank it in the cascade. */
+    transition: opacity 150ms var(--ease-out);
   }
 
   /* Floating chrome meeting scrolling content: a soft edge, not a 1px rule. */
@@ -498,28 +600,42 @@
   .animate-spin-fast { animation-duration: 1.4s; }
   .animate-caret { animation: none; }
   .press { transition: none; }
+  .glass-swell { transition: none; }
+  .glass-swell:active { transform: none; }
   .tab-pill { transition: opacity 150ms linear; }
   .transition-\[max-height\] { transition: none; }
   * { scroll-behavior: auto !important; }
 }
 
-/* Reduced transparency wants a frostier, solid material — not a blurred one. */
+/* Reduced transparency is handled by the solid-glass tokens at the top;
+   only the refraction filter sits outside them. */
 @media (prefers-reduced-transparency: reduce) {
-  .backdrop-blur-xl { backdrop-filter: none; }
-  .bg-surface\/80 { background-color: var(--color-surface); }
-  .glass, .glass-refract, .status-scrim {
-    background-color: var(--color-surface);
-    background-image: none;
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
+  .glass-refract { backdrop-filter: none; }
+}
+
+/* Scroll edges: the chrome answers what's under it. The strip under the
+   clock appears once content scrolls beneath it; the tab bar's cast and the
+   fade behind it ease off as the page's end clears the bar. Driven by the
+   scroll position on the compositor (Safari 26+); elsewhere they stay on. */
+@keyframes edge-in { from { opacity: 0; } }
+@keyframes edge-settle { to { opacity: 0.3; } }
+@keyframes edge-away { to { opacity: 0; } }
+@supports (animation-timeline: scroll()) {
+  .status-scrim {
+    animation: edge-in linear both;
+    animation-timeline: scroll(root block);
+    animation-range: 0 40px;
   }
-  .status-scrim { background-color: var(--color-bg-top); }
-  .glass-accent {
-    background-color: var(--color-accent);
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
+  .tabbar-depth {
+    animation: edge-settle linear both;
+    animation-timeline: scroll(root block);
+    animation-range: calc(100% - 72px) 100%;
   }
-  .tabbar-fade { background: linear-gradient(to bottom, transparent, var(--color-bg) 70%); }
+  .tabbar-fade {
+    animation: edge-away linear both;
+    animation-timeline: scroll(root block);
+    animation-range: calc(100% - 72px) 100%;
+  }
 }
 
 @media (prefers-contrast: more) {

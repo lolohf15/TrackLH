@@ -3,6 +3,7 @@
 import { useAddRecord } from "./AddRecordProvider";
 import { PlusIcon } from "@/components/shell/icons";
 import { useT } from "@/lib/i18n-react";
+import { lightAt } from "@/lib/glass";
 
 /**
  * Always-available way to log a movement, mirroring what the iOS shortcut asks
@@ -10,7 +11,7 @@ import { useT } from "@/lib/i18n-react";
  * of it — the thing you do most often sits at the app's center of gravity. On
  * desktop there's no tab bar, so it goes back to floating bottom-right.
  *
- * Positioned by `left`, not a translate: `.press` puts a scale on :active, and
+ * Positioned by `left`, not a translate: `.glass-swell` puts a scale on :active, and
  * a transform from the stylesheet would drop a translate rather than compose
  * with it, snapping the button sideways on every tap.
  */
@@ -22,8 +23,9 @@ export function AddRecordButton() {
     <button
       type="button"
       onClick={() => openAddRecord()}
+      onPointerDown={lightAt}
       aria-label={t.addRecord}
-      className="glass-accent press fixed z-40 w-14 h-14 rounded-full flex items-center justify-center
+      className="glass-accent glass-swell glass-touch fixed z-40 w-14 h-14 rounded-full flex items-center justify-center
                  text-accent-ink
                  left-[calc(50%-1.75rem)] bottom-[calc(env(safe-area-inset-bottom)+2.5rem)]
                  md:left-auto md:right-6 md:bottom-6"

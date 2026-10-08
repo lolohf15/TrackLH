@@ -72,7 +72,7 @@ export function BottomSheet({ open, onClose, title, children, className }: Props
               // a sheet spanning a desktop window turns every field into a
               // band running off to the right — the date worst of all, since
               // it shows eight characters and a mile of empty box.
-              "glass relative w-full max-w-lg rounded-t-[var(--radius-sheet)] max-h-[88dvh] flex flex-col",
+              "glass glass-thick relative w-full max-w-lg rounded-t-[var(--radius-sheet)] max-h-[88dvh] flex flex-col",
               className
             )}
             // .glass's own box-shadow is for chrome that floats generically; a

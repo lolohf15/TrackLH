@@ -243,7 +243,7 @@ export default function BienvenidaPage() {
         </div>
       </main>
 
-      <footer className="fixed bottom-0 inset-x-0 glass border-t border-border px-5 pb-safe">
+      <footer className="fixed bottom-0 inset-x-0 glass px-5 pb-safe">
         <div className="max-w-[440px] mx-auto pt-3.5 pb-4 space-y-2.5">
           {error && (
             <p role="alert" className="rounded-sm bg-red-bg border border-red-border text-red-fg text-xs px-3.5 py-2.5">
