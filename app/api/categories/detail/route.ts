@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser, errorResponse } from "@/lib/auth";
+import { getWeekStart } from "@/lib/profile";
 import { readToday } from "@/lib/request-today";
 import { toNumber } from "@/lib/money";
 import { round2, UNCATEGORIZED } from "@/services/finance";
@@ -22,7 +23,8 @@ export async function GET(req: NextRequest) {
     const kindParam = searchParams.get("period") ?? "month";
     const kind = isPeriodKind(kindParam) && kindParam !== "all" ? kindParam : "month";
     const today = readToday(req);
-    const period = resolvePeriod(kind, parseAnchor(searchParams.get("anchor") ?? today.toISOString()));
+    const weekStart = kind === "week" ? await getWeekStart(userId) : 1;
+    const period = resolvePeriod(kind, parseAnchor(searchParams.get("anchor") ?? today.toISOString()), weekStart);
     const samePoint = comparablePrevious(period, today);
     const inProgress = isInProgress(period, today);
 

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
 import { requireUser, errorResponse } from "@/lib/auth";
+import { getWeekStart } from "@/lib/profile";
 import { apiMessages } from "@/lib/api-lang";
 import { validateTransactionInput } from "@/lib/transaction-input";
 import { mapTransaction } from "@/lib/transaction-map";
@@ -86,7 +87,8 @@ export async function GET(req: NextRequest) {
       where.date = { gte: cycle.start, lt: cycle.end };
     } else if (isPeriodKind(period)) {
       if (period !== "all") {
-        const { range } = resolvePeriod(period, parseAnchor(searchParams.get("anchor")));
+        const weekStart = period === "week" ? await getWeekStart(userId) : 1;
+        const { range } = resolvePeriod(period, parseAnchor(searchParams.get("anchor")), weekStart);
         where.date = { gte: range.from, lt: range.to };
       }
     } else if (month) {

@@ -20,6 +20,7 @@ import { AnalyticsTable } from "@/components/charts/AnalyticsTable";
 import { formatMXN, cn } from "@/lib/utils";
 import { dayKey, formatPeriodLabel, todayAnchor, wallClockNow, type PeriodKind } from "@/services/period";
 import { useLocale, useT } from "@/lib/i18n-react";
+import { useProfile } from "@/lib/use-profile";
 import type { AnalyticsData, TrendsData } from "@/types";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
@@ -34,7 +35,10 @@ export default function Analytics() {
   const t = useT();
   const locale = useLocale();
   const openAddRecord = useAddRecord();
-  const [kind, setKind] = useState<PeriodKind>("month");
+  // Opens on the period the person chose in Perfil until they pick another.
+  const { data: profile } = useProfile();
+  const [pickedKind, setKind] = useState<PeriodKind | null>(null);
+  const kind: PeriodKind = pickedKind ?? profile?.analyticsPeriod ?? "month";
   const [anchor, setAnchor] = useState(todayAnchor);
   // Captured once rather than read during render.
   const [openedAt] = useState(() => wallClockNow().getTime());
@@ -83,6 +87,7 @@ export default function Analytics() {
         onAnchorChange={setAnchor}
         now={openedAt}
         kinds={["week", "month", "year"]}
+        weekStart={profile?.weekStart ?? 1}
       />
 
       {!data ? (

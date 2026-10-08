@@ -4,8 +4,9 @@ import { useState } from "react";
 import Link from "next/link";
 import useSWR from "swr";
 import { AccountPanel } from "@/components/auth/AccountPanel";
-import { ThemeToggle } from "@/components/settings/ThemeToggle";
-import { LanguageToggle } from "@/components/settings/LanguageToggle";
+import { IdentityCard } from "@/components/profile/IdentityCard";
+import { PreferencesPanel } from "@/components/profile/PreferencesPanel";
+import { SecurityPanel } from "@/components/profile/SecurityPanel";
 import { DataExport } from "@/components/settings/DataExport";
 import { TipsPanel } from "@/components/settings/TipsPanel";
 import { AccountEditSheet, type EditableAccount } from "@/components/settings/AccountEditSheet";
@@ -43,16 +44,19 @@ export default function Perfil() {
   }
 
   return (
-    <div className="max-w-xl mx-auto px-4 md:px-8 pt-4 pb-6 space-y-3">
-      <h1 className="text-[15px] font-semibold text-text mb-4">{t.profile.title}</h1>
+    <div className="max-w-xl mx-auto px-4 md:px-8 pt-4 pb-6 space-y-6">
+      <h1 className="sr-only">{t.profile.title}</h1>
 
-      <ThemeToggle />
-      <LanguageToggle />
+      {/* Who, then how the app behaves for them, then their data, then how
+          they get in; session and deleting sit at the end, out of the way. */}
+      <IdentityCard />
 
-      <section>
-        <p className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em] px-1 pb-2">
-          {t.profile.manage}
-        </p>
+      <PreferencesPanel />
+
+      <section className="space-y-3">
+        <h2 className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em] px-1 -mb-1">
+          {t.profile.data}
+        </h2>
 
         <div className="panel px-4">
           <ManageSection
@@ -111,13 +115,23 @@ export default function Perfil() {
             <ChevronDownIcon className="w-4 h-4 text-text-faint shrink-0 -rotate-90" />
           </Link>
         </div>
+        <DataExport />
       </section>
+
+      <SecurityPanel />
 
       <TipsPanel />
 
-      <DataExport />
-
       <AccountPanel />
+
+      {/* Last and quiet: a destructive action that's rarely wanted. Its own
+          screen does the confirming. */}
+      <Link
+        href="/perfil/eliminar"
+        className="press block mx-auto w-fit min-h-[44px] px-3 py-3 text-[13px] text-red-fg hover:underline underline-offset-2"
+      >
+        {t.profile.deleteAccount}
+      </Link>
 
       <AccountEditSheet
         key={editingAccount === "new" ? "new-account" : `account-${editingAccount?.id ?? "none"}`}

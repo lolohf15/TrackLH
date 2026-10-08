@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser, errorResponse } from "@/lib/auth";
+import { getWeekStart } from "@/lib/profile";
 import { buildDashboardData, computeAccountBalancesFromSums } from "@/services/finance";
 import { comparablePrevious, isInProgress, isPeriodKind, parseAnchor, resolvePeriod } from "@/services/period";
 import { readToday } from "@/lib/request-today";
@@ -17,7 +18,8 @@ export async function GET(req: NextRequest) {
     const kind = isPeriodKind(kindParam) ? kindParam : "month";
     const anchor = parseAnchor(searchParams.get("anchor"));
 
-    const period = resolvePeriod(kind, anchor);
+    // A week starts on the day the person chose; only looked up for a week.
+    const period = resolvePeriod(kind, anchor, kind === "week" ? await getWeekStart(userId) : 1);
     // Budgets stay monthly whatever is on screen, so the month holding the
     // anchor is fetched alongside the period even when it sits outside it.
     const budgetPeriod = resolvePeriod("month", anchor);

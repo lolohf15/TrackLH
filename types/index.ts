@@ -370,3 +370,22 @@ export interface CategoryDetailData {
   /** Descriptions it repeats most in the period, by amount. */
   top: Array<{ description: string; count: number; amount: number }>;
 }
+
+/** `GET /api/profile`: the signed-in person and their preferences. */
+export interface ProfileView {
+  email: string;
+  name: string | null;
+  avatarEmoji: string | null;
+  avatarColor: string | null;
+  defaultAccount: string | null;
+  defaultType: "Gasto" | "Ingreso" | "Transferencia" | null;
+  /** 0 = Sunday, 1 = Monday. */
+  weekStart: 0 | 1;
+  analyticsPeriod: "week" | "month" | "year";
+  /** Null until chosen on some device; the device's own value stands until then. */
+  theme: "dark" | "light" | null;
+  language: "es" | "en" | null;
+  hasPassword: boolean;
+  /** Outside sign-ins linked to the account, e.g. "google". */
+  providers: string[];
+}

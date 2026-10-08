@@ -21,6 +21,22 @@ model User {
   /// When the "Primeros pasos" card on Inicio was closed, by hand or by
   /// finishing it. Null keeps it showing while any step is left.
   firstStepsDismissedAt DateTime?
+  /// An emoji shown instead of the initials; null shows the initials.
+  avatarEmoji           String?
+  /// `#rrggbb` behind the avatar; null uses the accent.
+  avatarColor           String?
+  /// What a new movement starts on. Null falls back to the last account used
+  /// for that type, and to Gasto.
+  defaultAccount        String?
+  defaultType           String?
+  /// 0 = Sunday, 1 = Monday. Null is Monday.
+  weekStart             Int?
+  /// "week" | "month" | "year" Analytics opens on. Null is month.
+  analyticsPeriod       String?
+  /// "dark" | "light" and "es" | "en". The device keeps its own copy for a
+  /// flash-free first paint; these make the choice follow the person.
+  theme                 String?
+  language              String?
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @default(now()) @updatedAt
 

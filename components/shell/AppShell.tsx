@@ -10,6 +10,7 @@ import { AddRecordButton } from "@/components/transactions/AddRecordButton";
 import { AddRecordProvider } from "@/components/transactions/AddRecordProvider";
 import { GlassFilter } from "@/components/ui/GlassFilter";
 import { ToastProvider } from "@/components/ui/Toast";
+import { PreferencesSync } from "@/components/profile/PreferencesSync";
 
 function tabIndex(pathname: string): number {
   return NAV_ITEMS.findIndex((item) =>
@@ -41,6 +42,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <AddRecordProvider>
         <div className="flex min-h-dvh flex-col bg-bg">
           <GlassFilter />
+          <PreferencesSync />
           <Sidebar />
 
           <div className="relative flex flex-1 flex-col overflow-x-hidden md:pl-[72px]">

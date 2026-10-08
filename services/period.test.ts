@@ -43,3 +43,13 @@ describe("isInProgress", () => {
     expect(isInProgress(resolvePeriod("month", d("2026-10-31")), d("2026-10-31"))).toBe(false);
   });
 });
+
+describe("week start", () => {
+  it("starts on Monday by default and on Sunday when asked", () => {
+    expect(iso(resolvePeriod("week", d("2026-10-07")).range)).toEqual({ from: "2026-10-05", to: "2026-10-12" });
+    expect(iso(resolvePeriod("week", d("2026-10-07"), 0).range)).toEqual({ from: "2026-10-04", to: "2026-10-11" });
+    // A Sunday is the last day of a Monday week and the first of a Sunday one.
+    expect(iso(resolvePeriod("week", d("2026-10-11")).range)?.from).toBe("2026-10-05");
+    expect(iso(resolvePeriod("week", d("2026-10-11"), 0).range)?.from).toBe("2026-10-11");
+  });
+});

@@ -69,10 +69,6 @@ export function DataExport() {
   // inside that is itself the button.
   return (
     <section>
-      <p className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em] px-1 pb-2">
-        {t.profile.data}
-      </p>
-
       <div className="panel px-4">
         <button
           type="button"
