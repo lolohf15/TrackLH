@@ -21,7 +21,8 @@ model User {
   /// When the "Primeros pasos" card on Inicio was closed, by hand or by
   /// finishing it. Null keeps it showing while any step is left.
   firstStepsDismissedAt DateTime?
-  /// An emoji shown instead of the initials; null shows the initials.
+  /// Unused: emoji avatars were dropped before release. Kept so the applied
+  /// migration and the schema agree; safe to drop in a later migration.
   avatarEmoji           String?
   /// `#rrggbb` behind the avatar; null uses the accent.
   avatarColor           String?

@@ -6,7 +6,7 @@ export async function getProfile(userId: string): Promise<ProfileView | null> {
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: {
-      email: true, name: true, passwordHash: true, avatarEmoji: true, avatarColor: true,
+      email: true, name: true, passwordHash: true, avatarColor: true,
       defaultAccount: true, defaultType: true, weekStart: true, analyticsPeriod: true,
       theme: true, language: true,
       oauthAccounts: { select: { provider: true } },
@@ -16,7 +16,6 @@ export async function getProfile(userId: string): Promise<ProfileView | null> {
   return {
     email: user.email,
     name: user.name,
-    avatarEmoji: user.avatarEmoji,
     avatarColor: user.avatarColor,
     defaultAccount: user.defaultAccount,
     defaultType: user.defaultType as ProfileView["defaultType"],

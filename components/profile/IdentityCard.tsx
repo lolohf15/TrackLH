@@ -22,7 +22,6 @@ export function IdentityCard() {
         <Avatar
           name={profile?.name}
           email={profile?.email}
-          emoji={profile?.avatarEmoji}
           color={profile?.avatarColor}
           size={76}
           className="shadow-float"

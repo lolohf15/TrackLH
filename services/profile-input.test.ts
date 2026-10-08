@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { firstName, initialsOf, isSingleEmoji, parseProfileUpdate } from "./profile-input";
+import { firstName, initialsOf, parseProfileUpdate } from "./profile-input";
 
 const accounts = ["Nu Crédito", "BBVA Débito"];
 
@@ -10,9 +10,9 @@ describe("parseProfileUpdate", () => {
   });
 
   it("lets null put a preference back to the default", () => {
-    expect(parseProfileUpdate({ defaultAccount: null, avatarEmoji: "" }, accounts)).toEqual({
+    expect(parseProfileUpdate({ defaultAccount: null, avatarColor: null }, accounts)).toEqual({
       ok: true,
-      data: { defaultAccount: null, avatarEmoji: null },
+      data: { defaultAccount: null, avatarColor: null },
     });
   });
 
@@ -23,17 +23,6 @@ describe("parseProfileUpdate", () => {
     expect(parseProfileUpdate({ avatarColor: "red" }, accounts)).toEqual({ ok: false, field: "avatarColor" });
     expect(parseProfileUpdate({ name: "x".repeat(61) }, accounts)).toEqual({ ok: false, field: "name" });
     expect(parseProfileUpdate(null, accounts)).toEqual({ ok: false, field: null });
-  });
-});
-
-describe("isSingleEmoji", () => {
-  it("takes one emoji, families and flags included, and nothing else", () => {
-    expect(isSingleEmoji("🦊")).toBe(true);
-    expect(isSingleEmoji("👨‍👩‍👧")).toBe(true);
-    expect(isSingleEmoji("🇲🇽")).toBe(true);
-    expect(isSingleEmoji("🦊🦊")).toBe(false);
-    expect(isSingleEmoji("A")).toBe(false);
-    expect(isSingleEmoji("<b>")).toBe(false);
   });
 });
 

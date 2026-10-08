@@ -21,7 +21,6 @@ export function Greeting() {
         <Avatar
           name={profile?.name}
           email={profile?.email}
-          emoji={profile?.avatarEmoji}
           color={profile?.avatarColor}
           size={36}
         />

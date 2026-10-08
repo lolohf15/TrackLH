@@ -8,7 +8,6 @@ export const ANALYTICS_PERIODS = ["week", "month", "year"] as const;
 
 export interface ProfileUpdate {
   name?: string | null;
-  avatarEmoji?: string | null;
   avatarColor?: string | null;
   defaultAccount?: string | null;
   defaultType?: (typeof TRANSACTION_TYPES)[number] | null;
@@ -24,12 +23,6 @@ type Result = { ok: true; data: ProfileUpdate } | { ok: false; field: ProfileFie
 
 const MAX_NAME = 60;
 
-/** One grapheme that's an emoji (flags, skin tones and ZWJ families included). */
-export function isSingleEmoji(value: string): boolean {
-  const segments = Array.from(new Intl.Segmenter(undefined, { granularity: "grapheme" }).segment(value));
-  return segments.length === 1 && /\p{Extended_Pictographic}|\p{Regional_Indicator}/u.test(value);
-}
-
 export function parseProfileUpdate(body: unknown, accounts: string[]): Result {
   if (!body || typeof body !== "object" || Array.isArray(body)) return { ok: false, field: null };
   const raw = body as Record<string, unknown>;
@@ -43,12 +36,6 @@ export function parseProfileUpdate(body: unknown, accounts: string[]): Result {
     if (v === null) out.name = null;
     else if (typeof v === "string" && v.trim().length <= MAX_NAME) out.name = v.trim().replace(/\s+/g, " ") || null;
     else return { ok: false, field: "name" };
-  }
-  if (has("avatarEmoji")) {
-    const v = raw.avatarEmoji;
-    if (v === null || v === "") out.avatarEmoji = null;
-    else if (typeof v === "string" && isSingleEmoji(v.trim())) out.avatarEmoji = v.trim();
-    else return { ok: false, field: "avatarEmoji" };
   }
   if (has("avatarColor")) {
     const v = raw.avatarColor;

@@ -375,7 +375,6 @@ export interface CategoryDetailData {
 export interface ProfileView {
   email: string;
   name: string | null;
-  avatarEmoji: string | null;
   avatarColor: string | null;
   defaultAccount: string | null;
   defaultType: "Gasto" | "Ingreso" | "Transferencia" | null;
