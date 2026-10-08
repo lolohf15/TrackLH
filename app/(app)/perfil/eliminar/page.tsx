@@ -4,7 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import useSWR from "swr";
 import { signOut } from "next-auth/react";
-import { ChevronLeft, TriangleAlert } from "lucide-react";
+import { TriangleAlert } from "lucide-react";
+import { SubpageHeader } from "@/components/settings/SettingsList";
 import { Button } from "@/components/ui/Button";
 import { ChartSkeleton } from "@/components/ui/Skeleton";
 import { DataExport } from "@/components/settings/DataExport";
@@ -54,22 +55,13 @@ export default function DeleteAccountPage() {
   }
 
   return (
-    <div className="max-w-xl mx-auto px-4 pt-3 pb-8">
-      <Link
-        href="/perfil"
-        className="press inline-flex items-center gap-1 -ml-1 min-h-[36px] pr-2 font-mono text-[10.5px] uppercase tracking-wide text-text-dim hover:text-text"
-      >
-        <ChevronLeft className="w-4 h-4" aria-hidden />
-        {t.profile.title}
-      </Link>
+    <div className="max-w-xl mx-auto px-4 md:px-8 pb-8">
+      <SubpageHeader title={t.profile.deleteTitle} backLabel={t.profile.back} />
 
-      <div className="flex items-center gap-3 mt-2">
-        <span className="w-10 h-10 rounded-full grid place-items-center bg-red-bg text-red-fg shrink-0">
-          <TriangleAlert className="w-5 h-5" aria-hidden />
-        </span>
-        <h1 className="text-[20px] font-semibold text-text">{t.profile.deleteTitle}</h1>
-      </div>
-      <p className="text-[14px] text-text-muted leading-relaxed mt-3">{t.profile.deleteIntro}</p>
+      <p className="flex items-start gap-3 text-[14px] text-text-muted leading-relaxed px-1">
+        <TriangleAlert className="w-5 h-5 text-red-fg shrink-0 mt-0.5" aria-hidden />
+        {t.profile.deleteIntro}
+      </p>
 
       <p className="text-[13px] text-text-muted mt-6 mb-2 px-1">{t.profile.deleteExportFirst}</p>
       <DataExport />

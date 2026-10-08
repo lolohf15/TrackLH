@@ -116,8 +116,7 @@ function ToastCard({ toast, onDismiss }: { toast: ActiveToast; onDismiss: () => 
   return (
     <motion.div
       role={isError ? "alert" : "status"}
-      className="glass pointer-events-auto w-full max-w-sm rounded-[20px] flex items-center gap-3 pl-3.5 pr-1.5 py-2 min-h-[56px]"
-      style={{ boxShadow: "var(--shadow-glass), var(--shadow-float)" }}
+      className="glass glass-float pointer-events-auto w-full max-w-sm rounded-[20px] flex items-center gap-3 pl-3.5 pr-1.5 py-2 min-h-[56px]"
       initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 24, scale: 0.96 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       // Leaves faster than it arrives: the arrival is news, the exit isn't.

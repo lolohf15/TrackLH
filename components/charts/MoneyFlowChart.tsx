@@ -253,7 +253,9 @@ export function MoneyFlowChart({
                   aria-expanded={interactive ? isOpen : undefined}
                   className={cn(
                     "absolute -translate-x-full -translate-y-1/2 flex flex-col items-end gap-[3px] rounded-[6px] px-1.5 py-[4px] text-right leading-none whitespace-nowrap",
-                    "bg-[color-mix(in_srgb,var(--color-surface)_84%,transparent)] backdrop-blur-[2px]",
+                    // Solid enough to read over the bands without a backdrop filter per
+                    // label, which the phone would composite on every frame.
+                    "bg-[color-mix(in_srgb,var(--color-surface)_90%,transparent)]",
                     interactive && "press outline-none focus-visible:ring-2 focus-visible:ring-accent",
                     isOpen && "ring-1 ring-[color-mix(in_srgb,var(--color-text)_35%,transparent)]"
                   )}

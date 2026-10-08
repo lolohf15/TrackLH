@@ -29,11 +29,11 @@ function fileNameFrom(header: string | null, fallback: string): string {
  * of raw JSON. Fetching it means the button can say it's working and show
  * the error where they're already looking.
  */
-export function DataExport() {
+/** Builds and downloads the .xlsx, reporting progress and failure. */
+export function useExport() {
   const t = useT();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
   async function download() {
     setBusy(true);
     setError(null);
@@ -64,6 +64,13 @@ export function DataExport() {
       setBusy(false);
     }
   }
+
+  return { download, busy, error };
+}
+
+export function DataExport() {
+  const t = useT();
+  const { download, busy, error } = useExport();
 
   // Grouped the way the rest of Perfil is: the caption outside, one row
   // inside that is itself the button.

@@ -1,7 +1,7 @@
 "use client";
 
+import { SubpageHeader } from "@/components/settings/SettingsList";
 import { useState } from "react";
-import Link from "next/link";
 import { PlusIcon } from "@/components/shell/icons";
 import { CategoryIcon } from "@/components/ui/CategoryIcon";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -41,14 +41,8 @@ export default function RecurringPage() {
   }
 
   return (
-    <div className="max-w-xl mx-auto px-4 md:px-8 pt-4 pb-6 space-y-3">
-      <Link
-        href="/perfil"
-        className="inline-flex items-center gap-1.5 font-mono text-[10.5px] text-text-dim hover:text-text transition-colors min-h-[32px]"
-      >
-        ‹ {t.recurring.back.toUpperCase()}
-      </Link>
-      <h1 className="text-[15px] font-semibold text-text">{t.recurring.title}</h1>
+    <div className="max-w-xl mx-auto px-4 md:px-8 pb-6 space-y-3">
+      <SubpageHeader title={t.recurring.title} backLabel={t.profile.back} />
 
       {isLoading && !data ? (
         <ChartSkeleton height="h-64" />

@@ -40,7 +40,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <ToastProvider>
       <AddRecordProvider>
-        <div className="flex min-h-dvh flex-col bg-bg">
+        <div className="flex min-h-dvh flex-col">
           <GlassFilter />
           <PreferencesSync />
           <Sidebar />
@@ -73,6 +73,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </div>
           </div>
 
+          <div className="tabbar-fade md:hidden" aria-hidden />
           <AddRecordButton />
           <TabBar />
         </div>
@@ -119,7 +120,7 @@ function Page({
           ? { duration: 0.15, ease: "linear" }
           : { type: "spring", visualDuration: 0.28, bounce: 0 }
       }
-      className="[grid-area:1/1] min-w-0 bg-bg md:bg-transparent pb-28 md:pb-8"
+      className="[grid-area:1/1] min-w-0 page-ground pb-28 md:pb-8"
     >
       {children}
     </motion.main>

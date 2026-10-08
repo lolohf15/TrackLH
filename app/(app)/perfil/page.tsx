@@ -1,238 +1,238 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
-import useSWR from "swr";
-import { AccountPanel } from "@/components/auth/AccountPanel";
-import { IdentityCard } from "@/components/profile/IdentityCard";
-import { PreferencesPanel } from "@/components/profile/PreferencesPanel";
-import { SecurityPanel } from "@/components/profile/SecurityPanel";
-import { DataExport } from "@/components/settings/DataExport";
-import { TipsPanel } from "@/components/settings/TipsPanel";
-import { AccountEditSheet, type EditableAccount } from "@/components/settings/AccountEditSheet";
-import { CategoryEditSheet, type EditableCategory } from "@/components/settings/CategoryEditSheet";
-import { ChevronDownIcon, PlusIcon } from "@/components/shell/icons";
-import { formatMXN, cn } from "@/lib/utils";
-import { useT } from "@/lib/i18n-react";
-import { CategoryIcon } from "@/components/ui/CategoryIcon";
-import { UNKNOWN_COLOR } from "@/types";
+import { useState, useSyncExternalStore } from "react";
+import useSWR, { mutate } from "swr";
+import {
+  CalendarDays, ChartPie, Download, Languages, Lightbulb, LogOut, Moon, PenLine, Repeat, Shield, Sun, Tags,
+  Trash2, UserRound, WalletCards,
+} from "lucide-react";
+import { Avatar } from "@/components/profile/Avatar";
+import { ProfileSheet } from "@/components/profile/ProfileSheet";
+import { OptionSheet } from "@/components/settings/OptionSheet";
+import { SettingsGroup, SettingsRow } from "@/components/settings/SettingsList";
+import { useExport } from "@/components/settings/DataExport";
+import { useToast } from "@/components/ui/Toast";
+import { applyTheme, currentTheme, serverTheme, subscribeToTheme } from "@/lib/theme";
+import { applyLang } from "@/lib/i18n";
+import { useLang, useT } from "@/lib/i18n-react";
+import { saveProfile, useProfile } from "@/lib/use-profile";
+import { useAccounts } from "@/lib/use-accounts";
+import { signOutClean } from "@/lib/sign-out";
+import type { ProfileView } from "@/types";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
-type Panel = "accounts" | "categories" | null;
+type Picker = "theme" | "language" | "week" | "analytics" | null;
 
+/**
+ * Perfil as a phone's settings: who you are at the top, then short groups
+ * (account, preferences, your data, help), each row showing its current
+ * value and opening the screen or the choice behind it. Signing out and
+ * deleting sit at the end, where nothing is tapped by accident.
+ */
 export default function Perfil() {
   const t = useT();
-  // One open at a time: both lists expanded would push the session panel far
-  // enough down that it stops feeling like part of this screen.
-  const [open, setOpen] = useState<Panel>(null);
+  const toast = useToast();
+  const lang = useLang();
+  const theme = useSyncExternalStore(subscribeToTheme, currentTheme, serverTheme);
+  const { data: profile } = useProfile();
+  const { data: accounts } = useAccounts();
+  const { data: categories } = useSWR<unknown[]>("/api/categories", fetcher);
+  const { download, busy: exporting, error: exportError } = useExport();
 
-  // Only fetched once its list is opened — most visits here are for the theme
-  // or the language and never touch either.
-  const { data: accounts } = useSWR<EditableAccount[]>(
-    open === "accounts" ? "/api/accounts" : null, fetcher
-  );
-  const { data: categories } = useSWR<EditableCategory[]>(
-    open === "categories" ? "/api/categories" : null, fetcher
-  );
+  const [editing, setEditing] = useState(false);
+  const [picker, setPicker] = useState<Picker>(null);
+  const [leaving, setLeaving] = useState(false);
 
-  const [editingAccount, setEditingAccount] = useState<EditableAccount | "new" | null>(null);
-  const [editingCategory, setEditingCategory] = useState<EditableCategory | "new" | null>(null);
-
-  function toggle(panel: Exclude<Panel, null>) {
-    setOpen((current) => (current === panel ? null : panel));
+  function save(patch: Partial<ProfileView>) {
+    saveProfile(patch)
+      .then(() => {
+        // Week boundaries are drawn on the server, so anything cut by week
+        // has to be asked for again.
+        if ("weekStart" in patch) {
+          mutate((key) => typeof key === "string" && /^\/api\/(analytics|transactions|dashboard|categories)/.test(key));
+        }
+      })
+      .catch(() => toast({ message: t.profile.saveFailed }));
   }
 
+  const methods = profile
+    ? [profile.providers.includes("google") && t.profile.google, profile.hasPassword && t.profile.password]
+        .filter(Boolean)
+        .join(" · ")
+    : "";
+  const typeLabel = { Gasto: t.txType.Gasto, Ingreso: t.txType.Ingreso, Transferencia: t.movements.typeShort.Transferencia };
+  const periodLabel = { week: t.home.periodWeek, month: t.home.periodMonth, year: t.home.periodYear };
+  const version = process.env.NEXT_PUBLIC_APP_VERSION;
+
   return (
-    <div className="max-w-xl mx-auto px-4 md:px-8 pt-4 pb-6 space-y-6">
+    <div className="max-w-xl mx-auto px-4 md:px-8 pt-2 pb-8 flex flex-col gap-7">
       <h1 className="sr-only">{t.profile.title}</h1>
 
-      {/* Who, then how the app behaves for them, then their data, then how
-          they get in; session and deleting sit at the end, out of the way. */}
-      <IdentityCard />
-
-      <PreferencesPanel />
-
-      <section className="space-y-3">
-        <h2 className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em] px-1 -mb-1">
-          {t.profile.data}
-        </h2>
-
-        <div className="panel px-4">
-          <ManageSection
-            label={t.profile.accounts}
-            hint={t.profile.accountsHint}
-            open={open === "accounts"}
-            onToggle={() => toggle("accounts")}
-          >
-            {(accounts ?? []).map((a) => (
-              <ItemRow
-                key={a.id}
-                color={a.color}
-                name={a.account}
-                meta={a.isCredit ? t.wallet.credit : t.wallet.debit}
-                onClick={() => setEditingAccount(a)}
-              />
-            ))}
-            <AddRow label={t.wallet.addAccount} onClick={() => setEditingAccount("new")} />
-          </ManageSection>
-
-          <ManageSection
-            label={t.profile.categories}
-            hint={t.profile.categoriesHint}
-            open={open === "categories"}
-            onToggle={() => toggle("categories")}
-          >
-            {(categories ?? []).map((c) => (
-              <ItemRow
-                key={c.id}
-                color={c.color}
-                icon={c.icon}
-                name={c.name}
-                meta={
-                  c.kind === "expense" && c.budget > 0
-                    ? formatMXN(c.budget)
-                    : c.kind === "income"
-                      ? t.categorySheet.income
-                      : "—"
-                }
-                onClick={() => setEditingCategory(c)}
-              />
-            ))}
-            <AddRow label={t.analytics.addCategory} onClick={() => setEditingCategory("new")} />
-          </ManageSection>
-
-          {/* Its own screen rather than a fold: a rule has a schedule, a
-              status and a monthly figure, which a two-word row can't carry. */}
-          <Link
-            href="/perfil/recurrentes"
-            className="press w-full flex items-center justify-between gap-3 py-3.5 text-left border-t border-divider"
-          >
-            <span className="min-w-0">
-              <span className="block text-[13.5px] text-text">{t.recurring.title}</span>
-              <span className="block text-[11.5px] text-text-dim mt-0.5">{t.recurring.hint}</span>
-            </span>
-            <ChevronDownIcon className="w-4 h-4 text-text-faint shrink-0 -rotate-90" />
-          </Link>
-        </div>
-        <DataExport />
-      </section>
-
-      <SecurityPanel />
-
-      <TipsPanel />
-
-      <AccountPanel />
-
-      {/* Last and quiet: a destructive action that's rarely wanted. Its own
-          screen does the confirming. */}
-      <Link
-        href="/perfil/eliminar"
-        className="press block mx-auto w-fit min-h-[44px] px-3 py-3 text-[13px] text-red-fg hover:underline underline-offset-2"
-      >
-        {t.profile.deleteAccount}
-      </Link>
-
-      <AccountEditSheet
-        key={editingAccount === "new" ? "new-account" : `account-${editingAccount?.id ?? "none"}`}
-        account={editingAccount === "new" ? null : editingAccount}
-        open={editingAccount !== null}
-        onClose={() => setEditingAccount(null)}
-      />
-
-      <CategoryEditSheet
-        key={editingCategory === "new" ? "new-category" : `category-${editingCategory?.id ?? "none"}`}
-        category={editingCategory === "new" ? null : editingCategory}
-        open={editingCategory !== null}
-        onClose={() => setEditingCategory(null)}
-      />
-    </div>
-  );
-}
-
-/** A settings row that opens downward instead of leaving for another tab. */
-function ManageSection({
-  label, hint, open, onToggle, children,
-}: {
-  label: string;
-  hint: string;
-  open: boolean;
-  onToggle: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="border-t border-divider first:border-t-0">
+      {/* Who this is; tapping it edits the name and the avatar. */}
       <button
         type="button"
-        onClick={onToggle}
-        aria-expanded={open}
-        className="press w-full flex items-center justify-between gap-3 py-3.5 text-left"
+        onClick={() => setEditing(true)}
+        className="press flex flex-col items-center text-center gap-2 pt-5 outline-none focus-visible:[&>span:first-child]:ring-2 focus-visible:[&>span:first-child]:ring-accent"
       >
-        <span className="min-w-0">
-          <span className="block text-[13.5px] text-text">{label}</span>
-          <span className="block text-[11.5px] text-text-dim mt-0.5">{hint}</span>
+        <Avatar name={profile?.name} email={profile?.email} color={profile?.avatarColor} size={80} className="shadow-float" />
+        <span className="min-w-0 max-w-full">
+          <span className="block text-[21px] font-semibold text-text truncate tracking-[-0.01em]">
+            {profile?.name || profile?.email || " "}
+          </span>
+          {profile?.name && <span className="block text-[13px] text-text-dim truncate mt-0.5">{profile.email}</span>}
         </span>
-        <ChevronDownIcon
-          className={cn(
-            "w-4 h-4 text-text-faint shrink-0 transition-transform duration-200 ease-out",
-            open && "rotate-180"
-          )}
-        />
       </button>
 
-      <div
-        className={cn(
-          "overflow-hidden transition-[max-height] duration-300 ease-out",
-          open ? "max-h-[2000px]" : "max-h-0"
-        )}
-      >
-        <div className="pb-1.5">{children}</div>
-      </div>
+      <SettingsGroup title={t.profile.accountGroup}>
+        <SettingsRow icon={UserRound} tile="accent" label={t.profile.personalInfo} value={profile?.name ?? ""} onClick={() => setEditing(true)} />
+        <SettingsRow icon={Shield} tile="blue" label={t.profile.security} value={methods} href="/perfil/seguridad" />
+      </SettingsGroup>
+
+      <SettingsGroup title={t.profile.preferences}>
+        <SettingsRow
+          icon={theme === "light" ? Sun : Moon}
+          tile="graphite"
+          label={t.profile.appearance}
+          value={theme === "light" ? t.profile.light : t.profile.dark}
+          onClick={() => setPicker("theme")}
+        />
+        <SettingsRow
+          icon={Languages}
+          tile="blue"
+          label={t.profile.language}
+          value={lang === "en" ? t.profile.english : t.profile.spanish}
+          onClick={() => setPicker("language")}
+        />
+        <SettingsRow
+          icon={PenLine}
+          tile="accent"
+          label={t.profile.recordDefaults}
+          // The type alone until an account is chosen; "the last one you
+          // used" is the default and too long to repeat here.
+          value={
+            profile
+              ? [profile.defaultAccount, typeLabel[profile.defaultType ?? "Gasto"]].filter(Boolean).join(" · ")
+              : ""
+          }
+          href="/perfil/registro"
+        />
+        <SettingsRow
+          icon={CalendarDays}
+          tile="red"
+          label={t.profile.weekStart}
+          value={profile?.weekStart === 0 ? t.profile.sunday : t.profile.monday}
+          onClick={() => setPicker("week")}
+        />
+        <SettingsRow
+          icon={ChartPie}
+          tile="green"
+          label={t.profile.analyticsPeriod}
+          value={periodLabel[profile?.analyticsPeriod ?? "month"]}
+          onClick={() => setPicker("analytics")}
+        />
+      </SettingsGroup>
+
+      <SettingsGroup title={t.profile.data} footer={exportError ?? undefined}>
+        <SettingsRow icon={WalletCards} tile="purple" label={t.profile.accounts} value={accounts ? String(accounts.length) : ""} href="/perfil/cuentas" />
+        <SettingsRow icon={Tags} tile="amber" label={t.profile.categories} value={categories ? String(categories.length) : ""} href="/perfil/categorias" />
+        <SettingsRow icon={Repeat} tile="green" label={t.recurring.title} href="/perfil/recurrentes" />
+        <SettingsRow
+          icon={Download}
+          tile="graphite"
+          label={exporting ? t.profile.exporting : t.profile.exportExcel}
+          onClick={download}
+          disabled={exporting}
+          trailing={
+            exporting ? (
+              <svg className="animate-spin-fast w-4 h-4 text-text-dim" fill="none" viewBox="0 0 24 24" aria-hidden>
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+              </svg>
+            ) : (
+              <span />
+            )
+          }
+        />
+      </SettingsGroup>
+
+      <SettingsGroup title={t.profile.help}>
+        <SettingsRow icon={Lightbulb} tile="amber" label={t.profile.tipsRow} href="/perfil/consejos" />
+      </SettingsGroup>
+
+      <SettingsGroup footer={profile?.email}>
+        <SettingsRow
+          icon={LogOut}
+          tile="graphite"
+          label={leaving ? t.profile.signingOut : t.profile.signOut}
+          disabled={leaving}
+          trailing={<span />}
+          onClick={() => {
+            setLeaving(true);
+            signOutClean();
+          }}
+        />
+      </SettingsGroup>
+
+      <SettingsGroup>
+        <SettingsRow icon={Trash2} tone="danger" label={t.profile.deleteAccount} href="/perfil/eliminar" />
+      </SettingsGroup>
+
+      {version && <p className="text-center font-mono text-[10.5px] text-text-faint -mt-3">{t.profile.version(version)}</p>}
+
+      {profile && <ProfileSheet key={String(editing)} open={editing} onClose={() => setEditing(false)} profile={profile} />}
+
+      <OptionSheet
+        open={picker === "theme"}
+        onClose={() => setPicker(null)}
+        title={t.profile.appearance}
+        options={[
+          { value: "dark", label: t.profile.dark },
+          { value: "light", label: t.profile.light },
+        ]}
+        value={theme}
+        onChange={(v) => {
+          applyTheme(v);
+          save({ theme: v });
+        }}
+      />
+      <OptionSheet
+        open={picker === "language"}
+        onClose={() => setPicker(null)}
+        title={t.profile.language}
+        options={[
+          { value: "es", label: t.profile.spanish },
+          { value: "en", label: t.profile.english },
+        ]}
+        value={lang}
+        onChange={(v) => {
+          applyLang(v);
+          save({ language: v });
+        }}
+      />
+      <OptionSheet
+        open={picker === "week"}
+        onClose={() => setPicker(null)}
+        title={t.profile.weekStart}
+        options={[
+          { value: 1, label: t.profile.monday },
+          { value: 0, label: t.profile.sunday },
+        ]}
+        value={profile?.weekStart ?? 1}
+        onChange={(v) => save({ weekStart: v === 0 ? 0 : 1 })}
+      />
+      <OptionSheet
+        open={picker === "analytics"}
+        onClose={() => setPicker(null)}
+        title={t.profile.analyticsPeriod}
+        options={[
+          { value: "week", label: t.home.periodWeek },
+          { value: "month", label: t.home.periodMonth },
+          { value: "year", label: t.home.periodYear },
+        ]}
+        value={profile?.analyticsPeriod ?? "month"}
+        onChange={(v) => save({ analyticsPeriod: v })}
+      />
     </div>
-  );
-}
-
-function ItemRow({
-  color, icon, name, meta, onClick,
-}: {
-  color: string | null;
-  /** Categories pass theirs (null included); accounts have none and keep the dot. */
-  icon?: string | null;
-  name: string;
-  meta: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="press w-full flex items-center justify-between gap-2.5 py-2.5 pl-3 border-t border-divider text-left"
-    >
-      <span className="flex items-center gap-2.5 min-w-0">
-        {icon !== undefined ? (
-          <CategoryIcon icon={icon} name={name} color={color ?? UNKNOWN_COLOR} size="sm" />
-        ) : (
-          <span
-            className="w-[7px] h-[7px] rounded-full shrink-0"
-            style={{ backgroundColor: color ?? "var(--color-text-faint)" }}
-          />
-        )}
-        <span className="text-[13px] text-text truncate">{name}</span>
-      </span>
-      <span className="font-mono text-[10.5px] text-text-dim shrink-0">{meta}</span>
-    </button>
-  );
-}
-
-function AddRow({ label, onClick }: { label: string; onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="press w-full flex items-center gap-2.5 py-2.5 pl-3 border-t border-divider text-left text-accent"
-    >
-      <PlusIcon className="w-3.5 h-3.5 shrink-0" />
-      <span className="text-[13px]">{label}</span>
-    </button>
   );
 }

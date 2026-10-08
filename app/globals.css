@@ -17,7 +17,7 @@
      every value below is redefined under [data-theme="light"]. Nothing in
      the app should name a color directly — always the token, or the switch
      leaves half the screen in the other theme. */
-  --color-bg:              #000000;
+  --color-bg:              #0b0a08;
   --color-surface:         #121212;
   --color-surface-2:       #1b1b1b;
   --color-surface-3:       #262626;
@@ -92,6 +92,28 @@
   --ease-drawer:           cubic-bezier(0.32, 0.72, 0, 1);
   --ease-slide:            cubic-bezier(0.22, 1, 0.36, 1);
 
+  /* Ground — background B, "warm deep": a brass glow at the top of the page
+     fading into a warm near-black, never #000 (no room for elevation, and
+     glass has nothing to refract). It scrolls with the page, like a
+     wallpaper behind the balance, and is `--bg-glow-h` tall. */
+  --bg-glow:               radial-gradient(120% 55% at 50% -8%, #3a2a14 0%, #17110a 42%, #0b0a08 70%);
+  --bg-glow-h:             760px;
+  /* The colour at the very top, for the status bar and the browser chrome. */
+  --color-bg-top:          #17110a;
+  /* What dims the page behind a sheet. */
+  --scrim:                 rgba(0, 0, 0, 0.6);
+
+  /* Glass — one material for everything that floats over moving content
+     (see the rules in the utilities layer). */
+  --glass-fill:            color-mix(in srgb, var(--color-surface) 58%, transparent);
+  --glass-filter:          blur(20px) saturate(160%);
+  /* The light catching the pane: a top-down sheen over the fill. */
+  --glass-sheen:           linear-gradient(to bottom, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0) 45%);
+
+  /* Press — every pressable shrinks the same amount at the same speed. */
+  --press-scale:           0.97;
+  --press-duration:        160ms;
+
   /* Tinted panels — how far a hue bleeds into the surface, and how bright the
      top edge catches. A tint reads much stronger over a light ground than a
      dark one, so both drop in the light theme. */
@@ -151,6 +173,14 @@
   --shadow-sheet:  0 -12px 48px -12px rgba(60, 50, 30, 0.18);
   --shadow-glass:  inset 0 1px 0 rgba(255,255,255,0.7), inset 0 0 0 1px rgba(60,50,30,0.06), 0 8px 24px -8px rgba(60,50,30,0.16), 0 1px 2px rgba(60,50,30,0.06);
 
+  /* Background B on paper: sand at the top fading into warm paper. Same
+     idea as the dark ground, not its inversion. */
+  --bg-glow:               linear-gradient(180deg, #efe2c8 0%, #f6efe2 30%, #faf8f4 60%);
+  --color-bg-top:          #efe2c8;
+  --scrim:                 rgba(46, 36, 20, 0.28);
+  --glass-fill:            color-mix(in srgb, var(--color-surface) 62%, transparent);
+  --glass-sheen:           linear-gradient(to bottom, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0) 50%);
+
   --tint-ground:           #ffffff;
   --tint-strength:         16%;
   --tint-edge:             20%;
@@ -177,8 +207,10 @@
     color-scheme: light;
   }
 
+  html { background-color: var(--color-bg); }
+
   body {
-    background-color: var(--color-bg);
+    background: var(--bg-glow) 0 0 / 100% var(--bg-glow-h) no-repeat, var(--color-bg);
     color: var(--color-text);
     overscroll-behavior-x: none;
     overscroll-behavior-y: contain;
@@ -195,7 +227,7 @@
   input, textarea { caret-color: var(--color-accent); }
 
   ::-webkit-scrollbar { width: 5px; height: 5px; }
-  ::-webkit-scrollbar-track { background: var(--color-bg); }
+  ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: var(--color-surface-3); border-radius: 99px; }
   ::-webkit-scrollbar-thumb:hover { background: var(--color-border-strong); }
 
@@ -252,9 +284,32 @@
     inset: 0 0 auto 0;
     z-index: 30;
     height: env(safe-area-inset-top);
-    background: color-mix(in srgb, var(--color-bg) 82%, transparent);
-    -webkit-backdrop-filter: blur(12px);
-    backdrop-filter: blur(12px);
+    background: color-mix(in srgb, var(--color-bg-top) 72%, transparent);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
+    pointer-events: none;
+  }
+
+  /* A page carries the ground itself on the phone, so two pages crossing
+     during a tab switch never show each other through. Shifted up by the
+     status bar's height so it lines up with the body's ground behind it. */
+  .page-ground {
+    background: var(--bg-glow) 0 calc(-1 * env(safe-area-inset-top)) / 100% var(--bg-glow-h) no-repeat, var(--color-bg);
+  }
+  /* On a wide screen the pages don't slide over each other; the body's own
+     ground shows through. */
+  @media (min-width: 768px) {
+    .page-ground { background: none; }
+  }
+
+  /* Content passing under the floating tab bar fades instead of meeting it
+     edge on. Phone only; zero tall where there's no bar. */
+  .tabbar-fade {
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 20;
+    height: calc(env(safe-area-inset-bottom) + 96px);
+    background: linear-gradient(to bottom, transparent, color-mix(in srgb, var(--color-bg) 72%, transparent) 70%);
     pointer-events: none;
   }
 }
@@ -353,30 +408,59 @@
     );
   }
 
-  /* A pane of glass, not a blurred box: translucent fill + brighter top edge
-     + saturation lift, so color bleeding through from underneath still reads
-     as color instead of going muddy. Reserved for chrome that floats over
-     moving content — a static card on flat black has nothing to refract. */
+  /* ── Materials ──────────────────────────────────────────────────────────
+     1. Glass is only for what floats over content while it moves: the tab
+        bar, the + button, toasts, sheets and the status bar strip. It needs
+        something behind it to bend, which is why the ground has a glow.
+     2. Everything that is content stays solid: cards (.panel, .tint), lists,
+        charts, fields. Never glass on glass; each pane is a backdrop-filter
+        layer the phone has to composite on every scrolled frame.
+     3. Every pane is the same material: --glass-fill, --glass-filter, the
+        --glass-sheen catching the top and --shadow-glass's bright top edge.
+        Only the accent pane (+) swaps the fill for the brass.
+     4. Every pressable gives the same feedback: .press, --press-scale over
+        --press-duration with --ease-out.
+     Reduced transparency turns panes solid, more contrast outlines them
+     (end of file). */
   .glass {
-    background-color: color-mix(in srgb, var(--color-surface) 62%, transparent);
-    backdrop-filter: blur(20px) saturate(150%);
+    background-color: var(--glass-fill);
+    background-image: var(--glass-sheen);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
     box-shadow: var(--shadow-glass);
   }
 
-  /* Same pane, tinted with the accent instead of the surface — the FAB is
-     the app's one colored affordance, and glass shouldn't wash that out. */
+  /* A pane that floats free of any edge (toasts): the same glass, lifted. */
+  .glass-float { box-shadow: var(--shadow-glass), var(--shadow-float); }
+
+  /* Same pane, tinted with the accent instead of the surface — the + is
+     the app's one coloured affordance, and glass shouldn't wash that out. */
   .glass-accent {
-    background-color: color-mix(in srgb, var(--color-accent) 78%, transparent);
-    backdrop-filter: blur(20px) saturate(150%);
+    background-color: color-mix(in srgb, var(--color-accent) 80%, transparent);
+    background-image: var(--glass-sheen);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
     box-shadow: var(--shadow-glass), var(--shadow-float);
   }
 
-  /* Opt-in refraction layer: an SVG displacement filter (see GlassFilter.tsx)
-     chained onto the same backdrop-filter, gated to surfaces where it's been
-     verified to render — WebKit's support for backdrop-filter: url(#id) is
-     inconsistent. */
-  .glass-refract {
-    backdrop-filter: blur(6px) url(#app-glass-distortion) saturate(150%);
+  /* Refraction through an SVG displacement filter (GlassFilter.tsx). WebKit
+     doesn't render url() inside backdrop-filter, and Safari is where this
+     app lives, so the bend is only added where it's known to work; iOS keeps
+     the plain blur and saturation of .glass, which is a clean pane rather
+     than a broken one. `font: -apple-system-body` is a WebKit-only value. */
+  @supports not (font: -apple-system-body) {
+    .glass-refract {
+      backdrop-filter: blur(8px) url(#app-glass-distortion) saturate(160%);
+    }
+  }
+
+  /* The pill marking the current tab: a small pane of brass-tinted glass
+     inside the bar, sliding between tabs with the transform alone. */
+  .tab-pill {
+    background-color: color-mix(in srgb, var(--color-accent) 16%, transparent);
+    background-image: var(--glass-sheen);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 0 0 1px color-mix(in srgb, var(--color-accent) 22%, transparent);
+    transition: transform 300ms var(--ease-out), opacity 150ms var(--ease-out);
   }
 
   /* Floating chrome meeting scrolling content: a soft edge, not a 1px rule. */
@@ -385,7 +469,7 @@
     position: absolute;
     left: 0; right: 0; top: 100%;
     height: 16px;
-    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0));
+    background: linear-gradient(to bottom, color-mix(in srgb, var(--color-bg) 60%, transparent), transparent);
     pointer-events: none;
   }
 
@@ -397,8 +481,14 @@
   .animate-caret       { animation: caret 1.06s steps(1) infinite; }
 
   /* Interruptible press feedback */
-  .press               { transition: transform 160ms var(--ease-out); }
-  .press:active        { transform: scale(0.97); }
+  .press               { transition: transform var(--press-duration) var(--ease-out); }
+  .press:active        { transform: scale(var(--press-scale)); }
+
+  /* A sheet's scrolling body fades out under its fixed header. */
+  .sheet-scroll {
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 14px);
+    mask-image: linear-gradient(to bottom, transparent 0, #000 14px);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -408,6 +498,7 @@
   .animate-spin-fast { animation-duration: 1.4s; }
   .animate-caret { animation: none; }
   .press { transition: none; }
+  .tab-pill { transition: opacity 150ms linear; }
   .transition-\[max-height\] { transition: none; }
   * { scroll-behavior: auto !important; }
 }
@@ -416,19 +507,25 @@
 @media (prefers-reduced-transparency: reduce) {
   .backdrop-blur-xl { backdrop-filter: none; }
   .bg-surface\/80 { background-color: var(--color-surface); }
-  .glass, .glass-refract {
+  .glass, .glass-refract, .status-scrim {
     background-color: var(--color-surface);
+    background-image: none;
+    -webkit-backdrop-filter: none;
     backdrop-filter: none;
   }
+  .status-scrim { background-color: var(--color-bg-top); }
   .glass-accent {
     background-color: var(--color-accent);
+    -webkit-backdrop-filter: none;
     backdrop-filter: none;
   }
+  .tabbar-fade { background: linear-gradient(to bottom, transparent, var(--color-bg) 70%); }
 }
 
 @media (prefers-contrast: more) {
   .panel { box-shadow: none; outline: 1px solid var(--color-border-strong); }
-  .glass { box-shadow: none; outline: 1px solid var(--color-border-strong); }
+  .glass, .glass-accent { box-shadow: none; outline: 1px solid var(--color-border-strong); }
+  .tab-pill { box-shadow: inset 0 0 0 1.5px var(--color-accent); }
 }
 
 @media (hover: none) {

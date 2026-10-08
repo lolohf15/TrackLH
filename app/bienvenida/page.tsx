@@ -141,7 +141,7 @@ export default function BienvenidaPage() {
       };
 
   return (
-    <div className="min-h-dvh flex flex-col bg-bg">
+    <div className="min-h-dvh flex flex-col">
       <header className="px-5 pt-safe">
         <div
           className="max-w-[440px] mx-auto pt-6 pb-2 flex items-center gap-1.5"
