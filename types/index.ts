@@ -332,25 +332,6 @@ export interface PendingOccurrence {
   count: number;
 }
 
-/** One month of `GET /api/analytics/trends`. */
-export interface TrendMonth {
-  /** `YYYY-MM`. */
-  key: string;
-  income: number;
-  expenses: number;
-  /** The part of `expenses` confirmed from a recurring rule. */
-  fixed: number;
-  /** Debit money at the end of the month. */
-  available: number;
-  /** `available` less what was owed on the cards at the end of the month. */
-  netWorth: number;
-}
-
-/** What the trend charts on Analytics draw. */
-export interface TrendsData {
-  months: TrendMonth[];
-}
-
 /** `GET /api/categories/detail`: one category over a period. */
 export interface CategoryDetailData {
   category: string;
