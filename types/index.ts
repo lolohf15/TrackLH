@@ -179,7 +179,7 @@ export interface AnalyticsData {
   expenseCount: number;
   /** Sentences about the period, most telling first; see services/insights. */
   insights: Insight[];
-  /** Income to categories and savings; null without income. */
+  /** Income sources to categories to their descriptions; null with no movements. */
   flow: MoneyFlow | null;
   /** Monthly budgets with what's been spent; empty outside a month. */
   budgets: BudgetPace[];
@@ -188,7 +188,7 @@ export interface AnalyticsData {
 }
 
 export type { Insight } from "@/services/insights";
-export type { MoneyFlow, FlowNode } from "@/services/money-flow";
+export type { MoneyFlow, FlowItem } from "@/services/money-flow";
 export type { LeftToSpend } from "@/services/left-to-spend";
 import type { Insight } from "@/services/insights";
 import type { MoneyFlow } from "@/services/money-flow";

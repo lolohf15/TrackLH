@@ -136,7 +136,11 @@ export async function GET(req: NextRequest) {
       inProgress,
       expenseCount: filterByRange(transactions, period.range).filter((t) => t.type === "Gasto").length,
       insights: buildInsights({ categories, usual, usualPeriods, income, expenses, inProgress, dailyExpenses: elapsed }),
-      flow: moneyFlow(income, categories),
+      flow: moneyFlow(
+        filterByRange(transactions, period.range),
+        categories,
+        new Map(categoryRows.filter((c) => c.kind === "income").map((c) => [c.name, c.color]))
+      ),
       budgets,
       monthProgress: kind === "month" ? Math.min(100, Math.round((elapsedDays / monthDays) * 100)) : null,
     };
