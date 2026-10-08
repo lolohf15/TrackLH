@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { motion, useReducedMotion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n-react";
 import { NAV_ITEMS } from "./nav";
@@ -15,45 +14,63 @@ import { NAV_ITEMS } from "./nav";
  */
 export function TabBar() {
   const pathname = usePathname();
-  const reduceMotion = useReducedMotion();
 
   const left = NAV_ITEMS.slice(0, 2);
   const right = NAV_ITEMS.slice(2);
+
+  // Which of the five columns the current tab sits in; the + takes the third.
+  const index = NAV_ITEMS.findIndex((item) => isActive(item.href, pathname));
+  const column = index < 0 ? 0 : index < 2 ? index : index + 1;
 
   return (
     <nav
       className="md:hidden fixed left-3 right-3 z-30"
       style={{ bottom: "calc(env(safe-area-inset-bottom) + 10px)" }}
     >
-      <div className="glass glass-refract rounded-full h-[62px] grid grid-cols-5 items-center px-1.5">
+      <div className="glass glass-refract relative rounded-full h-[62px] grid grid-cols-5 items-center px-1.5">
+        {/* One pill for the whole bar, moved by transform alone: it slides
+            from tab to tab on the compositor, so a page loading at the same
+            moment can't make it stutter the way a JS-driven layout
+            animation does. */}
+        <span
+          aria-hidden="true"
+          className="tab-pill absolute top-[5px] left-1.5 h-[52px] rounded-full pointer-events-none"
+          style={{
+            width: "calc((100% - 12px) / 5)",
+            transform: `translateX(${column * 100}%)`,
+            opacity: index < 0 ? 0 : 1,
+          }}
+        />
         {left.map((item) => (
-          <Tab key={item.href} item={item} pathname={pathname} reduceMotion={reduceMotion} />
+          <Tab key={item.href} item={item} pathname={pathname} />
         ))}
 
         {/* The add button's berth. Nothing renders here. */}
         <div aria-hidden="true" />
 
         {right.map((item) => (
-          <Tab key={item.href} item={item} pathname={pathname} reduceMotion={reduceMotion} />
+          <Tab key={item.href} item={item} pathname={pathname} />
         ))}
       </div>
     </nav>
   );
 }
 
+function isActive(href: string, pathname: string): boolean {
+  return href === "/" ? pathname === "/" : pathname.startsWith(href);
+}
+
 function Tab({
   item,
   pathname,
-  reduceMotion,
 }: {
   item: (typeof NAV_ITEMS)[number];
   pathname: string;
-  reduceMotion: boolean | null;
 }) {
   const t = useT();
   const { href, key, icon: Icon } = item;
   const label = t.nav[key];
-  const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
+  const active = isActive(href, pathname);
 
   return (
     <Link
@@ -72,15 +89,6 @@ function Tab({
         active ? "text-accent" : "text-text-dim"
       )}
     >
-      {active && (
-        <motion.div
-          layoutId="tab-lens"
-          className="absolute inset-0 rounded-full bg-accent/12"
-          transition={
-            reduceMotion ? { duration: 0 } : { type: "spring", visualDuration: 0.3, bounce: 0.15 }
-          }
-        />
-      )}
       <Icon className="relative w-[19px] h-[19px]" active={active} />
       <span
         className={cn(

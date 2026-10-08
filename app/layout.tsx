@@ -34,7 +34,8 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#000000",
+  // The top of background B, where the status bar and browser chrome sit.
+  themeColor: "#17110a",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,

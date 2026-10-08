@@ -4,8 +4,8 @@ export const THEME_KEY = "tracklh-theme";
 
 /** The colors behind the iOS status bar, per theme — `--color-bg` by hand. */
 const THEME_COLOR: Record<Theme, string> = {
-  dark: "#000000",
-  light: "#faf8f4",
+  dark: "#17110a",
+  light: "#efe2c8",
 };
 
 /**

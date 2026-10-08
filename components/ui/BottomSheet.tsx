@@ -57,7 +57,8 @@ export function BottomSheet({ open, onClose, title, children, className }: Props
           aria-modal="true"
         >
           <motion.div
-            className="absolute inset-0 bg-black/60"
+            className="absolute inset-0"
+            style={{ background: "var(--scrim)" }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -105,7 +106,9 @@ export function BottomSheet({ open, onClose, title, children, className }: Props
               </div>
             )}
 
-            <div className="overflow-y-auto overscroll-contain px-5 pb-safe">{children}</div>
+            {/* Scrolls under the fixed header, fading out at its edge rather
+                than being cut by it. */}
+            <div className="sheet-scroll overflow-y-auto overscroll-contain px-5 pb-safe">{children}</div>
           </motion.div>
         </div>
       )}
