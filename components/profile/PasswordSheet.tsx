@@ -5,64 +5,12 @@ import { mutate } from "swr";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
-import { PROFILE_KEY, useProfile } from "@/lib/use-profile";
+import { PROFILE_KEY } from "@/lib/use-profile";
 import { useT } from "@/lib/i18n-react";
 import { cn } from "@/lib/utils";
 
-/** How this person gets in, and a way to change or create a password. */
-export function SecurityPanel() {
-  const t = useT();
-  const { data: profile } = useProfile();
-  const [sheet, setSheet] = useState(false);
-  if (!profile) return null;
-  const google = profile.providers.includes("google");
-
-  return (
-    <section aria-labelledby="security-title">
-      <h2 id="security-title" className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em] px-1 pb-2">
-        {t.profile.security}
-      </h2>
-      <div className="panel px-4 divide-y divide-divider">
-        <div className="py-3.5">
-          <p className="text-[13.5px] text-text">{t.profile.signInMethods}</p>
-          <ul className="mt-2 flex flex-col gap-1.5">
-            <Method label={t.profile.google} on={google} />
-            <Method label={t.profile.password} on={profile.hasPassword} />
-          </ul>
-        </div>
-        <button
-          type="button"
-          onClick={() => setSheet(true)}
-          className="press w-full flex items-center justify-between gap-3 py-3.5 text-left"
-        >
-          <span className="min-w-0">
-            <span className="block text-[13.5px] text-text">
-              {profile.hasPassword ? t.profile.changePassword : t.profile.setPassword}
-            </span>
-            {!profile.hasPassword && <span className="block text-[11.5px] text-text-dim mt-0.5">{t.profile.setPasswordHint}</span>}
-          </span>
-          <span aria-hidden className="text-text-faint">›</span>
-        </button>
-      </div>
-      <PasswordSheet key={String(sheet)} open={sheet} onClose={() => setSheet(false)} hasPassword={profile.hasPassword} />
-    </section>
-  );
-}
-
-function Method({ label, on }: { label: string; on: boolean }) {
-  const t = useT();
-  return (
-    <li className="flex items-center justify-between text-[12.5px]">
-      <span className="text-text-muted">{label}</span>
-      <span className={cn("flex items-center gap-1.5", on ? "text-green-fg" : "text-text-dim")}>
-        <span aria-hidden className={cn("w-1.5 h-1.5 rounded-full", on ? "bg-green-fg" : "bg-border-strong")} />
-        {on ? t.profile.connected : t.profile.notSet}
-      </span>
-    </li>
-  );
-}
-
-function PasswordSheet({ open, onClose, hasPassword }: { open: boolean; onClose: () => void; hasPassword: boolean }) {
+/** Changes the password with the current one, or creates a first one for a Google-only account. */
+export function PasswordSheet({ open, onClose, hasPassword }: { open: boolean; onClose: () => void; hasPassword: boolean }) {
   const t = useT();
   const toast = useToast();
   const [current, setCurrent] = useState("");

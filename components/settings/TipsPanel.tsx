@@ -12,7 +12,7 @@ import { useT } from "@/lib/i18n-react";
  * fixed expenses, the keypad's arithmetic. Kept here rather than in Inicio's
  * first steps, for whoever has a use for them, when they come looking.
  */
-export function TipsPanel() {
+export function TipsPanel({ bare = false }: { bare?: boolean }) {
   const t = useT();
   const [installOpen, setInstallOpen] = useState(false);
   const tips: { icon: LucideIcon; title: string; text: string; href?: string; onClick?: () => void; action?: string }[] = [
@@ -25,9 +25,12 @@ export function TipsPanel() {
 
   return (
     <section>
-      <p className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em] px-1 pb-2">
-        {t.tips.title}
-      </p>
+      {/* Its own screen names it; elsewhere the caption does. */}
+      {!bare && (
+        <p className="font-mono text-[10px] font-semibold text-text-dim uppercase tracking-[0.1em] px-1 pb-2">
+          {t.tips.title}
+        </p>
+      )}
       <ul className="panel divide-y divide-divider">
         {tips.map(({ icon: Icon, title, text, href, onClick }) => {
           const body = (
