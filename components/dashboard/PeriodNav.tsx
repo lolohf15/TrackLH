@@ -18,7 +18,10 @@ export function PeriodNav({
   now,
   onLabelClick,
   kinds = ["week", "month", "year", "all"],
+  weekStart = 1,
 }: {
+  /** 1 = Monday, 0 = Sunday, as the person set it. */
+  weekStart?: 0 | 1;
   /** Which spans the selector offers. */
   kinds?: PeriodKind[];
   kind: PeriodKind;
@@ -32,7 +35,7 @@ export function PeriodNav({
   const t = useT();
   const locale = useLocale();
 
-  const period = resolvePeriod(kind, anchor);
+  const period = resolvePeriod(kind, anchor, weekStart);
   const label = formatPeriodLabel(period, locale);
   // A period that already contains today has no "next" to walk into.
   const atLatest = period.range.to.getTime() > now;

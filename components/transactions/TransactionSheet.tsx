@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useProfile } from "@/lib/use-profile";
 import useSWR, { mutate } from "swr";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ArrowDown, CalendarDays, NotebookPen, Repeat } from "lucide-react";
@@ -145,7 +146,10 @@ export function TransactionSheet({
   const { data: catalog } = useSWR<Catalog>("/api/catalog", fetcher);
   const accounts = catalog?.accounts ?? [];
 
-  const [type, setType] = useState<TransactionType>(transaction?.type ?? prefill?.type ?? "Gasto");
+  // A new movement with nothing filled in starts on the person's defaults.
+  const { data: profile } = useProfile();
+  const [pickedType, setType] = useState<TransactionType | null>(transaction?.type ?? prefill?.type ?? null);
+  const type: TransactionType = pickedType ?? profile?.defaultType ?? "Gasto";
   // Null until the user picks one: then the account follows the type, so a
   // switch to Ingreso lands on the account income usually goes to.
   const [pickedAccount, setPickedAccount] = useState<string | null>(
@@ -194,8 +198,12 @@ export function TransactionSheet({
   const categories =
     type === "Ingreso" ? catalog?.incomeCategories ?? [] : catalog?.expenseCategories ?? [];
 
+  // The default account, while it still exists, beats the last one used,
+  // except for income on a card, which can't take it.
+  const preferred = accounts.find((a) => a.account === profile?.defaultAccount);
+  const usePreferred = preferred && !(type === "Ingreso" && preferred.isCredit);
   const account =
-    pickedAccount ?? catalog?.lastAccount?.[type] ?? accounts[0]?.account ?? "";
+    pickedAccount ?? (usePreferred ? preferred.account : null) ?? catalog?.lastAccount?.[type] ?? accounts[0]?.account ?? "";
   const fallbackTo =
     catalog?.lastToAccount && catalog.lastToAccount !== account
       ? catalog.lastToAccount

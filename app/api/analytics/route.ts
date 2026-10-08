@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser, errorResponse } from "@/lib/auth";
+import { getWeekStart } from "@/lib/profile";
 import { readToday } from "@/lib/request-today";
 import { mapTransaction } from "@/lib/transaction-map";
 import { mapBudget } from "@/lib/money";
@@ -37,7 +38,8 @@ export async function GET(req: NextRequest) {
     const kind = isPeriodKind(kindParam) ? kindParam : "month";
     const anchor = parseAnchor(searchParams.get("anchor"));
     const today = readToday(req);
-    const period = resolvePeriod(kind, anchor);
+    const weekStart = kind === "week" ? await getWeekStart(userId) : 1;
+    const period = resolvePeriod(kind, anchor, weekStart);
     const inProgress = isInProgress(period, today);
 
     // All-time starts at the user's first movement, not at 1970.
@@ -55,7 +57,7 @@ export async function GET(req: NextRequest) {
     const usualRanges: DateRange[] = Array.from({ length: lookback }, (_, i) => {
       let at = anchor;
       for (let k = 0; k <= i; k++) at = stepAnchor(kind, at, -1);
-      const back = resolvePeriod(kind, at);
+      const back = resolvePeriod(kind, at, weekStart);
       return comparablePrevious({ ...period, previous: back.range }, today) ?? back.range;
     });
     const samePoint = comparablePrevious(period, today);

@@ -26,7 +26,7 @@ export function BalanceHero({
   const display = useCountUp(total, formatMXN);
 
   return (
-    <section className="flex flex-col items-center text-center pt-14 pb-2 md:pt-12">
+    <section className="flex flex-col items-center text-center pt-8 pb-2 md:pt-6">
       <p className="text-[12.5px] text-text-dim">{t.overview.totalBalance}</p>
       <p className="mt-1 text-[44px] leading-none font-semibold text-text tabular-nums tracking-[-0.035em]">
         {display}

@@ -332,25 +332,6 @@ export interface PendingOccurrence {
   count: number;
 }
 
-/** One month of `GET /api/analytics/trends`. */
-export interface TrendMonth {
-  /** `YYYY-MM`. */
-  key: string;
-  income: number;
-  expenses: number;
-  /** The part of `expenses` confirmed from a recurring rule. */
-  fixed: number;
-  /** Debit money at the end of the month. */
-  available: number;
-  /** `available` less what was owed on the cards at the end of the month. */
-  netWorth: number;
-}
-
-/** What the trend charts on Analytics draw. */
-export interface TrendsData {
-  months: TrendMonth[];
-}
-
 /** `GET /api/categories/detail`: one category over a period. */
 export interface CategoryDetailData {
   category: string;
@@ -369,4 +350,22 @@ export interface CategoryDetailData {
   months: Array<{ month: string; amount: number }>;
   /** Descriptions it repeats most in the period, by amount. */
   top: Array<{ description: string; count: number; amount: number }>;
+}
+
+/** `GET /api/profile`: the signed-in person and their preferences. */
+export interface ProfileView {
+  email: string;
+  name: string | null;
+  avatarColor: string | null;
+  defaultAccount: string | null;
+  defaultType: "Gasto" | "Ingreso" | "Transferencia" | null;
+  /** 0 = Sunday, 1 = Monday. */
+  weekStart: 0 | 1;
+  analyticsPeriod: "week" | "month" | "year";
+  /** Null until chosen on some device; the device's own value stands until then. */
+  theme: "dark" | "light" | null;
+  language: "es" | "en" | null;
+  hasPassword: boolean;
+  /** Outside sign-ins linked to the account, e.g. "google". */
+  providers: string[];
 }

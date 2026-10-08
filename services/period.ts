@@ -47,11 +47,13 @@ function startOfUTCDay(d: Date): Date {
   return utc(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
 }
 
-/** Monday, matching how weeks are read in Spanish and most of the world. */
-function startOfUTCWeek(d: Date): Date {
+/** 1 = Monday (the default, as weeks are read in Spanish), 0 = Sunday. */
+export type WeekStart = 0 | 1;
+
+function startOfUTCWeek(d: Date, weekStart: WeekStart): Date {
   const day = startOfUTCDay(d);
-  // getUTCDay is 0 for Sunday, so Sunday has to walk back six days, not none.
-  const weekday = (day.getUTCDay() + 6) % 7;
+  // Days since the week began: with Monday first, Sunday is six days in.
+  const weekday = (day.getUTCDay() - weekStart + 7) % 7;
   day.setUTCDate(day.getUTCDate() - weekday);
   return day;
 }
@@ -67,10 +69,10 @@ function addDays(d: Date, n: number): Date {
  * "the month containing this date" — so navigating back a month is a matter
  * of moving the anchor, not of special-casing the period.
  */
-export function resolvePeriod(kind: PeriodKind, anchor: Date = new Date()): Period {
+export function resolvePeriod(kind: PeriodKind, anchor: Date = new Date(), weekStart: WeekStart = 1): Period {
   switch (kind) {
     case "week": {
-      const from = startOfUTCWeek(anchor);
+      const from = startOfUTCWeek(anchor, weekStart);
       const to = addDays(from, 7);
       return {
         kind,

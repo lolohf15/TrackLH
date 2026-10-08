@@ -10,6 +10,7 @@ import { TransactionList } from "@/components/transactions/TransactionList";
 import { FirstSteps } from "@/components/onboarding/FirstSteps";
 import { useAddRecord } from "@/components/transactions/AddRecordProvider";
 import { BalanceHero } from "@/components/home/BalanceHero";
+import { Greeting } from "@/components/home/Greeting";
 import { LeftToSpendCard } from "@/components/home/LeftToSpendCard";
 import { PaceCard } from "@/components/home/PaceCard";
 import { InsightList } from "@/components/charts/InsightList";
@@ -65,6 +66,7 @@ export default function Home() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 md:px-8 pb-6">
+      <Greeting />
       <BalanceHero
         total={dashboard.totalAvailable}
         netWorth={hasDebt ? dashboard.netWorth : null}

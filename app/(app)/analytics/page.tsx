@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/Button";
 import { TrendBadge } from "@/components/ui/TrendBadge";
 import { ChartSkeleton } from "@/components/ui/Skeleton";
 import { useAddRecord } from "@/components/transactions/AddRecordProvider";
-import { TrendsPanel } from "@/components/analytics/TrendCharts";
 import { CategoryBars } from "@/components/charts/CategoryBars";
 import { CategoryTreemap } from "@/components/charts/CategoryTreemap";
 import { HeatCalendar } from "@/components/charts/HeatCalendar";
@@ -20,7 +19,8 @@ import { AnalyticsTable } from "@/components/charts/AnalyticsTable";
 import { formatMXN, cn } from "@/lib/utils";
 import { dayKey, formatPeriodLabel, todayAnchor, wallClockNow, type PeriodKind } from "@/services/period";
 import { useLocale, useT } from "@/lib/i18n-react";
-import type { AnalyticsData, TrendsData } from "@/types";
+import { useProfile } from "@/lib/use-profile";
+import type { AnalyticsData } from "@/types";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -28,13 +28,16 @@ const fetcher = (url: string) => fetch(url).then((r) => r.json());
  * "Where did my money go", one screen per week, month or year: the figure,
  * what's notable about it in words, then the charts that answer it (by day,
  * by category, by day of the calendar, from income to savings), budgets
- * against the month's pace, and the months around it.
+ * against the month's pace.
  */
 export default function Analytics() {
   const t = useT();
   const locale = useLocale();
   const openAddRecord = useAddRecord();
-  const [kind, setKind] = useState<PeriodKind>("month");
+  // Opens on the period the person chose in Perfil until they pick another.
+  const { data: profile } = useProfile();
+  const [pickedKind, setKind] = useState<PeriodKind | null>(null);
+  const kind: PeriodKind = pickedKind ?? profile?.analyticsPeriod ?? "month";
   const [anchor, setAnchor] = useState(todayAnchor);
   // Captured once rather than read during render.
   const [openedAt] = useState(() => wallClockNow().getTime());
@@ -44,11 +47,6 @@ export default function Analytics() {
     `/api/analytics?period=${kind}&anchor=${dayKey(anchor)}&today=${todayKey}`,
     fetcher,
     // The period on screen stays until its replacement lands.
-    { keepPreviousData: true }
-  );
-  const { data: trends, isLoading: trendsLoading } = useSWR<TrendsData>(
-    `/api/analytics/trends?period=${kind}&anchor=${dayKey(anchor)}&today=${todayKey}`,
-    fetcher,
     { keepPreviousData: true }
   );
 
@@ -83,6 +81,7 @@ export default function Analytics() {
         onAnchorChange={setAnchor}
         now={openedAt}
         kinds={["week", "month", "year"]}
+        weekStart={profile?.weekStart ?? 1}
       />
 
       {!data ? (
@@ -175,13 +174,6 @@ export default function Analytics() {
                 />
               )}
               {data.flow && <MoneyFlowChart flow={data.flow} periodLabel={periodLabel} spanQuery={spanQuery} />}
-              {trends ? (
-                <div className={cn("transition-opacity duration-200", trendsLoading && "opacity-50")}>
-                  <TrendsPanel data={trends} partialKey={todayKey.slice(0, 7)} />
-                </div>
-              ) : (
-                <ChartSkeleton height="h-72" />
-              )}
             </div>
           </div>
 

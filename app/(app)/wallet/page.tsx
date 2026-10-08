@@ -20,6 +20,7 @@ import { BalancesPrompt } from "@/components/onboarding/BalancesPrompt";
 import { shortDay } from "@/components/wallet/DueBadge";
 import { payPrefill, usePaySheet } from "@/components/wallet/PayCard";
 import { useAccounts } from "@/lib/use-accounts";
+import { useProfile } from "@/lib/use-profile";
 import { cycleContaining, stepCycle } from "@/services/credit-cycle";
 import { useLocale, useT } from "@/lib/i18n-react";
 import { ChevronDownIcon, CloseIcon, PlusIcon } from "@/components/shell/icons";
@@ -130,6 +131,7 @@ function WalletScreen({
 }) {
   const t = useT();
   const locale = useLocale();
+  const { data: profile } = useProfile();
 
   const { data: dashboard, isLoading } =
     useSWR<DashboardData>("/api/dashboard?period=month", fetcher);
@@ -245,7 +247,7 @@ function WalletScreen({
   const anchorDay = parseAnchor(filters.anchor);
   const cycle =
     filters.period === "cycle" && filters.cut ? cycleContaining(filters.cut, anchorDay) : null;
-  const span = cycle ? null : resolvePeriod(filters.period as PeriodKind, anchorDay);
+  const span = cycle ? null : resolvePeriod(filters.period as PeriodKind, anchorDay, profile?.weekStart ?? 1);
   const spanLabel = cycle
     ? t.wallet.cycleRange(
         shortDay(dayKey(cycle.start), locale),
