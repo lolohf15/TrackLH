@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { usePathname } from "next/navigation";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+// Internal to Next, but the only handle on which route a subtree renders.
+import { LayoutRouterContext } from "next/dist/shared/lib/app-router-context.shared-runtime";
+import { AnimatePresence, motion, useIsPresent, useReducedMotion } from "framer-motion";
 import { Sidebar } from "./Sidebar";
 import { TabBar } from "./TabBar";
 import { NAV_ITEMS } from "./nav";
@@ -122,7 +124,27 @@ function Page({
       }
       className="[grid-area:1/1] min-w-0 page-ground pb-28 md:pb-8"
     >
-      {children}
+      <FrozenRouter>{children}</FrozenRouter>
     </motion.main>
+  );
+}
+
+/**
+ * Keeps an exiting page on the route it was showing. `children` reads the
+ * current route from context, so without this the page sliding out renders
+ * the page sliding in, and the switch shows the new tab twice, offset and
+ * half faded. A present page follows the live context, so refreshes and
+ * query changes still reach it.
+ */
+function FrozenRouter({ children }: { children: React.ReactNode }) {
+  const context = useContext(LayoutRouterContext);
+  const isPresent = useIsPresent();
+  const [frozen, setFrozen] = useState(context);
+  if (isPresent && frozen !== context) setFrozen(context);
+
+  return (
+    <LayoutRouterContext.Provider value={isPresent ? context : frozen}>
+      {children}
+    </LayoutRouterContext.Provider>
   );
 }
