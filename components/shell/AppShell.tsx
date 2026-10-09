@@ -52,7 +52,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 content clear of the status bar and notch, and the scrim over
                 it stops scrolled content from running under the clock when
                 the app is installed (zero tall in a browser tab). */}
-            <div className="pt-safe md:hidden shrink-0" aria-hidden />
+            <div className="pt-safe-app md:hidden shrink-0" aria-hidden />
             <div className="status-scrim md:hidden" aria-hidden />
 
             {/*

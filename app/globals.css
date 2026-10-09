@@ -326,6 +326,13 @@
   /* Safe-area padding for the mobile tab bar */
   .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
   .pt-safe { padding-top: env(safe-area-inset-top); }
+  /* Opened from the home screen, iOS 26 fades the page out under the status
+     bar further down than the safe area reaches, dimming each tab's header.
+     The app's top spacer clears that band too. */
+  .pt-safe-app { padding-top: env(safe-area-inset-top); }
+  @media (display-mode: standalone) {
+    .pt-safe-app { padding-top: calc(env(safe-area-inset-top) + 24px); }
+  }
   .status-scrim {
     position: fixed;
     inset: 0 0 auto 0;
