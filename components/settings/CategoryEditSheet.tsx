@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { mutate } from "swr";
+import useSWR, { mutate } from "swr";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Button } from "@/components/ui/Button";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
@@ -57,6 +57,14 @@ export function CategoryEditSheet({ category, open, onClose }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [replacementId, setReplacementId] = useState("");
+
+  // Only fetched once someone asks to delete: the choices for what comes next.
+  const { data: all } = useSWR<EditableCategory[]>(
+    confirmingDelete ? "/api/categories" : null,
+    (url: string) => fetch(url).then((r) => r.json())
+  );
+  const replacements = (all ?? []).filter((c) => c.kind === category?.kind && c.id !== category?.id);
 
   const renamed = !isNew && name.trim() !== category.name;
 
@@ -95,7 +103,11 @@ export function CategoryEditSheet({ category, open, onClose }: Props) {
     setBusy(true);
     setError(null);
     try {
-      const res = await fetch(`/api/categories/${category.id}`, { method: "DELETE" });
+      const res = await fetch(`/api/categories/${category.id}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ replacementId: replacementId || undefined }),
+      });
       const payload = await res.json().catch(() => ({}));
       if (!res.ok) {
         setError(payload?.error ?? t.common.deleteFailed);
@@ -229,15 +241,32 @@ export function CategoryEditSheet({ category, open, onClose }: Props) {
 
         {!isNew &&
           (confirmingDelete ? (
-            <div className="flex gap-2.5">
-              <Button variant="secondary" size="lg" className="flex-1 py-3.5"
-                onClick={() => setConfirmingDelete(false)}>
-                {t.common.cancel}
-              </Button>
-              <Button variant="danger" size="lg" className="flex-1 py-3.5" loading={busy}
-                onClick={remove}>
-                {t.categorySheet.confirmDelete}
-              </Button>
+            <div className="space-y-3">
+              <p className="text-xs text-text-dim leading-relaxed">{t.categorySheet.keepsHistory}</p>
+              <Field label={t.categorySheet.replaceLabel}>
+                <select
+                  value={replacementId}
+                  onChange={(e) => setReplacementId(e.target.value)}
+                  className="w-full rounded-md bg-surface-2 border border-border px-3.5 py-3 min-h-[48px] text-[15px] text-text outline-none focus:border-accent/60 transition-colors duration-150"
+                >
+                  <option value="">{t.categorySheet.replaceNone}</option>
+                  {replacements.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <div className="flex gap-2.5">
+                <Button variant="secondary" size="lg" className="flex-1 py-3.5"
+                  onClick={() => setConfirmingDelete(false)}>
+                  {t.common.cancel}
+                </Button>
+                <Button variant="danger" size="lg" className="flex-1 py-3.5" loading={busy}
+                  onClick={remove}>
+                  {t.categorySheet.confirmDelete}
+                </Button>
+              </div>
             </div>
           ) : (
             <button

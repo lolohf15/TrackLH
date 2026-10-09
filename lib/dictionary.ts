@@ -476,6 +476,9 @@ export const es = {
     addCategory: "Agregar categoría",
     deleteCategory: "Eliminar categoría",
     confirmDelete: "Sí, eliminar",
+    keepsHistory: "Tus movimientos anteriores se quedan tal cual, con esta categoría.",
+    replaceLabel: "De ahora en adelante usar",
+    replaceNone: "Ninguna",
   },
 
   profile: {
@@ -829,13 +832,9 @@ export const es = {
     categoryNameRequired: "Escribe un nombre para la categoría",
     categoryExists: "Ya tienes una categoría con ese nombre",
     categoryMissing: "Categoría no encontrada",
-    categoryInUse: (name: string, count: number) =>
-      `"${name}" tiene ${count} ${count === 1 ? "movimiento" : "movimientos"}. ` +
-      `Cámbialos de categoría antes de eliminarla.`,
-
     categoryInRules: (name: string, count: number) =>
       `"${name}" está en ${count} ${count === 1 ? "recurrente" : "recurrentes"}. ` +
-      `Cámbialas o elimínalas antes de eliminarla.`,
+      `Elige otra categoría para que sigan de ahora en adelante.`,
     accountInRules: (name: string, count: number) =>
       `"${name}" está en ${count} ${count === 1 ? "recurrente" : "recurrentes"}. ` +
       `Cámbialas o elimínalas antes de eliminarla.`,
@@ -1323,6 +1322,9 @@ export const en: typeof es = {
     addCategory: "Add category",
     deleteCategory: "Delete category",
     confirmDelete: "Yes, delete",
+    keepsHistory: "Your past movements stay exactly as they are, under this category.",
+    replaceLabel: "From now on use",
+    replaceNone: "None",
   },
 
   profile: {
@@ -1660,13 +1662,9 @@ export const en: typeof es = {
     categoryNameRequired: "Enter a name for the category",
     categoryExists: "You already have a category with that name",
     categoryMissing: "Category not found",
-    categoryInUse: (name: string, count: number) =>
-      `"${name}" has ${count} ${count === 1 ? "movement" : "movements"}. ` +
-      `Move them to another category before removing it.`,
-
     categoryInRules: (name: string, count: number) =>
       `"${name}" is used by ${count} recurring ${count === 1 ? "rule" : "rules"}. ` +
-      `Change or delete them before removing it.`,
+      `Pick another category for them to continue under.`,
     accountInRules: (name: string, count: number) =>
       `"${name}" is used by ${count} recurring ${count === 1 ? "rule" : "rules"}. ` +
       `Change or delete them before removing it.`,

@@ -99,8 +99,13 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   }
 }
 
-/** Refuses to delete a category that still has movements behind it. */
-export async function DELETE(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
+/**
+ * Deleting a category never touches the movements already filed under it:
+ * they keep its name, so the history reads the same. What moves on is what
+ * comes next. Recurring rules would keep logging the old name, so they need
+ * a `replacementId` (another category of the same kind) to carry on under.
+ */
+export async function DELETE(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   try {
     const userId = await requireUser();
     const m = await apiMessages();
@@ -111,25 +116,24 @@ export async function DELETE(_req: NextRequest, ctx: { params: Promise<{ id: str
       return NextResponse.json({ error: m.categoryMissing }, { status: 404 });
     }
 
-    const used = await prisma.transaction.count({
-      where: { userId, category: existing.name },
-    });
-
-    if (used > 0) {
-      return NextResponse.json(
-        { error: m.categoryInUse(existing.name, used) },
-        { status: 409 }
-      );
+    const body = (await req.json().catch(() => null)) as Record<string, unknown> | null;
+    const replacementId = typeof body?.replacementId === "string" ? body.replacementId : null;
+    const replacement = replacementId
+      ? await prisma.category.findFirst({
+          where: { id: replacementId, userId, kind: existing.kind, NOT: { id } },
+        })
+      : null;
+    if (replacementId && !replacement) {
+      return NextResponse.json({ error: m.categoryMissing }, { status: 404 });
     }
 
-    const rules = await prisma.recurringRule.count({
-      where: {
-        userId,
-        category: existing.name,
-        type: existing.kind === "income" ? "Ingreso" : "Gasto",
-      },
-    });
-    if (rules > 0) {
+    const ruleWhere = {
+      userId,
+      category: existing.name,
+      type: existing.kind === "income" ? "Ingreso" : "Gasto",
+    };
+    const rules = await prisma.recurringRule.count({ where: ruleWhere });
+    if (rules > 0 && !replacement) {
       return NextResponse.json(
         { error: m.categoryInRules(existing.name, rules) },
         { status: 409 }
@@ -137,6 +141,9 @@ export async function DELETE(_req: NextRequest, ctx: { params: Promise<{ id: str
     }
 
     await prisma.$transaction([
+      ...(replacement && rules > 0
+        ? [prisma.recurringRule.updateMany({ where: ruleWhere, data: { category: replacement.name } })]
+        : []),
       prisma.category.delete({ where: { id } }),
       prisma.budgetConfig.deleteMany({ where: { userId, category: existing.name } }),
     ]);
